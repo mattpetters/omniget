@@ -1,5 +1,6 @@
 <script lang="ts">
   import PageHero from "$lib/study-components/PageHero.svelte";
+  import { t } from "$lib/i18n";
 
   interface Props {
     title: string;
@@ -11,7 +12,7 @@
 </script>
 
 <section class="study-page">
-  <PageHero {title} subtitle="Em construção" />
+  <PageHero {title} subtitle={$t("study.anki_stubpage.under_construction") as string} />
 
   <div class="card">
     <div class="card-body">

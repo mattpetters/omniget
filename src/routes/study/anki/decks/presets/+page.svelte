@@ -3,6 +3,7 @@
   import { pluginInvoke } from "$lib/plugin-invoke";
   import PageHero from "$lib/study-components/PageHero.svelte";
   import ConfirmDialog from "$lib/study-components/ConfirmDialog.svelte";
+  import { t } from "$lib/i18n";
 
   type DeckConfigSummary = {
     id: number;
@@ -199,8 +200,8 @@
 
 <section class="study-page">
   <PageHero
-    title="Presets de deck"
-    subtitle="Configurações reutilizáveis (limites, FSRS, learning steps)"
+    title={$t("study.anki_decks_presets.title") as string}
+    subtitle={$t("study.anki_decks_presets.subtitle") as string}
   />
 
   {#if toast}
@@ -210,14 +211,14 @@
   {/if}
 
   <div class="toolbar">
-    <a class="back-link" href="/study/anki/decks">← Voltar pra Decks</a>
+    <a class="back-link" href="/study/anki/decks">← {$t("study.anki_decks_presets.back_to_decks")}</a>
   </div>
 
   <div class="create-row">
     <input
       type="text"
       class="name-input"
-      placeholder="Nome do novo preset…"
+      placeholder={$t("study.anki_decks_presets.name_placeholder") as string}
       bind:value={createName}
       onkeydown={(e) => { if (e.key === "Enter") create(); }}
     />
@@ -227,17 +228,17 @@
       onclick={create}
       disabled={creating || !createName.trim()}
     >
-      {creating ? "Criando…" : "Criar preset"}
+      {creating ? ($t("study.anki_decks_presets.creating") as string) : ($t("study.anki_decks_presets.create") as string)}
     </button>
   </div>
 
   {#if loading}
-    <div class="state">Carregando…</div>
+    <div class="state">{$t("study.anki_decks_presets.loading")}</div>
   {:else if error}
     <div class="state err">{error}</div>
   {:else if summaries.length === 0}
     <div class="empty">
-      <p>Nenhum preset ainda.</p>
+      <p>{$t("study.anki_decks_presets.empty")}</p>
     </div>
   {:else}
     <ul class="preset-list">
@@ -247,12 +248,12 @@
             <div class="preset-name">
               {p.name}
               {#if p.id === DEFAULT_PRESET_ID}
-                <span class="badge">padrão</span>
+                <span class="badge">{$t("study.anki_decks_presets.default_badge")}</span>
               {/if}
             </div>
             <div class="preset-meta">
-              {p.use_count === 1 ? "1 deck usa" : `${p.use_count} decks usam`}
-              · atualizado {fmtTime(p.mtime_secs)}
+              {p.use_count === 1 ? ($t("study.anki_decks_presets.one_deck_uses") as string) : ($t("study.anki_decks_presets.many_decks_use", { count: p.use_count }) as string)}
+              · {$t("study.anki_decks_presets.updated", { time: fmtTime(p.mtime_secs) })}
             </div>
           </div>
           <div class="preset-actions">
@@ -261,7 +262,7 @@
               class="btn ghost sm"
               onclick={() => startEdit(p)}
             >
-              Editar
+              {$t("study.anki_decks_presets.edit")}
             </button>
             <button
               type="button"
@@ -269,12 +270,12 @@
               onclick={() => askDelete(p)}
               disabled={p.id === DEFAULT_PRESET_ID || p.use_count > 0}
               title={p.id === DEFAULT_PRESET_ID
-                ? "Preset padrão não pode ser apagado"
+                ? ($t("study.anki_decks_presets.cannot_delete_default") as string)
                 : p.use_count > 0
-                  ? "Mover decks pra outro preset antes de apagar"
+                  ? ($t("study.anki_decks_presets.move_decks_first") as string)
                   : ""}
             >
-              Apagar
+              {$t("study.anki_decks_presets.delete")}
             </button>
           </div>
         </li>
@@ -290,11 +291,11 @@
     onclick={(e) => { if (e.target === e.currentTarget) editing = null; }}
   >
     <div class="modal modal-wide" role="dialog" aria-modal="true">
-      <h3>Editar preset · {editing.name}</h3>
+      <h3>{$t("study.anki_decks_presets.edit_title", { name: editing.name })}</h3>
 
       <div class="form-grid">
         <label class="field">
-          <span>Novos cards / dia</span>
+          <span>{$t("study.anki_decks_presets.new_per_day")}</span>
           <input
             type="number"
             min="0"
@@ -302,7 +303,7 @@
           />
         </label>
         <label class="field">
-          <span>Reviews / dia</span>
+          <span>{$t("study.anki_decks_presets.reviews_per_day")}</span>
           <input
             type="number"
             min="0"
@@ -310,7 +311,7 @@
           />
         </label>
         <label class="field">
-          <span>Retenção desejada (FSRS)</span>
+          <span>{$t("study.anki_decks_presets.desired_retention")}</span>
           <input
             type="number"
             step="0.01"
@@ -320,7 +321,7 @@
           />
         </label>
         <label class="field">
-          <span>Limite de leech</span>
+          <span>{$t("study.anki_decks_presets.leech_threshold")}</span>
           <input
             type="number"
             min="1"
@@ -328,7 +329,7 @@
           />
         </label>
         <label class="field">
-          <span>Learning steps (min)</span>
+          <span>{$t("study.anki_decks_presets.learning_steps")}</span>
           <input
             type="text"
             bind:value={editLearnRaw}
@@ -336,7 +337,7 @@
           />
         </label>
         <label class="field">
-          <span>Relearning steps (min)</span>
+          <span>{$t("study.anki_decks_presets.relearning_steps")}</span>
           <input
             type="text"
             bind:value={editRelearnRaw}
@@ -346,22 +347,22 @@
       </div>
 
       <fieldset class="check-group">
-        <legend>Comportamento</legend>
+        <legend>{$t("study.anki_decks_presets.behavior")}</legend>
         <label class="check">
           <input type="checkbox" bind:checked={editForm.bury_new} />
-          <span>Enterrar novos cards relacionados</span>
+          <span>{$t("study.anki_decks_presets.bury_new")}</span>
         </label>
         <label class="check">
           <input type="checkbox" bind:checked={editForm.bury_reviews} />
-          <span>Enterrar reviews relacionados</span>
+          <span>{$t("study.anki_decks_presets.bury_reviews")}</span>
         </label>
         <label class="check">
           <input type="checkbox" bind:checked={editForm.disable_autoplay} />
-          <span>Desativar autoplay de mídia</span>
+          <span>{$t("study.anki_decks_presets.disable_autoplay")}</span>
         </label>
         <label class="check">
           <input type="checkbox" bind:checked={editForm.show_timer} />
-          <span>Mostrar timer durante estudo</span>
+          <span>{$t("study.anki_decks_presets.show_timer")}</span>
         </label>
       </fieldset>
 
@@ -372,7 +373,7 @@
           onclick={() => { editing = null; editForm = null; }}
           disabled={editBusy}
         >
-          Cancelar
+          {$t("study.anki_decks_presets.cancel")}
         </button>
         <button
           type="button"
@@ -380,7 +381,7 @@
           onclick={saveEdit}
           disabled={editBusy}
         >
-          {editBusy ? "Salvando…" : "Salvar"}
+          {editBusy ? ($t("study.anki_decks_presets.saving") as string) : ($t("study.anki_decks_presets.save") as string)}
         </button>
       </div>
     </div>
@@ -389,11 +390,11 @@
 
 <ConfirmDialog
   bind:open={confirmDeleteOpen}
-  title="Apagar preset"
+  title={$t("study.anki_decks_presets.delete_title") as string}
   message={deleteTarget
-    ? `Apagar o preset "${deleteTarget.name}"? Decks que usam vão pro preset padrão.`
+    ? ($t("study.anki_decks_presets.delete_message", { name: deleteTarget.name }) as string)
     : ""}
-  confirmLabel="Apagar"
+  confirmLabel={$t("study.anki_decks_presets.delete") as string}
   variant="danger"
   onConfirm={confirmDelete}
 />
