@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { t } from "$lib/i18n";
+
   type Props = {
     open: boolean;
     onClose: () => void;
@@ -9,51 +11,51 @@
   type Shortcut = { keys: string[]; label: string };
   type Group = { title: string; items: Shortcut[] };
 
-  const groups: Group[] = [
+  const groups: Group[] = $derived([
     {
-      title: "Reprodução",
+      title: $t("study.player_keyboardhelpoverlay.group_playback") as string,
       items: [
-        { keys: ["Espaço"], label: "Play / Pausar" },
-        { keys: ["F"], label: "Tela cheia" },
-        { keys: ["M"], label: "Mutar / Desmutar" },
-        { keys: ["T"], label: "Modo cinema" },
-        { keys: ["Esc"], label: "Sair do fullscreen / Fechar" },
+        { keys: ["Space"], label: $t("study.player_keyboardhelpoverlay.play_pause") as string },
+        { keys: ["F"], label: $t("study.player_keyboardhelpoverlay.fullscreen") as string },
+        { keys: ["M"], label: $t("study.player_keyboardhelpoverlay.mute_unmute") as string },
+        { keys: ["T"], label: $t("study.player_keyboardhelpoverlay.theater_mode") as string },
+        { keys: ["Esc"], label: $t("study.player_keyboardhelpoverlay.exit_fullscreen_close") as string },
       ],
     },
     {
-      title: "Navegação",
+      title: $t("study.player_keyboardhelpoverlay.group_navigation") as string,
       items: [
-        { keys: ["←", "J"], label: "Voltar 10s" },
-        { keys: ["→", "L", "K"], label: "Avançar 10s" },
-        { keys: ["Shift", "+", "J"], label: "Voltar 3s (fine seek)" },
-        { keys: ["Shift", "+", "L"], label: "Avançar 3s (fine seek)" },
-        { keys: [","], label: "Frame anterior (pausado)" },
-        { keys: ["."], label: "Próximo frame (pausado)" },
-        { keys: ["0", "—", "9"], label: "Pular pra 0%, 10%, … 90%" },
+        { keys: ["←", "J"], label: $t("study.player_keyboardhelpoverlay.back_10s") as string },
+        { keys: ["→", "L", "K"], label: $t("study.player_keyboardhelpoverlay.forward_10s") as string },
+        { keys: ["Shift", "+", "J"], label: $t("study.player_keyboardhelpoverlay.back_3s") as string },
+        { keys: ["Shift", "+", "L"], label: $t("study.player_keyboardhelpoverlay.forward_3s") as string },
+        { keys: [","], label: $t("study.player_keyboardhelpoverlay.prev_frame") as string },
+        { keys: ["."], label: $t("study.player_keyboardhelpoverlay.next_frame") as string },
+        { keys: ["0", "—", "9"], label: $t("study.player_keyboardhelpoverlay.seek_percent") as string },
       ],
     },
     {
-      title: "Velocidade",
+      title: $t("study.player_keyboardhelpoverlay.group_speed") as string,
       items: [
-        { keys: ["["], label: "Diminuir velocidade" },
-        { keys: ["]"], label: "Aumentar velocidade" },
+        { keys: ["["], label: $t("study.player_keyboardhelpoverlay.decrease_speed") as string },
+        { keys: ["]"], label: $t("study.player_keyboardhelpoverlay.increase_speed") as string },
       ],
     },
     {
-      title: "Legendas / Notas",
+      title: $t("study.player_keyboardhelpoverlay.group_subs_notes") as string,
       items: [
-        { keys: ["C"], label: "Próxima legenda (cycle)" },
-        { keys: ["N"], label: "Adicionar nota no timestamp" },
+        { keys: ["C"], label: $t("study.player_keyboardhelpoverlay.next_subtitle") as string },
+        { keys: ["N"], label: $t("study.player_keyboardhelpoverlay.add_note_timestamp") as string },
       ],
     },
     {
-      title: "Geral",
+      title: $t("study.player_keyboardhelpoverlay.group_general") as string,
       items: [
-        { keys: ["?"], label: "Mostrar este painel" },
-        { keys: ["/"], label: "Buscar (em qualquer rota)" },
+        { keys: ["?"], label: $t("study.player_keyboardhelpoverlay.show_this_panel") as string },
+        { keys: ["/"], label: $t("study.player_keyboardhelpoverlay.search_any_route") as string },
       ],
     },
-  ];
+  ]);
 
   function onBackdropKey(e: KeyboardEvent) {
     if (e.key === "Escape" || e.key === "?" || e.key === "/") {
@@ -68,15 +70,15 @@
     class="overlay"
     role="dialog"
     aria-modal="true"
-    aria-label="Atalhos de teclado"
+    aria-label={$t("study.player_keyboardhelpoverlay.title") as string}
     tabindex="-1"
     onkeydown={onBackdropKey}
   >
-    <button type="button" class="bg-btn" aria-label="Fechar" onclick={onClose}></button>
+    <button type="button" class="bg-btn" aria-label={$t("study.player_keyboardhelpoverlay.close") as string} onclick={onClose}></button>
     <div class="modal" role="document">
       <header class="head">
-        <h2>Atalhos de teclado</h2>
-        <button type="button" class="close" aria-label="Fechar" onclick={onClose}>×</button>
+        <h2>{$t("study.player_keyboardhelpoverlay.title")}</h2>
+        <button type="button" class="close" aria-label={$t("study.player_keyboardhelpoverlay.close") as string} onclick={onClose}>×</button>
       </header>
       <div class="body">
         {#each groups as g (g.title)}
@@ -102,7 +104,7 @@
         {/each}
       </div>
       <footer class="foot">
-        Pressione <kbd>?</kbd> ou <kbd>Esc</kbd> para fechar
+        {$t("study.player_keyboardhelpoverlay.footer_before")}<kbd>?</kbd> {$t("study.player_keyboardhelpoverlay.footer_or")} <kbd>Esc</kbd> {$t("study.player_keyboardhelpoverlay.footer_after")}
       </footer>
     </div>
   </div>
