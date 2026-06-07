@@ -378,6 +378,8 @@
       "courses_section": "コース（プラグイン）",
       "continuous_lecture_numbers": "連続したレッスン番号",
       "continuous_lecture_numbers_desc": "モジュールごとにリセットせず、モジュール間で連続した番号（1, 2, 3…）を付けます。",
+      "save_encrypted_hls": "Save protected HLS as encrypted files",
+      "save_encrypted_hls_desc": "Stores encrypted media with a marker sidecar so later authorized decryption can process it when a rights-holder-provided key is available.",
       "translate_metadata": "タイトルとチャプターを翻訳",
       "translate_metadata_desc": "YouTubeにタイトルとチャプター名をアプリ言語にローカライズするよう依頼（YouTubeのみ）",
       "youtube_sponsorblock": "SponsorBlockセグメントを削除",

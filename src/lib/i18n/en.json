@@ -378,6 +378,8 @@
       "courses_section": "Courses (plugin)",
       "continuous_lecture_numbers": "Continuous lecture numbering",
       "continuous_lecture_numbers_desc": "Number lectures sequentially across modules (1, 2, 3…) instead of restarting at each module.",
+      "save_encrypted_hls": "Save protected HLS as encrypted files",
+      "save_encrypted_hls_desc": "Stores encrypted media with a marker sidecar so later authorized decryption can process it when a rights-holder-provided key is available.",
       "bilibili_section": "Bilibili",
       "bilibili_container_label": "Output container",
       "bilibili_container_desc": "MKV recommended when downloading Hi-Res FLAC or Dolby Atmos. MP4 works everywhere.",

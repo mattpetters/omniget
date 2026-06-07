@@ -370,6 +370,7 @@ impl PlatformDownloader for YouTubeDownloader {
             opts.download_subtitles,
             &[],
             opts.audio_format.as_deref(),
+            opts.save_encrypted_hls,
         )
         .await
     }
@@ -438,6 +439,7 @@ impl YouTubeDownloader {
                 opts.download_subtitles,
                 &[],
                 opts.audio_format.as_deref(),
+                opts.save_encrypted_hls,
             )
             .await
             {

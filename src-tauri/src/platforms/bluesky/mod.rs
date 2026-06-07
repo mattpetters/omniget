@@ -267,6 +267,7 @@ impl PlatformDownloader for BlueskyDownloader {
                     false,
                     &[],
                     opts.audio_format.as_deref(),
+                    opts.save_encrypted_hls,
                 )
                 .await;
             }

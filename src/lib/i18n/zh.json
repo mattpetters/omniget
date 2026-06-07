@@ -378,6 +378,8 @@
       "courses_section": "课程（插件）",
       "continuous_lecture_numbers": "连续编号的课程",
       "continuous_lecture_numbers_desc": "在模块之间连续编号课程（1、2、3…），而不是每个模块都重新开始。",
+      "save_encrypted_hls": "Save protected HLS as encrypted files",
+      "save_encrypted_hls_desc": "Stores encrypted media with a marker sidecar so later authorized decryption can process it when a rights-holder-provided key is available.",
       "translate_metadata": "翻译标题和章节",
       "translate_metadata_desc": "请求 YouTube 将标题和章节名本地化为应用语言（仅 YouTube）",
       "youtube_sponsorblock": "移除 SponsorBlock 片段",

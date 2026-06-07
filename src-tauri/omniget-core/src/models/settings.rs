@@ -136,6 +136,8 @@ pub struct DownloadSettings {
     #[serde(default)]
     pub extra_ytdlp_flags: Vec<String>,
     #[serde(default = "default_true")]
+    pub save_encrypted_hls: bool,
+    #[serde(default = "default_true")]
     pub copy_to_clipboard_on_hotkey: bool,
     #[serde(default)]
     pub cookie_file: String,
@@ -482,6 +484,7 @@ impl Default for AppSettings {
                 music_hotkey_binding: default_music_hotkey_binding(),
                 music_audio_format: default_music_audio_format(),
                 extra_ytdlp_flags: Vec::new(),
+                save_encrypted_hls: true,
                 copy_to_clipboard_on_hotkey: true,
                 cookie_file: String::new(),
                 always_use_managed_cookies: true,

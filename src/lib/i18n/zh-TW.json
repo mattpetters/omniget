@@ -378,6 +378,8 @@
       "courses_section": "課程（外掛）",
       "continuous_lecture_numbers": "連續編號課程",
       "continuous_lecture_numbers_desc": "在各模組之間連續編號課程（1、2、3…），而不是每個模組都從頭開始。",
+      "save_encrypted_hls": "Save protected HLS as encrypted files",
+      "save_encrypted_hls_desc": "Stores encrypted media with a marker sidecar so later authorized decryption can process it when a rights-holder-provided key is available.",
       "translate_metadata": "翻譯標題與章節",
       "translate_metadata_desc": "請求 YouTube 將標題與章節名稱在地化為應用程式語言（僅 YouTube）",
       "youtube_sponsorblock": "移除 SponsorBlock 片段",

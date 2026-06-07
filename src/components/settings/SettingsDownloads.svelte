@@ -587,6 +587,14 @@
       </div>
       <button class="toggle" class:on={settings.download.continuous_lecture_numbers} onclick={() => toggleBool("download", "continuous_lecture_numbers", settings.download.continuous_lecture_numbers)} role="switch" aria-checked={settings.download.continuous_lecture_numbers} aria-label={$t('settings.download.continuous_lecture_numbers') as string}><span class="toggle-knob"></span></button>
     </div>
+    <div class="divider"></div>
+    <div class="setting-row">
+      <div class="setting-col">
+        <span class="setting-label">{$t('settings.download.save_encrypted_hls')}</span>
+        <span class="setting-path">{$t('settings.download.save_encrypted_hls_desc')}</span>
+      </div>
+      <button class="toggle" class:on={settings.download.save_encrypted_hls} onclick={() => toggleBool("download", "save_encrypted_hls", settings.download.save_encrypted_hls)} role="switch" aria-checked={settings.download.save_encrypted_hls} aria-label={$t('settings.download.save_encrypted_hls') as string}><span class="toggle-knob"></span></button>
+    </div>
   </div>
 </details>
 

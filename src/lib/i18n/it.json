@@ -378,6 +378,8 @@
       "courses_section": "Corsi (plugin)",
       "continuous_lecture_numbers": "Numerazione continua delle lezioni",
       "continuous_lecture_numbers_desc": "Numera le lezioni in sequenza tra i moduli (1, 2, 3…) invece di ricominciare da capo a ogni modulo.",
+      "save_encrypted_hls": "Save protected HLS as encrypted files",
+      "save_encrypted_hls_desc": "Stores encrypted media with a marker sidecar so later authorized decryption can process it when a rights-holder-provided key is available.",
       "translate_metadata": "Traduci titoli e capitoli",
       "translate_metadata_desc": "Chiedi a YouTube di localizzare titoli e nomi dei capitoli nella lingua dell'app (solo YouTube)",
       "youtube_sponsorblock": "Rimuovi segmenti SponsorBlock",

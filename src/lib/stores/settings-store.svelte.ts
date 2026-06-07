@@ -40,6 +40,7 @@ export type AppSettings = {
     music_audio_format: string;
     copy_to_clipboard_on_hotkey: boolean;
     extra_ytdlp_flags?: string[];
+    save_encrypted_hls: boolean;
     cookie_file: string;
     always_use_managed_cookies: boolean;
     bilibili_danmaku_enabled: boolean;

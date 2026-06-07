@@ -60,6 +60,7 @@ pub struct DownloadOptions {
     pub torrent_files: Option<Vec<usize>>,
     pub torrent_auto_trackers: bool,
     pub torrent_upnp: bool,
+    pub save_encrypted_hls: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

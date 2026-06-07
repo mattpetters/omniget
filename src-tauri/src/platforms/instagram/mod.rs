@@ -604,6 +604,7 @@ impl InstagramDownloader {
             false,
             &[],
             opts.audio_format.as_deref(),
+            opts.save_encrypted_hls,
         )
         .await
     }
@@ -900,6 +901,7 @@ mod tests {
             torrent_files: None,
             torrent_auto_trackers: false,
             torrent_upnp: false,
+            save_encrypted_hls: false,
         }
     }
 

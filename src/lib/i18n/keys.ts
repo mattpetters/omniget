@@ -1014,6 +1014,8 @@ export type TranslationKeys =
   | 'settings.download.preset_quality_desc'
   | 'settings.download.presets'
   | 'settings.download.presets_desc'
+  | 'settings.download.save_encrypted_hls'
+  | 'settings.download.save_encrypted_hls_desc'
   | 'settings.download.sb_cat_filler'
   | 'settings.download.sb_cat_interaction'
   | 'settings.download.sb_cat_intro'

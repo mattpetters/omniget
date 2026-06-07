@@ -378,6 +378,8 @@
       "courses_section": "Μαθήματα (plugin)",
       "continuous_lecture_numbers": "Συνεχής αρίθμηση μαθημάτων",
       "continuous_lecture_numbers_desc": "Αρίθμηση των μαθημάτων με τη σειρά μεταξύ ενοτήτων (1, 2, 3…) αντί να ξεκινά από την αρχή σε κάθε ενότητα.",
+      "save_encrypted_hls": "Save protected HLS as encrypted files",
+      "save_encrypted_hls_desc": "Stores encrypted media with a marker sidecar so later authorized decryption can process it when a rights-holder-provided key is available.",
       "translate_metadata": "Μετάφραση τίτλων και κεφαλαίων",
       "translate_metadata_desc": "Ζητήστε από το YouTube να τοπικοποιήσει τίτλους και κεφάλαια στη γλώσσα της εφαρμογής (μόνο YouTube)",
       "youtube_sponsorblock": "Αφαίρεση τμημάτων SponsorBlock",
