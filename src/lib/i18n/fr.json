@@ -333,7 +333,7 @@
       "language": "Langue",
       "lang_pt": "Português",
       "lang_en": "English",
-	  "lang_ru": "Русский",
+      "lang_ru": "Русский",
       "lang_zh": "中文",
       "lang_ja": "日本語",
       "lang_it": "Italiano",
@@ -783,6 +783,23 @@
         "login_webview_btn": "Se connecter via la page Bilibili",
         "login_webview_loading": "Ouverture de la fenêtre de connexion..."
       }
+    },
+    "browser_ext": {
+      "section_title": "Browser extension",
+      "intro": "The extension sends cookies and URLs from your browser to OmniGet. Auto-update directly from the app only works through official stores — until we publish there, use the buttons below to export the current version and (re)install it manually.",
+      "bundled_version": "Bundled version: v{{version}}",
+      "extracting": "Extracting…",
+      "update_install": "Update / Install",
+      "open_store": "Open store",
+      "unavailable": "Unavailable",
+      "modal_title": "Install / Update extension — {{browser}}",
+      "close": "Close",
+      "close_aria": "close",
+      "extracted_to": "The extension was extracted to:",
+      "open_folder": "Open folder",
+      "how_to": "How to install / update",
+      "reload_hint_before": "If the extension is already installed, click \"Reload\" in ",
+      "reload_hint_after": " pointing to this folder — or remove the old one and add the new one."
     }
   },
   "omnibox": {
