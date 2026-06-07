@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+<!-- git-changelog-on-commit: 918ef270300f6e2acde8f5ea052ebc9889a94775 -->
+### Changed
+- Updated src/lib/i18n/el.json,src/lib/i18n/en.json src/lib/i18n/es.json,src/lib/i18n/fr.json src/lib/i18n/it.json,src/lib/i18n/ja.json src/lib/i18n/keys.ts,src/lib/i18n/pt.json based on the staged diff so the commit records the current implementation changes.
+
 <!-- git-changelog-on-commit: a34b9e16851c2259a2bdbb92213c8f3eb34269c0 -->
 ### Changed
 - Updated src/lib/i18n/el.json,src/lib/i18n/en.json src/lib/i18n/es.json,src/lib/i18n/fr.json src/lib/i18n/it.json,src/lib/i18n/ja.json src/lib/i18n/keys.ts,src/lib/i18n/pt.json based on the staged diff so the commit records the current implementation changes.
