@@ -1304,6 +1304,14 @@ async fn spawn_download_inner(
         torrent_auto_trackers: settings.advanced.torrent_auto_trackers,
         torrent_upnp: settings.advanced.torrent_upnp,
         save_encrypted_hls: settings.download.save_encrypted_hls,
+        widevine_device_path: {
+            let p = settings.download.widevine_device_path.trim();
+            if p.is_empty() {
+                None
+            } else {
+                Some(p.to_string())
+            }
+        },
     };
 
     let total_bytes = info.file_size_bytes;

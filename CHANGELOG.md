@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+<!-- git-changelog-on-commit: 2fce9769fc84abc7e761f07af819e8a107099337 -->
+### Changed
+- Updated src-tauri/omniget-core/src/core/dependencies.rs,src-tauri/omniget-core/src/core/mod.rs src-tauri/omniget-core/src/core/udemy/api.rs,src-tauri/omniget-core/src/core/udemy/drm.rs src-tauri/omniget-core/src/core/udemy/mod.rs,src-tauri/omniget-core/src/core/udemy/pssh.rs src-tauri/omniget-core/src/core/udemy/widevine_cdm.py,src-tauri/omniget-core/src/core/ytdlp.rs based on the staged diff so the commit records the current implementation changes.
+
 <!-- git-changelog-on-commit: b5e9eec11e8171440400609cda30377efba334ab -->
 ### Changed
 - Updated plan.md,src/lib/study-components/notes/AbcView.svelte src/lib/study-components/notes/AnnotateOverlay.svelte,src/lib/study-components/notes/CoverManager.svelte src/lib/study-components/notes/DiffView.svelte,src/lib/study-components/notes/EmbedView.svelte src/lib/study-components/notes/FlowchartView.svelte,src/lib/study-components/notes/HistoryModal.svelte based on the staged diff so the commit records the current implementation changes.

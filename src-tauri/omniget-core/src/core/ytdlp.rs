@@ -1219,24 +1219,6 @@ fn is_youtube_url(url: &str) -> bool {
     lower.contains("youtube.com") || lower.contains("youtu.be")
 }
 
-fn is_udemy_url(url: &str) -> bool {
-    url::Url::parse(url)
-        .ok()
-        .and_then(|u| u.host_str().map(|h| h.to_lowercase()))
-        .is_some_and(|host| host == "udemy.com" || host.ends_with(".udemy.com"))
-}
-
-fn is_unplayable_or_drm_error(stderr_lower: &str) -> bool {
-    stderr_lower.contains("drm")
-        || stderr_lower.contains("protected")
-        || stderr_lower.contains("encrypted")
-        || stderr_lower.contains("unplayable")
-        || stderr_lower.contains("widevine")
-        || stderr_lower.contains("sample-aes")
-        || stderr_lower.contains("requested format")
-            && stderr_lower.contains("not available")
-            && stderr_lower.contains("udemy")
-}
 
 /// Extracts the most meaningful error line from yt-dlp stderr output.
 /// Prefers lines starting with "ERROR:", falls back to "WARNING:", then raw trimmed output.
@@ -1887,7 +1869,10 @@ pub async fn download_video(
     download_subtitles: bool,
     extra_flags: &[String],
     audio_format: Option<&str>,
-    save_encrypted_hls: bool,
+    // Retained for call-site compatibility; the Udemy DRM path now lives in the
+    // dedicated `core::udemy` pipeline, and non-Udemy SAMPLE-AES is handled by
+    // the HLS downloader. yt-dlp no longer saves undecryptable "encrypted" stubs.
+    _save_encrypted_hls: bool,
 ) -> anyhow::Result<DownloadResult> {
     let _timer_start = std::time::Instant::now();
 
@@ -2308,8 +2293,6 @@ pub async fn download_video(
     let mut use_cfb = !cfb_setting.is_empty() && !explicit_cookie_header && !manual_cookie_enabled;
     let mut format_already_simplified = false;
     let mut last_was_429 = false;
-    let mut allow_unplayable_formats = false;
-    let can_save_unplayable_formats = save_encrypted_hls && is_udemy_url(url);
 
     for attempt in 0..max_attempts {
         tracing::info!("[yt-dlp] download attempt {}/{}", attempt + 1, max_attempts);
@@ -2366,10 +2349,6 @@ pub async fn download_video(
                 };
                 args.push(format!("aria2c:-x {} -k 1M -j {} --min-split-size=1M --file-allocation=none --optimize-concurrent-downloads=true --auto-file-renaming=false --summary-interval=1 --console-log-level=warn{}", conns, conns, aria2c_proxy));
             }
-        }
-
-        if allow_unplayable_formats {
-            args.push("--allow-unplayable-formats".to_string());
         }
 
         args.extend(extra_args.iter().cloned());
@@ -2606,25 +2585,18 @@ pub async fn download_video(
             }
 
             let meta = std::fs::metadata(&file_path)?;
-            if allow_unplayable_formats {
-                let protected = crate::core::hls_downloader::ProtectedMediaInfo {
-                    marker: "omniget.protected_hls.v1",
-                    encrypted: true,
-                    encryption_method: "yt-dlp unplayable/DRM format".to_string(),
-                    source_url: url.to_string(),
-                    key_uri: None,
-                    key_format: None,
-                    decryption_status: "not_decrypted",
-                    note: "Saved encrypted without built-in decryption. If future decryption support is added, this file is eligible once the rights holder grants a valid key.",
-                };
-                let sidecar =
-                    crate::core::hls_downloader::write_protection_sidecar(&file_path, &protected)?;
-                if let Some(id) = log_hook::current_download_id() {
-                    log_hook::emit_log(
-                        id,
-                        &format!("[download] encrypted media marker: {}", sidecar.display()),
-                    );
-                }
+            // Guard against a false "success": yt-dlp can exit 0 after *skipping*
+            // a format (DRM/unplayable, "already downloaded", etc.) leaving an
+            // empty or missing file. Never report a 0-byte download as complete —
+            // surface it as an error so the UI shows a real failure instead of a
+            // green checkmark with "0 B saved".
+            if meta.len() == 0 {
+                let _ = std::fs::remove_file(&file_path);
+                anyhow::bail!(
+                    "yt-dlp produced no data (0 bytes) — the stream may be DRM-protected or was skipped. \
+                     For Udemy DRM courses, omniget's dedicated decryption path handles this; \
+                     for other sources, check authentication/cookies."
+                );
             }
             tracing::debug!("[perf] download_video took {:?}", _timer_start.elapsed());
             return Ok(DownloadResult {
@@ -2789,18 +2761,6 @@ pub async fn download_video(
                 && effective_cookie_file.is_none()
             {
                 tracing::warn!("[yt-dlp] login required. Install the browser extension and visit the site while logged in.");
-            }
-
-            if can_save_unplayable_formats
-                && !allow_unplayable_formats
-                && is_unplayable_or_drm_error(&stderr_lower)
-            {
-                allow_unplayable_formats = true;
-                base_args.retain(|a| a != "--merge-output-format" && a != "mp4");
-                use_aria2c = false;
-                tracing::warn!(
-                    "[yt-dlp] protected Udemy media detected, retrying with --allow-unplayable-formats"
-                );
             }
 
             if stderr_lower.contains("requested format") && stderr_lower.contains("not available")
@@ -3714,28 +3674,6 @@ e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  yt-dlp.exe\n\
     #[test]
     fn is_youtube_url_other_site() {
         assert!(!is_youtube_url("https://vimeo.com/123456"));
-    }
-
-    #[test]
-    fn is_udemy_url_detects_udemy_hosts() {
-        assert!(is_udemy_url(
-            "https://www.udemy.com/course/example/learn/lecture/123"
-        ));
-        assert!(is_udemy_url("https://company.udemy.com/course/example"));
-        assert!(!is_udemy_url("https://example.com/udemy.com/course"));
-    }
-
-    #[test]
-    fn is_unplayable_or_drm_error_detects_protected_media() {
-        assert!(is_unplayable_or_drm_error(
-            "error: this video is drm protected"
-        ));
-        assert!(is_unplayable_or_drm_error(
-            "error: requested format is not available for udemy"
-        ));
-        assert!(!is_unplayable_or_drm_error(
-            "error: requested format is not available"
-        ));
     }
 
     #[test]
