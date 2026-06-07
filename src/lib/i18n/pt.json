@@ -2771,7 +2771,18 @@
       "scope_global": "Sem vínculo",
       "scope_course": "Curso",
       "scope_module": "Módulo",
-      "scope_lesson": "Aula"
+      "scope_lesson": "Aula",
+      "add_cover": "+ Cover",
+      "cover_set": "Cover ✓",
+      "delete_page_message": "\"{{name}}\" and all its blocks will be removed. This action cannot be undone.",
+      "delete_page_title": "Delete page",
+      "history": "History",
+      "history_title": "View history of this page's main block",
+      "page_created": "Page created",
+      "page_removed": "Page removed",
+      "set_cover_title": "Set page cover",
+      "undo_structural_title": "Undo last structural operation (Cmd+Alt+Z)",
+      "version_restored": "Version restored"
     },
     "achievements": {
       "title": "Conquistas",
@@ -3830,6 +3841,23 @@
     },
     "watch": {
       "subtitle_default": "Default"
+    },
+    "notes_search": {
+      "back_notes": "Notes",
+      "blocks": "Blocks",
+      "blocks_count": "{{count}} blocks",
+      "empty_hint_after": " for exact search.",
+      "empty_hint_before": "Search blocks and pages. Use ",
+      "empty_hint_mid": " for wildcards and ",
+      "hint_before": "FTS5 (full-text) search over block content. Supports operators",
+      "in_label": "in",
+      "index_rebuilt": "Index rebuilt — {{count}} blocks",
+      "no_results_before": "No results for ",
+      "pages": "Pages",
+      "placeholder": "Type to search… (accents ignored)",
+      "rebuild_index": "Rebuild FTS index",
+      "start_typing": "Start typing",
+      "title": "Search in notes"
     }
   },
   "tracking": {

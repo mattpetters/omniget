@@ -3,6 +3,7 @@
   import { goto } from "$app/navigation";
   import { page as routePage } from "$app/stores";
   import { pluginInvoke } from "$lib/plugin-invoke";
+  import { t } from "$lib/i18n";
 
   type SearchHit = {
     block_id: number;
@@ -84,7 +85,7 @@
         "study",
         "study:notes:search:rebuild",
       );
-      showToast("ok", `Index reconstruída — ${r.indexed} blocos`);
+      showToast("ok", $t("study.notes_search.index_rebuilt", { count: r.indexed }) as string);
     } catch (e) {
       showToast("err", e instanceof Error ? e.message : String(e));
     }
@@ -111,19 +112,19 @@
 
 <section class="search-page">
   <header class="head">
-    <a href="/study/notes" class="back">← Notas</a>
-    <h1>Buscar em notas</h1>
+    <a href="/study/notes" class="back">← {$t("study.notes_search.back_notes")}</a>
+    <h1>{$t("study.notes_search.title")}</h1>
     <p class="hint">
-      Busca FTS5 (full-text) sobre conteúdo dos blocos. Suporta operadores
-      <code>palavra*</code>, <code>"frase exata"</code>,
-      <code>palavra1 OR palavra2</code>.
+      {$t("study.notes_search.hint_before")}
+      <code>word*</code>, <code>"exact phrase"</code>,
+      <code>word1 OR word2</code>.
     </p>
   </header>
 
   <div class="search-bar">
     <input
       type="search"
-      placeholder="Digite para buscar… (acentos ignorados)"
+      placeholder={$t("study.notes_search.placeholder") as string}
       bind:this={inputRef}
       bind:value={query}
     />
@@ -132,7 +133,7 @@
     {:else if query}
       <button class="btn ghost sm" onclick={() => (query = "")}>×</button>
     {/if}
-    <button class="btn ghost sm" onclick={rebuildIndex} title="Reconstruir índice FTS">
+    <button class="btn ghost sm" onclick={rebuildIndex} title={$t("study.notes_search.rebuild_index") as string}>
       ⟳
     </button>
   </div>
@@ -145,10 +146,9 @@
 
   {#if !query}
     <div class="empty-state">
-      <h2>Comece a digitar</h2>
+      <h2>{$t("study.notes_search.start_typing")}</h2>
       <p>
-        Pesquise por blocos e páginas. Use <code>*</code> para wildcards e
-        <code>"frase"</code> para busca exata.
+        {$t("study.notes_search.empty_hint_before")}<code>*</code>{$t("study.notes_search.empty_hint_mid")}<code>"phrase"</code>{$t("study.notes_search.empty_hint_after")}
       </p>
     </div>
   {:else}
@@ -156,7 +156,7 @@
       {#if pageHits.length > 0}
         <section>
           <h2>
-            Páginas
+            {$t("study.notes_search.pages")}
             <span class="count">{pageHits.length}</span>
           </h2>
           <ul>
@@ -165,7 +165,7 @@
                 <button class="row page" onclick={() => gotoPage(p.name)}>
                   <strong>{p.title ?? p.name}</strong>
                   <span class="meta">
-                    {p.name} · {p.block_count} blocos · {fmtDate(p.updated_at)}
+                    {p.name} · {$t("study.notes_search.blocks_count", { count: p.block_count })} · {fmtDate(p.updated_at)}
                   </span>
                 </button>
               </li>
@@ -177,7 +177,7 @@
       {#if blockHits.length > 0}
         <section>
           <h2>
-            Blocos
+            {$t("study.notes_search.blocks")}
             <span class="count">{blockHits.length}</span>
           </h2>
           <ul>
@@ -186,7 +186,7 @@
                 <button class="row block" onclick={() => gotoPage(h.page_name)}>
                   <span class="snippet">{@html highlightSnippet(h.snippet)}</span>
                   <span class="meta">
-                    em <code>{h.page_name}</code> · {fmtDate(h.updated_at)}
+                    {$t("study.notes_search.in_label")} <code>{h.page_name}</code> · {fmtDate(h.updated_at)}
                   </span>
                 </button>
               </li>
@@ -197,7 +197,7 @@
 
       {#if !searching && pageHits.length === 0 && blockHits.length === 0}
         <div class="empty-state">
-          <p>Nenhum resultado para "<strong>{query}</strong>".</p>
+          <p>{$t("study.notes_search.no_results_before")}"<strong>{query}</strong>".</p>
         </div>
       {/if}
     </div>
