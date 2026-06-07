@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { t } from "$lib/i18n";
   import {
     notesEmbedResolve,
     type EmbedTarget,
@@ -75,14 +76,14 @@
       type="button"
       class="refresh-btn"
       onclick={() => void resolve()}
-      title="Recarregar embed"
+      title={$t("study.notes_embedview.reload") as string}
     >↻</button>
   </header>
 
   {#if eState.kind === "loading"}
-    <p class="embed-state">resolvendo…</p>
+    <p class="embed-state">{$t("study.notes_embedview.resolving")}</p>
   {:else if eState.kind === "error"}
-    <p class="embed-state err">erro: {eState.message}</p>
+    <p class="embed-state err">{$t("study.notes_embedview.error", { message: eState.message })}</p>
   {:else if eState.kind === "resolved"}
     {@const data = eState.data}
     {#if data.kind === "missing"}
@@ -92,8 +93,8 @@
         </svg>
         <span>
           {data.target.kind === "page"
-            ? `Página "${data.target.name}" não encontrada`
-            : "Bloco não encontrado"}
+            ? ($t("study.notes_embedview.page_not_found", { name: data.target.name }) as string)
+            : ($t("study.notes_embedview.block_not_found") as string)}
         </span>
       </div>
     {:else if data.kind === "cycle"}
@@ -101,7 +102,7 @@
         <svg class="warning-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M12 3l10 18H2z M12 10v5 M12 18v.5" />
         </svg>
-        <span>Embed cíclico bloqueado</span>
+        <span>{$t("study.notes_embedview.cyclic_blocked")}</span>
       </div>
     {:else if data.kind === "block"}
       <div class="embed-block">

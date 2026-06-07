@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
+  import { t } from "$lib/i18n";
   import {
     notesPagesGetByName,
     notesBlocksPageTree,
@@ -52,7 +53,7 @@
         const p = await notesPagesGetByName(pageName);
         if (cancelled) return;
         if (!p) {
-          error = "página não encontrada";
+          error = $t("study.notes_pagepopover.not_found") as string;
           loading = false;
           return;
         }
@@ -83,7 +84,7 @@
   style:left={`${position.x}px`}
   style:top={`${position.y}px`}
   role="dialog"
-  aria-label="Preview da página {pageName}"
+  aria-label={$t("study.notes_pagepopover.preview_aria", { name: pageName }) as string}
 >
   {#if loading}
     <div class="state">carregando…</div>

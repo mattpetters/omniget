@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+<!-- git-changelog-on-commit: b5e9eec11e8171440400609cda30377efba334ab -->
+### Changed
+- Updated plan.md,src/lib/study-components/notes/AbcView.svelte src/lib/study-components/notes/AnnotateOverlay.svelte,src/lib/study-components/notes/CoverManager.svelte src/lib/study-components/notes/DiffView.svelte,src/lib/study-components/notes/EmbedView.svelte src/lib/study-components/notes/FlowchartView.svelte,src/lib/study-components/notes/HistoryModal.svelte based on the staged diff so the commit records the current implementation changes.
+
 <!-- git-changelog-on-commit: 92b7da4ccab4640e48c621bc5600e574eb20c1fa -->
 ### Changed
 - Updated src/lib/i18n/el.json,src/lib/i18n/en.json src/lib/i18n/es.json,src/lib/i18n/fr.json src/lib/i18n/it.json,src/lib/i18n/ja.json src/lib/i18n/keys.ts,src/lib/i18n/pt.json based on the staged diff so the commit records the current implementation changes.
