@@ -623,7 +623,7 @@
                     {
                       path: currentSubtitle,
                       lang: "default",
-                      label: "Padrão",
+                      label: $t("study.watch.subtitle_default") as string,
                       format: "vtt",
                       default: true,
                     },
