@@ -3250,7 +3250,17 @@
       "clip_done": "Clip saved",
       "clip_failed": "Clip failed",
       "clip_no_video": "Video not loaded yet",
-      "clip_aria": "Save last 60 seconds as clip"
+      "clip_aria": "Save last 60 seconds as clip",
+      "info_current_time": "Current time",
+      "info_duration": "Duration",
+      "info_lesson": "Lesson",
+      "info_position": "Position",
+      "info_status": "Status",
+      "no_attachments": "No attachments in this lesson.",
+      "panel_tabs_aria": "lesson panels",
+      "status_complete": "Complete",
+      "status_in_progress": "In progress",
+      "video_not_loaded": "Video hasn't loaded yet"
     },
     "notes": {
       "title": "Notes",
@@ -4354,6 +4364,23 @@
       "cat_filler": "filler",
       "skip": "Skip {{category}}",
       "dismiss": "Dismiss"
+    },
+    "course_id": {
+      "actions": "Actions",
+      "all_had_duration": "Everything already had a duration",
+      "assign_subjects": "+ Assign subjects",
+      "bulk_actions": "Bulk actions",
+      "detect_durations": "Detect durations (ffprobe)",
+      "detecting": "Detecting…",
+      "duration_detected_many": "{{count}} durations detected",
+      "duration_detected_one": "1 duration detected",
+      "edit": "Edit",
+      "ffprobe_failed": "ffprobe failed — check that it's installed",
+      "subjects": "Subjects",
+      "subjects_updated": "Subjects updated"
+    },
+    "watch": {
+      "subtitle_default": "Default"
     }
   },
   "tracking": {
