@@ -325,3 +325,80 @@ pub fn register_event_listeners(app: &AppHandle) {
 fn _ensure_queue_module_loaded() {
     let _ = queue::ProgressThrottle::new(0);
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{apply_report_complete, ReportCompleteArgs};
+    use crate::core::queue::{QueueItem, QueueKind, QueueStatus};
+    use crate::platforms::noop::NoopDownloader;
+    use std::path::PathBuf;
+    use std::sync::Arc;
+    use tokio_util::sync::CancellationToken;
+
+    fn external_item(id: u64) -> QueueItem {
+        QueueItem {
+            id,
+            url: "https://example.test/video".to_string(),
+            platform: "courses".to_string(),
+            title: "Course lesson".to_string(),
+            status: QueueStatus::Active,
+            cancel_token: CancellationToken::new(),
+            output_dir: "/tmp".to_string(),
+            download_mode: None,
+            quality: None,
+            format_id: None,
+            referer: None,
+            extra_headers: None,
+            page_url: None,
+            user_agent: None,
+            percent: 37.0,
+            speed_bytes_per_sec: 1024.0,
+            downloaded_bytes: 0,
+            total_bytes: None,
+            file_path: None,
+            file_size_bytes: None,
+            file_count: None,
+            media_info: None,
+            downloader: Arc::new(NoopDownloader::new()),
+            ytdlp_path: None,
+            from_hotkey: false,
+            torrent_id: None,
+            kind: Some(QueueKind::CourseLesson),
+            external: true,
+            thumbnail_url_override: None,
+            retry_count: 0,
+            max_retries: 0,
+            resume_state: None,
+            concurrent_segments: None,
+            segment_size_bytes: None,
+            eta_seconds: None,
+            cookie_slug: None,
+            custom_ytdlp_args: None,
+            torrent_files: None,
+            scheduled_at_ms: None,
+            stop_at_ms: None,
+        }
+    }
+
+    #[test]
+    fn host_queue_empty_success_is_retryable_error() {
+        let mut item = external_item(7);
+        let args = ReportCompleteArgs {
+            queue_id: 7,
+            success: true,
+            file_path: Some(PathBuf::from("/tmp/empty-course-video.mp4")),
+            error: None,
+            file_size_bytes: Some(0),
+            decryption_status: None,
+            protection_sidecar_path: None,
+        };
+
+        apply_report_complete(&mut item, &args).unwrap();
+
+        match item.status {
+            QueueStatus::Error { retryable, .. } => assert!(retryable),
+            other => panic!("expected retryable error for empty host success, got {other:?}"),
+        }
+        assert_ne!(item.percent, 100.0);
+    }
+}

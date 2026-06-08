@@ -258,4 +258,25 @@ mod tests {
         assert_eq!(list.len(), 2);
         assert_eq!(list[0].id, 8);
     }
+
+    #[test]
+    fn protected_hls_saved_encrypted_becomes_needs_decryption_history_row() {
+        let c = conn();
+        let mut entry = mk(9, 90);
+        entry.success = false;
+        entry.status = "needs_decryption".into();
+        entry.error = Some("Protected media was saved encrypted and needs decryption".into());
+        entry.protection_sidecar_path = Some("/tmp/protected.mp4.protection.json".into());
+
+        db_upsert(&c, &entry).unwrap();
+
+        let list = db_list(&c).unwrap();
+        assert_eq!(list.len(), 1);
+        assert!(!list[0].success);
+        assert_eq!(list[0].status, "needs_decryption");
+        assert_eq!(
+            list[0].protection_sidecar_path.as_deref(),
+            Some("/tmp/protected.mp4.protection.json")
+        );
+    }
 }
