@@ -1219,6 +1219,22 @@ fn is_youtube_url(url: &str) -> bool {
     lower.contains("youtube.com") || lower.contains("youtu.be")
 }
 
+/// Validate that a finished download produced real data. Returns the file size
+/// on success; errors if the file is missing or empty (0 bytes). This is the
+/// guard that prevents a yt-dlp exit-0 *skip* (DRM/unplayable, "already
+/// downloaded", etc.) from being laundered into a green "COMPLETE / 0 B".
+fn verify_nonempty_output(path: &std::path::Path) -> anyhow::Result<u64> {
+    let meta = std::fs::metadata(path)
+        .map_err(|e| anyhow!("downloaded file missing ({}): {e}", path.display()))?;
+    if meta.len() == 0 {
+        anyhow::bail!(
+            "yt-dlp produced no data (0 bytes) — the stream may be DRM-protected or was skipped. \
+             For Udemy DRM courses, omniget's dedicated decryption path handles this; \
+             for other sources, check authentication/cookies."
+        );
+    }
+    Ok(meta.len())
+}
 
 /// Extracts the most meaningful error line from yt-dlp stderr output.
 /// Prefers lines starting with "ERROR:", falls back to "WARNING:", then raw trimmed output.
@@ -2584,24 +2600,20 @@ pub async fn download_video(
                 }
             }
 
-            let meta = std::fs::metadata(&file_path)?;
             // Guard against a false "success": yt-dlp can exit 0 after *skipping*
             // a format (DRM/unplayable, "already downloaded", etc.) leaving an
-            // empty or missing file. Never report a 0-byte download as complete —
-            // surface it as an error so the UI shows a real failure instead of a
-            // green checkmark with "0 B saved".
-            if meta.len() == 0 {
-                let _ = std::fs::remove_file(&file_path);
-                anyhow::bail!(
-                    "yt-dlp produced no data (0 bytes) — the stream may be DRM-protected or was skipped. \
-                     For Udemy DRM courses, omniget's dedicated decryption path handles this; \
-                     for other sources, check authentication/cookies."
-                );
-            }
+            // empty or missing file. Never report a 0-byte download as complete.
+            let file_size_bytes = match verify_nonempty_output(&file_path) {
+                Ok(size) => size,
+                Err(e) => {
+                    let _ = std::fs::remove_file(&file_path);
+                    return Err(e);
+                }
+            };
             tracing::debug!("[perf] download_video took {:?}", _timer_start.elapsed());
             return Ok(DownloadResult {
                 file_path,
-                file_size_bytes: meta.len(),
+                file_size_bytes,
                 duration_seconds: 0.0,
                 torrent_id: None,
             });
@@ -3664,6 +3676,31 @@ e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  yt-dlp.exe\n\
     #[test]
     fn is_youtube_url_short() {
         assert!(is_youtube_url("https://youtu.be/dQw4w9WgXcQ"));
+    }
+
+    #[test]
+    fn verify_nonempty_output_rejects_empty_and_missing() {
+        use std::io::Write;
+        let dir = std::env::temp_dir().join(format!("omniget_nonempty_{}", std::process::id()));
+        let _ = std::fs::create_dir_all(&dir);
+
+        // 0-byte file (a skipped DRM "download") → rejected.
+        let empty = dir.join("empty.mp4");
+        std::fs::File::create(&empty).unwrap();
+        assert!(verify_nonempty_output(&empty).is_err());
+
+        // Real data → accepted, returns the size.
+        let nonempty = dir.join("data.mp4");
+        std::fs::File::create(&nonempty)
+            .unwrap()
+            .write_all(b"hello")
+            .unwrap();
+        assert_eq!(verify_nonempty_output(&nonempty).unwrap(), 5);
+
+        // Missing file → rejected.
+        assert!(verify_nonempty_output(&dir.join("nope.mp4")).is_err());
+
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

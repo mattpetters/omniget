@@ -50,7 +50,7 @@ async fn ensure_python() -> Result<std::path::PathBuf> {
         }
     }
     Err(anyhow!(
-        "python3 not found. Udemy DRM decryption needs python3 with pywidevine installed: `pip install pywidevine 'protobuf==5.29.4'`"
+        "python3 not found. Udemy DRM decryption needs python3 with pywidevine installed: `pip install pywidevine`"
     ))
 }
 

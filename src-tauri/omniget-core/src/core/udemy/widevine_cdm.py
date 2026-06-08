@@ -13,7 +13,9 @@ Usage:
 Outputs one kid:key pair per line to stdout. Exits non-zero on failure.
 
 Requires:
-    pip install pywidevine "protobuf==5.29.4"
+    pip install pywidevine
+(pywidevine pulls a compatible protobuf automatically — do NOT pin protobuf, no
+PyPI pywidevine release is compatible with a hand-pinned protobuf==5.29.4.)
 
 The .wvd (Widevine Device) file is a user-supplied L3 CDM blob created with:
     pywidevine create-device -t android -l 3 -k private_key.pem -c client_id.bin
@@ -32,7 +34,7 @@ try:
     from pywidevine.device import Device
     from pywidevine.pssh import PSSH
 except ImportError:
-    print("pywidevine not installed. Run: pip install pywidevine 'protobuf==5.29.4'", file=sys.stderr)
+    print("pywidevine not installed. Run: pip install pywidevine", file=sys.stderr)
     sys.exit(1)
 
 DEFAULT_LICENSE_URL = "https://www.udemy.com/media-license-server/validate-auth-token"

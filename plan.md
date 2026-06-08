@@ -1,356 +1,420 @@
-# Implementation Plan: Download DRM-Protected Udemy Content
+# Execution Plan: stop empty downloads from reporting success; make them retryable & clearable
 
-## Problem Statement
+> Audience: an implementing model. Follow steps in order. Each edit gives the EXACT file,
+> an anchor (unique existing text), and the replacement. After each phase run the stated
+> build/check command and do not proceed if it fails. Do not refactor anything not listed.
 
-The OmniGet app skips or fails to download DRM-protected (Widevine encrypted) courses from Udemy. Users cannot obtain the video files even if they're willing to decrypt them later with a Widevine key.
+## Problem (verified root causes)
 
-## Root Cause Analysis
+The Downloads page shows course/lecture cards as **COMPLETE / 100%** with **0 bytes** and an
+empty log, the header reads **"0 B saved"**, and the filter chips all read **0**. There are
+**three** places an item is marked complete with no zero-byte check, plus two frontend display
+bugs:
 
-### 1. HLS Downloader Blocks SampleAES DRM
+1. `src-tauri/src/core/queue.rs` ~1604-1624 — internal downloads: `Ok(dl)` → `mark_complete(..true.., Some(dl.file_size_bytes))` with no `> 0` check.
+2. `src-tauri/src/commands/host_queue.rs` 208-216 — external/course-lesson downloads (the study plugin): `if args.success { percent=100; status=Complete }` with no `file_size_bytes > 0` check.
+3. `src/lib/stores/download-listener.ts` 191-208 & 234-236 — course aggregate: marks complete on the plugin's `success` flag; line 200 hardcodes `recordDownloadComplete(0)` → "0 B saved".
+4. `src/routes/downloads/+page.svelte` 107-113 — filter chip counts derive only from `genericList`; course items (`kind:"course"`) are counted nowhere → all chips read 0.
+5. `src/routes/downloads/+page.svelte` 450-451 — header bytes come from a lifetime stats store that courses always feed `0`.
 
-The HLS downloader explicitly rejects streams using `SampleAES` encryption (which includes both FairPlay and Widevine):
+Fix every seam where success is declared so 0-byte output becomes a **retryable Error**, and
+make the counts/header reflect what is actually on screen.
 
-**File:** `src-tauri/omniget-core/src/core/hls_downloader.rs:348-349`
+---
 
-```rust
-m3u8_rs::KeyMethod::SampleAES => {
-    anyhow::bail!("HLS stream uses SAMPLE-AES (FairPlay DRM), cannot decrypt");
-}
-```
+## Phase 1 — Backend: internal download path (queue.rs)
 
-This causes an immediate failure when the playlist uses SampleAES encryption.
+File: `src-tauri/src/core/queue.rs`
 
-### 2. No Widevine Decryption Support in yt-dlp Integration
-
-The yt-dlp downloader in `generic_ytdlp/mod.rs` and `ytdlp.rs` does not pass Widevine decryption arguments to yt-dlp. Relevant options that could be used:
-
-- `--widevine-key` - Provide a Widevine key directly
-- `--widevine-cdm` - Path to Widevine CDM extension
-- `--extractor-args "udemy:widevine_pssh_data=..."` - Udemy-specific Widevine PSSH data
-
-### 3. No "Download Encrypted" Fallback Option
-
-When decryption fails, the download is aborted entirely rather than saving the encrypted file for later decryption.
-
-## Architecture Overview
-
-```
-┌─────────────┐     ┌──────────────────┐     ┌─────────────────────┐
-│   Frontend   │────▶│  Download Queue   │────▶│   PlatformRegistry  │
-│  (SvelteKit) │     │  (queue.rs)      │     │                     │
-└─────────────┘     └──────────────────┘     │ ┌─────────────────┐ │
-                                              │ │ udemy.com?       │ │
-                                              │ │ └─► GenericYtdlp │ │
-                                              │ └─────────────────┘ │
-                                              └─────────────────────┘
-                                                        │
-                                              ┌─────────▼─────────┐
-                                              │  GenericYtdlp     │
-                                              │  (generic_ytdlp/  │
-                                              │    mod.rs:443)    │
-                                              └─────────┬─────────┘
-                                                        │
-                                              ┌─────────▼─────────┐
-                                              │  yt-dlp            │
-                                              │  (ytdlp.rs:1856)  │
-                                              │                    │
-                                              │  download_video() │
-                                              └─────────┬─────────┘
-                                                        │
-                                              ┌─────────▼─────────┐
-                                              │  HLS Downloader   │
-                                              │  (hls_downloader.rs)│
-                                              │                    │
-                                              │  Blocks at         │
-                                              │  line 349           │
-                                              └───────────────────┘
-```
-
-## Implementation Plan
-
-### Phase 1: Add Widevine Settings
-
-Add new settings to the settings schema for Widevine CDM configuration and a "download encrypted" option.
-
-**File:** `src-tauri/omniget-core/src/models/settings.rs`
-
-Add to `DownloadSettings` struct (line ~80):
+Find this block (inside the `Ok(dl) => {` arm, around line 1604):
 
 ```rust
-/// Widevine CDM extension directory (e.g., from Chrome at
-/// Chrome //Extensions/content decryption module path).
-/// Allows yt-dlp to decrypt Widevine-protected streams.
-pub widevine_cdm: Option<String>,
-
-/// Widevine PSSH data for EME-protected streams.
-/// Stored as hex string.
-pub widevine_pssh: Option<String>,
-
-/// Force download even if decryption fails.
-/// Saves encrypted file for later decryption.
-pub download_encrypted: bool,
-```
-
-### Phase 2: Extend yt-dlp Arguments for Widevine
-
-Add Widevine-specific arguments to yt-dlp when downloading from Udemy.
-
-**File:** `src-tauri/omniget-core/src/core/ytdlp.rs`
-
-1. Add Widevine argument builder function (near line 500):
-
-```rust
-/// Build Widevine-specific arguments for yt-dlp.
-/// Requires platform == "udemy" and valid Widevine configuration.
-fn build_widevine_args(platform: &str, settings: &Settings) -> Vec<String> {
-    if platform != "udemy" {
-        return Vec::new();
-    }
-
-    let mut args = Vec::new();
-
-    // Add CDM path if available
-    if let Some(ref cdm) = settings.widevine_cdm {
-        if !cdm.is_empty() {
-            args.push("--widevine-cdm".to_string());
-            args.push(cdm.clone());
-        }
-    }
-
-    // Add PSSH data if available
-    if let Some(ref pssh) = settings.widevine_pssh {
-        if !pssh.is_empty() {
-            args.push("--extractor-args".to_string());
-            args.push(format!("udemy:widevine_pssh_data={}", pssh));
-        }
-    }
-
-    args
-}
-```
-
-2. Integrate Widevine args into `download_video()` function (line 1856)
-
-After building `base_args`, add:
-
-```rust
-// Add Widevine decryption args for Udemy
-let widevine_args = build_widevine_args(&platform_name, &settings);
-base_args.extend(widevine_args);
-```
-
-### Phase 3: Modify HLS Downloader for "Download Encrypted" Option
-
-Update the HLS downloader to support downloading encrypted content when decryption is unavailable.
-
-**File:** `src-tauri/omniget-core/src/core/hls_downloader.rs`
-
-1. Add new enum for DRM handling behavior:
-
-```rust
-pub enum DrmStrategy {
-    /// Decrypt on-the-fly, fail if no key is available.
-    DecryptOrFail,
-    /// Try to decrypt, but save encrypted file if key is unavailable.
-    DownloadEncrypted,
-}
-```
-
-2. Update `HlsDownloader` struct:
-
-```rust
-pub struct HlsDownloader {
-    client: Client,
-    user_agent_override: Option<String>,
-    /// Strategy for handling DRM-protected streams.
-    drm_strategy: DrmStrategy,
-}
-```
-
-3. Add builder method:
-
-```rust
-pub fn with_drm_strategy(mut self, strategy: DrmStrategy) -> Self {
-    self.drm_strategy = strategy;
-    self
-}
-```
-
-4. Modify `fetch_encryption_info()` (line 338) to not bail on SampleAES:
-
-```rust
-m3u8_rs::KeyMethod::SampleAES => {
-    if self.drm_strategy == DrmStrategy::DecryptOrFail {
-        anyhow::bail!("HLS stream uses SAMPLE-AES (Widevine/FairPlay DRM), cannot decrypt");
-    }
-    // For DownloadEncrypted: return None, write unencrypted data
-    tracing::warn!("[hls] SampleAES detected, downloading encrypted content");
-}
-```
-
-5. Update `write_segments_ordered()` to handle unencrypted writes (line 448):
-
-```rust
-// If encryption is detected but no key is available (SampleAES without decryption)
-// Write segments as-is (encrypted)
-if let Some(enc) = encryption {
-    // Attempt AES-128 decryption
-    // ... existing code ...
-} else {
-    // No encryption or could not obtain key - write as-is
-    file.write_all(&segment_data)?;
-}
-```
-
-### Phase 4: Update GenericYtdlp Platform Downloader
-
-Connect the Widevine settings to the HLS downloader.
-
-**File:** `src-tauri/src/platforms/generic_ytdlp/mod.rs`
-
-1. Import settings accessor (around line 1):
-
-```rust
-use crate::storage::config;
-```
-
-2. In the `download()` method (line 443), check for encrypted download:
-
-```rust
-// After checking for HLS format
-if selected.format == "hls" {
-    // Check if user wants to download encrypted content
-    let settings = config::load_settings(app_handle); // Get app handle from context
-    let drm_strategy = if settings.widevine_cdm.is_some() {
-        DrmStrategy::DecryptOrFail
-    } else if settings.download_encrypted {
-        DrmStrategy::DownloadEncrypted
-    } else {
-        // Try Widevine first, then fall back to encrypted download
-        DrmStrategy::DownloadEncrypted
-    };
-
-    let downloader = HlsDownloader::with_client(client)
-        .with_user_agent_override(opts.user_agent.clone())
-        .with_drm_strategy(drm_strategy);
-    
-    // ... rest of HLS download code
-}
-```
-
-### Phase 5: Add Settings UI
-
-Add Widevine CDM configuration options to the settings UI.
-
-**Files to modify:**
-- Frontend settings components in `src/components/settings/`
-- Add new i18n strings for Widevine options
-
-### Phase 6: Add Widevine CDM Auto-detection
-
-Create helper function to auto-detect Widevine CDM path from installed Chrome/Chromium browsers.
-
-**File:** `src-tauri/omniget-core/src/core/widevine.rs` (new file)
-
-```rust
-use std::path::PathBuf;
-use std::env;
-
-/// Try to auto-detect Widevine CDM path from browser installations.
-pub fn auto_detect_widevine_cdm() -> Option<PathBuf> {
-    let os = env::consts::OS;
-    
-    match os {
-        "macos" => detect_macos_widevine(),
-        "windows" => detect_windows_widevine(),
-        "linux" => detect_linux_widevine(),
-        _ => None,
-    }
-}
-
-fn detect_macos_widevine() -> Option<PathBuf> {
-    // Check Chrome locations
-    let chrome_dirs = vec![
-        PathBuf::from("/Applications/Google Chrome.app"),
-        PathBuf::from("/Applications/Chromium.app"),
-        PathBuf::from(format!(
-            "{}/Applications/Google Chrome Canary.app",
-            env::var("HOME").unwrap_or_default()
-        ))
-    ];
-    
-    for chrome in chrome_dirs {
-        // Widevine is typically at:
-        // Chrome.app/Contents/Versions/<version>/WidevineCdm/<version>_<build>/
-        let versions = chrome.join("Contents/Versions");
-        if versions.exists() {
-            // Find latest version
-            for entry in std::fs::read_dir(&versions).ok()? {
-                let version = entry.ok()?.path();
-                let widevine = version.join("WidevineCdm");
-                for entry in std::fs::read_dir(&widevine).ok()? {
-                    let candidate = entry.ok()?.path();
-                    if candidate.is_dir() {
-                        return Some(candidate);
-                    }
+            let state = {
+                let mut q = queue.lock().await;
+                if platform_name == "magnet" && dl.torrent_id.is_some() {
+                    q.mark_seeding(
+                        item_id,
+                        Some(dl.file_path.to_string_lossy().to_string()),
+                        Some(dl.file_size_bytes),
+                        dl.torrent_id,
+                    );
+                } else {
+                    q.mark_complete(
+                        item_id,
+                        true,
+                        None,
+                        Some(dl.file_path.to_string_lossy().to_string()),
+                        Some(dl.file_size_bytes),
+                    );
                 }
-            }
-        }
-    }
-    None
-}
-
-// Similar functions for Windows and Linux...
+                q.get_state()
+            };
+            emit_queue_state_from_state(&app, state);
 ```
 
-## Testing Strategy
+Replace it with:
 
-1. **Unit tests for Widevine argument building**
-   - Test argument generation with/without CDM path
-   - Test argument generation with/without PSSH data
+```rust
+            let is_magnet_seed = platform_name == "magnet" && dl.torrent_id.is_some();
+            // An exit-0 download that produced no bytes (e.g. a skipped DRM/region-locked
+            // stream) must NOT be reported as success — that hides the failure and blocks
+            // retry. Treat 0 bytes or a missing output file as a retryable failure.
+            let empty_output =
+                !is_magnet_seed && (dl.file_size_bytes == 0 || !dl.file_path.exists());
+            if empty_output {
+                append_download_log(
+                    &app,
+                    item_id,
+                    "[omniget] download produced no data (0 bytes) — marking as failed".to_string(),
+                );
+            }
+            let state = {
+                let mut q = queue.lock().await;
+                if is_magnet_seed {
+                    q.mark_seeding(
+                        item_id,
+                        Some(dl.file_path.to_string_lossy().to_string()),
+                        Some(dl.file_size_bytes),
+                        dl.torrent_id,
+                    );
+                } else if empty_output {
+                    q.mark_complete(
+                        item_id,
+                        false,
+                        Some(EMPTY_DOWNLOAD_ERROR.to_string()),
+                        None,
+                        None,
+                    );
+                } else {
+                    q.mark_complete(
+                        item_id,
+                        true,
+                        None,
+                        Some(dl.file_path.to_string_lossy().to_string()),
+                        Some(dl.file_size_bytes),
+                    );
+                }
+                q.get_state()
+            };
+            emit_queue_state_from_state(&app, state);
+```
 
-2. **Integration tests for HLS downloader**
-   - Test with SampleAES playlist (should download encrypted)
-   - Test with AES128 playlist (should decrypt if key available)
-   - Test fallback to encrypted download
+Then add this constant near the top of `queue.rs` (just after the existing `use` lines, before
+the first `pub fn`/`pub struct`):
 
-3. **End-to-end tests with Udemy courses**
-   - Test download of DRM-protected course
-   - Verify file is downloaded (encrypted if no key)
-   - Verify file can be decrypted later with external tool
+```rust
+/// Message used when a download exits cleanly but wrote 0 bytes. Wording is deliberate: it must
+/// NOT contain any keyword that `classify_download_error` maps to a non-retryable category
+/// (e.g. "login", "cookie", "403", "404", "not found", "private", "ffmpeg", "yt-dlp"), so that
+/// `is_retryable_error_message` returns true and the UI shows a Retry button.
+pub const EMPTY_DOWNLOAD_ERROR: &str =
+    "Download produced no data (0 bytes). The stream may be DRM-protected or temporarily blocked. Retry after re-checking access.";
+```
 
-## Risks and Mitigations
+Verify: `is_retryable_error_message(EMPTY_DOWNLOAD_ERROR)` must return `true`
+(`classify_download_error` returns `("unknown", _)` for this string → retryable). Do not change
+the wording without re-checking `src-tauri/omniget-core/src/core/errors.rs`.
 
-1. **Widevine CDM changes version**
-   - Mitigation: Use latest version auto-detection, allow manual path override
+**Check:** `cd src-tauri && cargo check`
 
-2. **Udemy changes DRM implementation**
-   - Mitigation: Keep yt-dlp updated, use nightly builds
+---
 
-3. **License issues with Widevine CDM**
-   - Mitigation: Use system CDM, don't bundle it
+## Phase 2 — Backend: external / course-lesson path (host_queue.rs)
 
-## Implementation Timeline
+File: `src-tauri/src/commands/host_queue.rs`, function `report_complete_inner`.
 
-| Phase | Description | Estimated Time |
-|-------|-------------|----------------|
-| 1 | Add settings for Widevine | 2 hours |
-| 2 | Extend yt-dlp arguments | 3 hours |
-| 3 | Modify HLS downloader | 4 hours |
-| 4 | Update GenericYtdlp platform | 2 hours |
-| 5 | Add settings UI | 2 hours |
-| 6 | Add auto-detection | 2 hours |
-| Testing | Unit/integration tests | 4 hours |
-| **Total** | | **~20 hours** |
+Find (around line 208):
 
-## Key Source Files
+```rust
+                if args.success {
+                    it.percent = 100.0;
+                    if let Some(ref p) = args.file_path {
+                        it.file_path = Some(p.to_string_lossy().to_string());
+                    }
+                    if let Some(sz) = args.file_size_bytes {
+                        it.file_size_bytes = Some(sz);
+                    }
+                    it.status = QueueStatus::Complete { success: true };
+                } else {
+```
 
-| File | Purpose |
-|------|---------|
-| `src-tauri/omniget-core/src/core/ytdlp.rs` | yt-dlp wrapper, download_video() |
-| `src-tauri/omniget-core/src/core/hls_downloader.rs` | HLS downloader, encryption handling |
-| `src-tauri/src/platforms/generic_ytdlp/mod.rs` | Generic platform downloader |
-| `src-tauri/omniget-core/src/core/registry.rs` | Platform registry |
-| `src-tauri/src/core/queue.rs` | Download queue |
-| `src-tauri/omniget-core/src/platforms/mod.rs` | Platform enum (Udemy variant) |
-| `src-tauri/omniget-core/src/models/settings.rs` | Settings schema |
+Replace the `if args.success {` line and its body so a success report carrying 0 bytes is
+downgraded to a retryable failure. New version:
+
+```rust
+                // A "success" report that carries no bytes is not a success — the external
+                // downloader skipped or produced an empty file. Downgrade to a retryable error
+                // so the user can retry instead of seeing a false COMPLETE.
+                let reported_empty = args.success
+                    && args.file_size_bytes.unwrap_or(0) == 0
+                    && args
+                        .file_path
+                        .as_ref()
+                        .map(|p| std::fs::metadata(p).map(|m| m.len() == 0).unwrap_or(true))
+                        .unwrap_or(true);
+                if args.success && !reported_empty {
+                    it.percent = 100.0;
+                    if let Some(ref p) = args.file_path {
+                        it.file_path = Some(p.to_string_lossy().to_string());
+                    }
+                    if let Some(sz) = args.file_size_bytes {
+                        it.file_size_bytes = Some(sz);
+                    }
+                    it.status = QueueStatus::Complete { success: true };
+                } else if reported_empty {
+                    it.status = QueueStatus::Error {
+                        message: crate::core::queue::EMPTY_DOWNLOAD_ERROR.to_string(),
+                        retryable: true,
+                    };
+                } else {
+```
+
+(The original `else {` branch that handled `args.success == false` becomes this final `else`.
+Its body — building `msg`/`retryable` and setting `QueueStatus::Error` — stays unchanged.)
+
+**Check:** `cd src-tauri && cargo check`
+
+---
+
+## Phase 3 — Backend: defense-in-depth in leaf downloaders
+
+These make a 0-byte result fail at the source with a clearer message. The Phase 1/2 guards are
+authoritative; these are belt-and-suspenders.
+
+### 3a. `src-tauri/omniget-core/src/core/direct_downloader.rs` (~line 227)
+
+Find:
+
+```rust
+    std::fs::rename(&part_path, output)?;
+    let _ = progress_tx.send(ProgressUpdate::percent(100.0)).await;
+
+    let size = std::fs::metadata(output)?.len();
+    Ok(size)
+```
+
+Replace with:
+
+```rust
+    std::fs::rename(&part_path, output)?;
+
+    let size = std::fs::metadata(output)?.len();
+    if size == 0 {
+        let _ = std::fs::remove_file(output);
+        anyhow::bail!("direct download produced no data (0 bytes)");
+    }
+    let _ = progress_tx.send(ProgressUpdate::percent(100.0)).await;
+    Ok(size)
+```
+
+### 3b. `src-tauri/omniget-core/src/core/hls_downloader.rs` (~line 352)
+
+Find:
+
+```rust
+        std::fs::rename(&part_path, &output)?;
+
+        let file_size = std::fs::metadata(&output)?.len();
+        let protection_sidecar_path = if let Some(ref protected) = protected_media {
+```
+
+Replace the first two lines so an empty mux fails — but only when this is NOT a protected
+passthrough (a protected sidecar legitimately produces a tiny/zero main file):
+
+```rust
+        std::fs::rename(&part_path, &output)?;
+
+        let file_size = std::fs::metadata(&output)?.len();
+        if file_size == 0 && protected_media.is_none() {
+            let _ = std::fs::remove_file(&output);
+            anyhow::bail!("HLS download produced no data (0 bytes)");
+        }
+        let protection_sidecar_path = if let Some(ref protected) = protected_media {
+```
+
+**Check:** `cd src-tauri && cargo check` (this compiles omniget-core too).
+
+---
+
+## Phase 4 — Frontend: course aggregate completion guard + honest saved-bytes
+
+File: `src/lib/stores/download-listener.ts`
+
+### 4a. `download-complete` listener (around line 191-208)
+
+Find:
+
+```ts
+  const unlistenComplete = await listen<CompletePayload>("download-complete", (event) => {
+    const d = event.payload;
+    markComplete(d.course_name, d.success, d.error ?? undefined);
+
+    const tr = get(t);
+    if (d.success) {
+      showToast("success", tr("toast.download_complete", { name: d.course_name }));
+      void notifyComplete(d.course_name);
+      addLog("info", "download", `Course download complete: ${d.course_name}`);
+      recordDownloadComplete(0);
+      void rpcSyncIdleStats();
+    } else {
+```
+
+Replace with (treat a "success" with 0 downloaded bytes as failure; record real bytes):
+
+```ts
+  const unlistenComplete = await listen<CompletePayload>("download-complete", (event) => {
+    const d = event.payload;
+    const item = getDownloads().get(d.course_id);
+    const bytes = item && item.kind === "course" ? item.bytesDownloaded : 0;
+    const reallySucceeded = d.success && bytes > 0;
+    markComplete(
+      d.course_name,
+      reallySucceeded,
+      reallySucceeded
+        ? undefined
+        : (d.error ?? "Download produced no files (0 bytes). Retry after checking access."),
+    );
+
+    const tr = get(t);
+    if (reallySucceeded) {
+      showToast("success", tr("toast.download_complete", { name: d.course_name }));
+      void notifyComplete(d.course_name);
+      addLog("info", "download", `Course download complete: ${d.course_name}`);
+      recordDownloadComplete(bytes);
+      void rpcSyncIdleStats();
+    } else {
+```
+
+> Note: the original `else {` branch (the failure toast/log) stays as-is; it now also catches
+> the downgraded "empty success" case.
+
+If `getDownloads` is not already imported in this file, add it to the existing import from
+`download-store.svelte` (the file already imports `upsertProgress`, `markComplete`).
+
+### 4b. `udemy-download-complete` listener (around line 234-236)
+
+Find:
+
+```ts
+  const unlistenUdemyComplete = await listen<UdemyCompletePayload>("udemy-download-complete", (event) => {
+    const d = event.payload;
+    markComplete(d.course_name, d.success, d.error ?? undefined);
+```
+
+Replace the `markComplete(...)` line with the same byte-aware guard:
+
+```ts
+  const unlistenUdemyComplete = await listen<UdemyCompletePayload>("udemy-download-complete", (event) => {
+    const d = event.payload;
+    const uItem = getDownloads().get(d.course_id);
+    const uBytes = uItem && uItem.kind === "course" ? uItem.bytesDownloaded : 0;
+    const uSucceeded = d.success && uBytes > 0;
+    markComplete(
+      d.course_name,
+      uSucceeded,
+      uSucceeded ? undefined : (d.error ?? "Download produced no files (0 bytes). Retry after checking access."),
+    );
+```
+
+If this listener also calls `recordDownloadComplete(0)` on success below, change that argument
+to `uBytes` (search the rest of this listener block for `recordDownloadComplete`).
+
+**Check:** `pnpm check`
+
+---
+
+## Phase 5 — Frontend: filter chip counts include all items
+
+File: `src/routes/downloads/+page.svelte`
+
+Find (around line 107):
+
+```svelte
+  let filterCounts = $derived({
+    all: genericList.length,
+    active: grouped.active.length + grouped.paused.length,
+    queued: grouped.queued.length,
+    completed: grouped.completed.length,
+    failed: grouped.errored.length,
+  });
+```
+
+Replace with a single source of truth that counts BOTH course and generic items by status:
+
+```svelte
+  let filterCounts = $derived.by(() => {
+    let all = 0, active = 0, queued = 0, completed = 0, failed = 0;
+    for (const d of downloads.values()) {
+      all++;
+      switch (d.status) {
+        case "downloading":
+        case "seeding":
+        case "paused":
+          active++;
+          break;
+        case "queued":
+          queued++;
+          break;
+        case "complete":
+          completed++;
+          break;
+        case "error":
+          failed++;
+          break;
+      }
+    }
+    return { all, active, queued, completed, failed };
+  });
+```
+
+(`downloads` is the existing `$derived(getDownloads())` at line 76 and already includes course
+items. This mirrors the logic in `getCounts()` in the store, which is the canonical counter.)
+
+**Check:** `pnpm check`
+
+---
+
+## Phase 6 — Tests
+
+### 6a. Rust (queue guard) — add to the `#[cfg(test)]` module in `src-tauri/src/core/queue.rs`:
+
+- A test asserting `is_retryable_error_message(EMPTY_DOWNLOAD_ERROR) == true`.
+- If there is an existing test that drives `mark_complete`, add one that calls
+  `mark_complete(id, false, Some(EMPTY_DOWNLOAD_ERROR.into()), None, None)` and asserts the
+  item's status is `QueueStatus::Error { retryable: true, .. }`.
+
+### 6b. Rust (leaf downloaders): mirror the existing `verify_nonempty_output` test style in
+`omniget-core/src/core/ytdlp.rs` — a small test writing a 0-byte file and asserting the new
+`bail!`s fire. Only add if a straightforward unit hook exists; otherwise rely on 6a.
+
+**Check:** `cd src-tauri && cargo test`
+
+---
+
+## Final verification (end-to-end — required, not synthetic-only)
+
+1. `cd src-tauri && cargo test` passes; `pnpm check` clean.
+2. `source .venv/bin/activate && pnpm tauri dev`.
+3. Trigger a download that yields 0 bytes (a DRM lecture without valid `.wvd`/cookies):
+   - Card shows **FAILED** with the empty-download message and a **Retry** button — NOT
+     COMPLETE/100%.
+4. Trigger a working download:
+   - Card shows COMPLETE with real bytes; header "N downloads · X saved" shows non-zero X.
+5. Filter chips (`All/Active/Queued/Completed/Failed`) show non-zero counts matching the
+   visible cards.
+6. Click **Clear finished** → the failed/empty items are removed. A stuck `DOWNLOADING 0%`
+   item can be cancelled (X) and then cleared.
+7. No `NaN%` anywhere; previously-working platforms still download (no regression).
+
+## Files touched (summary)
+- `src-tauri/src/core/queue.rs` — empty-output guard + `EMPTY_DOWNLOAD_ERROR` const + test.
+- `src-tauri/src/commands/host_queue.rs` — empty-success downgrade in `report_complete_inner`.
+- `src-tauri/omniget-core/src/core/direct_downloader.rs` — 0-byte bail.
+- `src-tauri/omniget-core/src/core/hls_downloader.rs` — 0-byte bail (non-protected only).
+- `src/lib/stores/download-listener.ts` — course completion byte-guard + real `recordDownloadComplete`.
+- `src/routes/downloads/+page.svelte` — `filterCounts` counts all items.
+
+## Out of scope
+- The Udemy Widevine pipeline itself (already ported).
+- Study-tab Portuguese localization.
+- Any new multi-select/bulk-delete UI beyond the existing "Clear finished".
