@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { t } from "$lib/i18n";
   import { notesLessonsLink } from "$lib/notes-bridge";
 
   type Props = {
@@ -92,8 +93,8 @@
     <button
       type="button"
       class="close-btn"
-      aria-label="Fechar"
-      title="Fechar (Esc)"
+      aria-label={$t("study.notes_annotateoverlay.close") as string}
+      title={$t("study.notes_annotateoverlay.close_esc") as string}
       onclick={() => {
         void flushSave();
         onClose();
@@ -103,7 +104,7 @@
   <textarea
     bind:this={textareaEl}
     class="body"
-    placeholder="Anote algo sobre este momento da aula… (auto-salva, Esc fecha)"
+    placeholder={$t("study.notes_annotateoverlay.placeholder") as string}
     bind:value={body}
     oninput={onInput}
     onkeydown={onKeyDown}
@@ -111,17 +112,17 @@
   ></textarea>
   <footer class="foot">
     {#if saving}
-      <span class="state">salvando…</span>
+      <span class="state">{$t("study.notes_annotateoverlay.saving")}</span>
     {:else if savedAt}
-      <span class="state subtle">salvo</span>
+      <span class="state subtle">{$t("study.notes_annotateoverlay.saved")}</span>
     {:else}
-      <span class="state subtle">timestamp captura no 1º caractere</span>
+      <span class="state subtle">{$t("study.notes_annotateoverlay.ts_on_first_char")}</span>
     {/if}
     <button
       type="button"
       class="capture-btn"
       onclick={captureTimestamp}
-      title="Recaptura timestamp atual"
+      title={$t("study.notes_annotateoverlay.recapture_ts") as string}
     >↻ timestamp</button>
   </footer>
 </div>

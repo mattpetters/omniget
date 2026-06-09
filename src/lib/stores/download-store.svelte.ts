@@ -138,6 +138,16 @@ export function getPausedCount(): number {
   return getCounts().paused;
 }
 
+/**
+ * Coerce a percent value to a safe non-negative number. DRM/unknown-size
+ * streams (e.g. Udemy Widevine) can yield a non-finite percent upstream, which
+ * otherwise renders as "NaN%" in the UI. Finite values keep the existing
+ * `Math.max(0, …)` clamp; NaN/Infinity collapse to 0.
+ */
+function safePercent(p: number): number {
+  return Number.isFinite(p) ? Math.max(0, p) : 0;
+}
+
 export function upsertProgress(
   courseId: number,
   courseName: string,
@@ -170,7 +180,7 @@ export function upsertProgress(
     kind: "course",
     id: courseId,
     name: courseName,
-    percent: Math.max(0, percent),
+    percent: safePercent(percent),
     currentModule,
     currentPage,
     status: "downloading",
@@ -297,7 +307,7 @@ export function syncQueueState(items: QueueItemInfo[]) {
       id: qi.id,
       name: qi.title,
       platform: qi.platform,
-      percent: Math.max(0, qi.percent),
+      percent: safePercent(qi.percent),
       speed: effectiveSpeed,
       downloadedBytes: qi.downloaded_bytes,
       totalBytes: qi.total_bytes,
@@ -385,7 +395,7 @@ export function upsertGenericProgress(
     id,
     name: title,
     platform,
-    percent: Math.max(0, percent),
+    percent: safePercent(percent),
     speed: effectiveSpeed,
     downloadedBytes,
     totalBytes,

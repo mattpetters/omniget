@@ -1,5 +1,6 @@
 <script lang="ts">
   import { untrack } from "svelte";
+  import { t } from "$lib/i18n";
   import {
     NOTEBOOK_LUCIDE_OPTIONS,
     NOTEBOOK_COLOR_SWATCHES,
@@ -94,23 +95,23 @@
           type="button"
           class="x"
           onclick={onClose}
-          aria-label="Fechar"
+          aria-label={$t("study.notes_shell_nbnotebookcreatedialog.close") as string}
         >×</button>
       </header>
 
       <label class="field">
-        <span>Nome</span>
+        <span>{$t("study.notes_shell_nbnotebookcreatedialog.name")}</span>
         <input
           bind:this={inputRef}
           bind:value={name}
           type="text"
           maxlength="60"
-          placeholder="Pessoal, Trabalho, Estudos…"
+          placeholder={$t("study.notes_shell_nbnotebookcreatedialog.name_placeholder") as string}
         />
       </label>
 
       <div class="field">
-        <span>Ícone</span>
+        <span>{$t("study.notes_shell_nbnotebookcreatedialog.icon")}</span>
         <div class="grid icons">
           {#each NOTEBOOK_LUCIDE_OPTIONS as opt (opt)}
             <button
@@ -128,14 +129,14 @@
       </div>
 
       <div class="field">
-        <span>Cor</span>
+        <span>{$t("study.notes_shell_nbnotebookcreatedialog.color")}</span>
         <div class="grid swatches">
           <button
             type="button"
             class="swatch none"
             class:active={color === null}
             aria-pressed={color === null}
-            title="Sem cor"
+            title={$t("study.notes_shell_nbnotebookcreatedialog.no_color") as string}
             onclick={() => (color = null)}
           >∅</button>
           {#each NOTEBOOK_COLOR_SWATCHES as sw (sw)}
@@ -154,7 +155,7 @@
 
       <footer>
         <button type="button" class="btn ghost" onclick={onClose}>
-          Cancelar
+          {$t("study.notes_shell_nbnotebookcreatedialog.cancel")}
         </button>
         <button
           type="button"

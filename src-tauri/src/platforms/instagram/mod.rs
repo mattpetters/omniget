@@ -902,6 +902,7 @@ mod tests {
             torrent_auto_trackers: false,
             torrent_upnp: false,
             save_encrypted_hls: false,
+            widevine_device_path: None,
         }
     }
 

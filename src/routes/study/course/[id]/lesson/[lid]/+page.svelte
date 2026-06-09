@@ -860,7 +860,7 @@
   async function captureScreenshot() {
     if (!videoRef || !lesson) return;
     if (!videoRef.videoWidth || !videoRef.videoHeight) {
-      screenshotToast = "Vídeo ainda não carregou";
+      screenshotToast = $t("study.lesson.video_not_loaded") as string;
       setTimeout(() => (screenshotToast = ""), 2400);
       return;
     }
@@ -1291,7 +1291,7 @@
         </div>
       </div>
 
-      <nav class="panel-tabs" aria-label="painéis da aula">
+      <nav class="panel-tabs" aria-label={$t("study.lesson.panel_tabs_aria") as string}>
         <SegmentedControl
           bind:value={activePanel}
           options={panelOptions}
@@ -1318,7 +1318,7 @@
             </ul>
           </div>
         {:else}
-          <p class="muted panel-empty">Sem anexos nesta aula.</p>
+          <p class="muted panel-empty">{$t("study.lesson.no_attachments")}</p>
         {/if}
       {/if}
 
@@ -1326,18 +1326,18 @@
         <div class="info-panel">
           {#if lesson}
             <dl class="info-grid">
-              <dt>Aula</dt>
+              <dt>{$t("study.lesson.info_lesson")}</dt>
               <dd>{lesson.title}</dd>
-              <dt>Posição</dt>
+              <dt>{$t("study.lesson.info_position")}</dt>
               <dd>#{lesson.position}</dd>
               {#if lesson.duration_ms}
-                <dt>Duração</dt>
+                <dt>{$t("study.lesson.info_duration")}</dt>
                 <dd>{formatTime(lesson.duration_ms / 1000)}</dd>
               {/if}
-              <dt>Status</dt>
-              <dd>{markedComplete ? "Completa" : "Em andamento"}</dd>
+              <dt>{$t("study.lesson.info_status")}</dt>
+              <dd>{markedComplete ? ($t("study.lesson.status_complete") as string) : ($t("study.lesson.status_in_progress") as string)}</dd>
               {#if videoRef && isFinite(videoRef.duration)}
-                <dt>Tempo atual</dt>
+                <dt>{$t("study.lesson.info_current_time")}</dt>
                 <dd>
                   {formatTime(videoRef.currentTime)} /
                   {formatTime(videoRef.duration)}

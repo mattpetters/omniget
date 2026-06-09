@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from "$lib/i18n";
   import { notebooksStore } from "$lib/study-notes/notebooks-store.svelte";
 
   type Props = {
@@ -31,7 +32,7 @@
     if (trimmed.length > 0) {
       const n = Number.parseInt(trimmed, 10);
       if (!Number.isFinite(n) || n <= 0) {
-        error = "ID precisa ser inteiro positivo";
+        error = $t("study.notes_shell_nbnotebookcoverdialog.error_positive_int") as string;
         return;
       }
       asset = n;
@@ -42,7 +43,7 @@
       await notebooksStore.setCover(notebookId, asset);
       onClose();
     } catch (e) {
-      error = String(e ?? "falha ao aplicar capa");
+      error = String(e ?? ($t("study.notes_shell_nbnotebookcoverdialog.error_apply_cover") as string));
     } finally {
       busy = false;
     }
@@ -83,18 +84,16 @@
       class="dialog"
       role="dialog"
       aria-modal="true"
-      aria-label="Capa do notebook"
+      aria-label={$t("study.notes_shell_nbnotebookcoverdialog.dialog_aria") as string}
       data-modal="true"
     >
       <header>
-        <h3>Capa de {current?.name ?? "notebook"}</h3>
-        <button type="button" class="x" onclick={onClose} aria-label="Fechar">×</button>
+        <h3>{$t("study.notes_shell_nbnotebookcoverdialog.heading", { name: current?.name ?? "notebook" })}</h3>
+        <button type="button" class="x" onclick={onClose} aria-label={$t("study.notes_shell_nbnotebookcoverdialog.close") as string}>×</button>
       </header>
 
       <p class="hint">
-        Use o ID de um asset já registrado em <code>note_assets</code>.
-        Para fazer upload de uma nova imagem, use o gerenciador de capas
-        de uma página primeiro e depois aponte o ID aqui.
+        {$t("study.notes_shell_nbnotebookcoverdialog.hint_before")}<code>note_assets</code>{$t("study.notes_shell_nbnotebookcoverdialog.hint_after")}
       </p>
 
       <label class="field">
@@ -102,7 +101,7 @@
         <input
           type="text"
           inputmode="numeric"
-          placeholder="ex: 42"
+          placeholder={$t("study.notes_shell_nbnotebookcoverdialog.id_placeholder") as string}
           bind:value={assetIdDraft}
         />
       </label>
@@ -118,14 +117,14 @@
           onclick={clear}
           disabled={busy || current?.cover_asset_id == null}
         >
-          Remover capa
+          {$t("study.notes_shell_nbnotebookcoverdialog.remove_cover")}
         </button>
         <span class="spacer"></span>
         <button type="button" class="btn ghost" onclick={onClose} disabled={busy}>
-          Cancelar
+          {$t("study.notes_shell_nbnotebookcoverdialog.cancel")}
         </button>
         <button type="button" class="btn primary" onclick={apply} disabled={busy}>
-          Aplicar
+          {$t("study.notes_shell_nbnotebookcoverdialog.apply")}
         </button>
       </footer>
     </div>

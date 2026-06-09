@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
+  import { t } from "$lib/i18n";
 
   type Props = {
     source: string;
@@ -144,7 +145,7 @@
       onblur={onSourceBlur}
       spellcheck="false"
       rows={Math.max(3, editingValue.split("\n").length)}
-      aria-label="Source do diagrama mermaid"
+      aria-label={$t("study.notes_mermaidview.source_aria") as string}
     ></textarea>
   {:else if renderState.kind === "idle"}
     <p class="mermaid-state">Sem source. Clique em ‹/› para editar.</p>

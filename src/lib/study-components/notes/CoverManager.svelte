@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from "$lib/i18n";
   import {
     notesCoverSetExternal,
     notesCoverRemove,
@@ -30,7 +31,7 @@
     const url = urlDraft.trim();
     if (!url) return;
     if (!/^https?:\/\//i.test(url)) {
-      error = "URL precisa começar com http:// ou https://";
+      error = $t("study.notes_covermanager.url_must_start") as string;
       return;
     }
     busy = true;
@@ -71,18 +72,18 @@
     }}
   >
     <div class="modal" role="dialog" aria-label="Cover image">
-      <h3>Capa da página</h3>
+      <h3>{$t("study.notes_covermanager.title")}</h3>
 
       <p class="hint">
-        Cole uma URL externa (https://...). Upload local de arquivo entra em sessão futura.
+        {$t("study.notes_covermanager.hint")}
       </p>
 
       <label class="field">
-        <span>URL da imagem</span>
+        <span>{$t("study.notes_covermanager.image_url")}</span>
         <input
           type="url"
           bind:value={urlDraft}
-          placeholder="https://exemplo.com/banner.jpg"
+          placeholder="https://example.com/banner.jpg"
           disabled={busy}
           onkeydown={(e) => {
             if (e.key === "Enter") {
@@ -113,12 +114,12 @@
             onclick={removeCover}
             disabled={busy}
           >
-            Remover capa
+            {$t("study.notes_covermanager.remove_cover")}
           </button>
         {/if}
         <span class="footer-spacer"></span>
         <button type="button" class="btn ghost" onclick={onClose} disabled={busy}>
-          Cancelar
+          {$t("study.notes_covermanager.cancel")}
         </button>
         <button
           type="button"
@@ -126,7 +127,7 @@
           onclick={saveExternal}
           disabled={busy || !urlDraft.trim()}
         >
-          {busy ? "Salvando…" : "Salvar"}
+          {busy ? ($t("study.notes_covermanager.saving") as string) : ($t("study.notes_covermanager.save") as string)}
         </button>
       </footer>
     </div>

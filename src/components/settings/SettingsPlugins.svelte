@@ -116,8 +116,8 @@
   </section>
 
   <section class="section">
-    <h5 class="section-title">Extensão de navegador</h5>
-    <p class="muted">A extensão envia cookies e URLs do seu navegador para o OmniGet. Auto-update direto pelo app só funciona via lojas oficiais — enquanto não publicamos, use os botões abaixo para extrair a versão atual e (re)instalar manualmente.</p>
+    <h5 class="section-title">{$t('settings.browser_ext.section_title')}</h5>
+    <p class="muted">{$t('settings.browser_ext.intro')}</p>
     <div class="card">
       {#each extStatuses as ext, i (ext.browser)}
         {#if i > 0}<div class="divider"></div>{/if}
@@ -126,7 +126,7 @@
             <span class="setting-label">{browserLabel(ext.browser)}</span>
             <span class="setting-path">
               {#if ext.bundled_version}
-                Versão empacotada: v{ext.bundled_version}
+                {$t('settings.browser_ext.bundled_version', { version: ext.bundled_version })}
               {:else}
                 {ext.install_hint}
               {/if}
@@ -138,12 +138,12 @@
               disabled={busyBrowser === ext.browser}
               onclick={() => exportExtension(ext.browser)}
             >
-              {busyBrowser === ext.browser ? "Extraindo..." : "Atualizar / Instalar"}
+              {busyBrowser === ext.browser ? $t('settings.browser_ext.extracting') : $t('settings.browser_ext.update_install')}
             </button>
           {:else if ext.store_url}
-            <a class="button" href={ext.store_url} target="_blank" rel="noreferrer">Abrir loja</a>
+            <a class="button" href={ext.store_url} target="_blank" rel="noreferrer">{$t('settings.browser_ext.open_store')}</a>
           {:else}
-            <span class="muted small">Indisponível</span>
+            <span class="muted small">{$t('settings.browser_ext.unavailable')}</span>
           {/if}
         </div>
       {/each}
@@ -174,21 +174,21 @@
   <div class="overlay" role="presentation" onclick={(e) => { if (e.target === e.currentTarget) closeInstall(); }}>
     <div class="dialog" role="dialog" aria-modal="true">
       <header class="head">
-        <h3>Instalar / Atualizar extensão — {browserLabel(installModal.browser)}</h3>
-        <button class="close" onclick={closeInstall} aria-label="fechar">×</button>
+        <h3>{$t('settings.browser_ext.modal_title', { browser: browserLabel(installModal.browser) })}</h3>
+        <button class="close" onclick={closeInstall} aria-label={$t('settings.browser_ext.close_aria') as string}>×</button>
       </header>
       <div class="body">
-        <p>A extensão foi extraída para:</p>
+        <p>{$t('settings.browser_ext.extracted_to')}</p>
         <code class="path">{installModal.path}</code>
-        <button class="button" onclick={() => openFolder(installModal!.path)}>Abrir pasta</button>
-        <h4>Como instalar / atualizar</h4>
+        <button class="button" onclick={() => openFolder(installModal!.path)}>{$t('settings.browser_ext.open_folder')}</button>
+        <h4>{$t('settings.browser_ext.how_to')}</h4>
         <p class="hint">{installModal.hint}</p>
         <p class="hint small">
-          Se a extensão já está instalada, clique em "Recarregar" no <code>{installModal.browser === 'firefox' ? 'about:debugging' : 'chrome://extensions'}</code> apontando pra essa pasta — ou remova a antiga e adicione a nova.
+          {$t('settings.browser_ext.reload_hint_before')}<code>{installModal.browser === 'firefox' ? 'about:debugging' : 'chrome://extensions'}</code>{$t('settings.browser_ext.reload_hint_after')}
         </p>
       </div>
       <footer class="foot">
-        <button class="button" onclick={closeInstall}>Fechar</button>
+        <button class="button" onclick={closeInstall}>{$t('settings.browser_ext.close')}</button>
       </footer>
     </div>
   </div>

@@ -3,6 +3,7 @@
   import SettingsSlider from "./SettingsSlider.svelte";
   import SettingsToggle from "./SettingsToggle.svelte";
   import { pluginInvoke } from "$lib/plugin-invoke";
+  import { t } from "$lib/i18n";
   import type { StudySettings } from "$lib/study-bridge";
 
   type Props = {
@@ -32,7 +33,12 @@
         ms: number;
         new_lessons_notified?: number;
       }>("study", "study:rescan");
-      rescanReport = `${r.courses_found} cursos · ${r.lessons_found} aulas · ${r.new_lessons_notified ?? 0} aulas novas detectadas (${r.ms}ms)`;
+      rescanReport = $t("study.settings_librarysettingstab.rescan_report", {
+        courses: r.courses_found,
+        lessons: r.lessons_found,
+        new_lessons: r.new_lessons_notified ?? 0,
+        ms: r.ms,
+      }) as string;
     } catch (e) {
       rescanReport = e instanceof Error ? e.message : String(e);
     } finally {
@@ -43,8 +49,8 @@
 
 <section class="tab">
   <SettingsField
-    label="Watcher ativado"
-    description="Detecta automaticamente quando arquivos de curso são adicionados ou removidos"
+    label={$t("study.settings_librarysettingstab.watcher_label") as string}
+    description={$t("study.settings_librarysettingstab.watcher_desc") as string}
   >
     <SettingsToggle
       value={library.watcher_enabled ?? true}
@@ -54,30 +60,30 @@
   </SettingsField>
 
   <SettingsField
-    label="Incluir pastas ocultas"
-    description="Inclui pastas com nome iniciado em ponto durante o scan"
+    label={$t("study.settings_librarysettingstab.hidden_label") as string}
+    description={$t("study.settings_librarysettingstab.hidden_desc") as string}
   >
     <SettingsToggle
       value={library.scan_hidden ?? false}
       onChange={(v) => setLibrary("scan_hidden", v)}
-      ariaLabel="Pastas ocultas"
+      ariaLabel={$t("study.settings_librarysettingstab.hidden_aria") as string}
     />
   </SettingsField>
 
   <SettingsField
-    label="Limpeza automática"
-    description="Roda vacuum periódico (apaga seek logs antigos, notificações dispensadas, recents fora do top 50)"
+    label={$t("study.settings_librarysettingstab.autoclean_label") as string}
+    description={$t("study.settings_librarysettingstab.autoclean_desc") as string}
   >
     <SettingsToggle
       value={library.auto_vacuum ?? true}
       onChange={(v) => setLibrary("auto_vacuum", v)}
-      ariaLabel="Limpeza automática"
+      ariaLabel={$t("study.settings_librarysettingstab.autoclean_aria") as string}
     />
   </SettingsField>
 
   <SettingsField
-    label="Intervalo de limpeza"
-    description="Quantos dias entre cada vacuum"
+    label={$t("study.settings_librarysettingstab.interval_label") as string}
+    description={$t("study.settings_librarysettingstab.interval_desc") as string}
     valueDisplay={`${library.auto_vacuum_interval_days ?? 30}d`}
   >
     <SettingsSlider
@@ -91,14 +97,14 @@
 
   <div class="actions">
     <div>
-      <strong>Re-scanear biblioteca</strong>
-      <p class="hint">Força detecção de novos cursos/aulas e dispara notificações</p>
+      <strong>{$t("study.settings_librarysettingstab.rescan_title")}</strong>
+      <p class="hint">{$t("study.settings_librarysettingstab.rescan_hint")}</p>
       {#if rescanReport}
         <p class="report">{rescanReport}</p>
       {/if}
     </div>
     <button type="button" class="btn" disabled={rescanning} onclick={rescan}>
-      {rescanning ? "Escaneando…" : "Re-scanear agora"}
+      {rescanning ? $t("study.settings_librarysettingstab.scanning") : $t("study.settings_librarysettingstab.rescan_now")}
     </button>
   </div>
 </section>

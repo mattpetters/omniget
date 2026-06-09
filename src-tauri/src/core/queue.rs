@@ -1304,6 +1304,14 @@ async fn spawn_download_inner(
         torrent_auto_trackers: settings.advanced.torrent_auto_trackers,
         torrent_upnp: settings.advanced.torrent_upnp,
         save_encrypted_hls: settings.download.save_encrypted_hls,
+        widevine_device_path: {
+            let p = settings.download.widevine_device_path.trim();
+            if p.is_empty() {
+                None
+            } else {
+                Some(p.to_string())
+            }
+        },
     };
 
     let total_bytes = info.file_size_bytes;
@@ -2024,5 +2032,94 @@ mod kind_tests {
     fn case_insensitive() {
         assert_eq!(kind_from_platform("YouTube"), QueueKind::Video);
         assert_eq!(kind_from_platform("TELEGRAM"), QueueKind::TelegramMedia);
+    }
+}
+
+#[cfg(test)]
+mod completion_contract_tests {
+    use super::{DownloadQueue, QueueStatus};
+    use crate::platforms::noop::NoopDownloader;
+    use std::sync::Arc;
+
+    fn enqueue_native_video(q: &mut DownloadQueue, id: u64) {
+        q.enqueue(
+            id,
+            format!("https://example.test/{id}"),
+            "generic_ytdlp".to_string(),
+            format!("Video {id}"),
+            "/tmp".to_string(),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            Arc::new(NoopDownloader::new()),
+            None,
+            false,
+            None,
+            None,
+            None,
+            None,
+            None,
+        );
+    }
+
+    #[test]
+    fn queue_empty_output_is_retryable_error() {
+        let mut q = DownloadQueue::new(1);
+        enqueue_native_video(&mut q, 42);
+
+        q.mark_complete(
+            42,
+            true,
+            None,
+            Some("/tmp/omniget-empty-output.mp4".to_string()),
+            Some(0),
+        );
+
+        let item = q.items.iter().find(|i| i.id == 42).unwrap();
+        match &item.status {
+            QueueStatus::Error { message, retryable } => {
+                assert!(*retryable);
+                assert!(message.contains("0 bytes") || message.contains("playable output"));
+            }
+            other => panic!("expected retryable error for empty output, got {other:?}"),
+        }
+        assert_ne!(item.percent, 100.0);
+    }
+
+    #[test]
+    fn protected_hls_saved_encrypted_becomes_needs_decryption() {
+        let mut q = DownloadQueue::new(1);
+        enqueue_native_video(&mut q, 43);
+
+        q.mark_needs_decryption(
+            43,
+            "Protected media was saved encrypted and needs decryption".to_string(),
+            Some("/tmp/protected.mp4".to_string()),
+            Some(4096),
+            "/tmp/protected.mp4.protection.json".to_string(),
+        );
+
+        let item = q.items.iter().find(|i| i.id == 43).unwrap();
+        match &item.status {
+            QueueStatus::NeedsDecryption {
+                message,
+                sidecar_path,
+            } => {
+                assert!(message.contains("decryption"));
+                assert_eq!(sidecar_path, "/tmp/protected.mp4.protection.json");
+            }
+            other => panic!("expected needs_decryption, got {other:?}"),
+        }
+        assert_eq!(
+            item.protection_sidecar_path.as_deref(),
+            Some("/tmp/protected.mp4.protection.json")
+        );
     }
 }

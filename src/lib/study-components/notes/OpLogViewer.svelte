@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from "$lib/i18n";
   import { notesUndoListOps, notesUndoLastOp, type OpSummary } from "$lib/notes-bridge";
 
   type Props = {
@@ -54,22 +55,22 @@
 
 <details class="op-log" ontoggle={onToggle}>
   <summary>
-    <span>Histórico de operações (op-log)</span>
+    <span>{$t("study.notes_oplogviewer.title")}</span>
     <span class="caret" aria-hidden="true">▸</span>
   </summary>
 
   <div class="body">
     <div class="actions">
       <button type="button" class="btn ghost sm" onclick={refresh} disabled={loading}>
-        {loading ? "Carregando…" : "Atualizar"}
+        {loading ? ($t("study.notes_oplogviewer.loading") as string) : ($t("study.notes_oplogviewer.refresh") as string)}
       </button>
-      <span class="hint">Últimas 50 operações. Você pode desfazer ops antigas, não só a última.</span>
+      <span class="hint">{$t("study.notes_oplogviewer.hint")}</span>
     </div>
 
     {#if !loaded && !loading}
-      <p class="muted">Expanda para carregar.</p>
+      <p class="muted">{$t("study.notes_oplogviewer.expand_to_load")}</p>
     {:else if ops.length === 0}
-      <p class="muted">Sem operações registradas ainda.</p>
+      <p class="muted">{$t("study.notes_oplogviewer.no_ops")}</p>
     {:else}
       <ul class="list">
         {#each ops as op (op.op_id)}
@@ -78,16 +79,16 @@
             <span class="when">{fmtTime(op.created_at)}</span>
             <span class="rows-count">{op.row_count} {op.row_count === 1 ? "row" : "rows"}</span>
             {#if op.undone}
-              <span class="badge undone">desfeito</span>
+              <span class="badge undone">{$t("study.notes_oplogviewer.undone")}</span>
             {/if}
             <button
               type="button"
               class="btn ghost sm"
               onclick={() => undoOp(op.op_id)}
               disabled={op.undone || busy === op.op_id}
-              title={op.undone ? "Já desfeito" : "Desfazer esta operação"}
+              title={op.undone ? ($t("study.notes_oplogviewer.already_undone") as string) : ($t("study.notes_oplogviewer.undo_this") as string)}
             >
-              {busy === op.op_id ? "…" : "Desfazer"}
+              {busy === op.op_id ? "…" : ($t("study.notes_oplogviewer.undo") as string)}
             </button>
           </li>
         {/each}

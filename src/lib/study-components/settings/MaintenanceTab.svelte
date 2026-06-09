@@ -8,6 +8,7 @@
     type VacuumResult,
     type ImportResult,
   } from "$lib/study-bridge";
+  import { t } from "$lib/i18n";
 
   type Props = {
     onToast: (kind: "ok" | "err", msg: string) => void;
@@ -35,7 +36,11 @@
       lastVacuum = r;
       onToast(
         "ok",
-        `Limpeza: ${r.seek_logs_deleted} logs, ${r.notifications_deleted} notificações, ${r.recents_deleted} recents`,
+        $t("study.settings_maintenancetab.vacuum_toast", {
+          logs: r.seek_logs_deleted,
+          notifications: r.notifications_deleted,
+          recents: r.recents_deleted,
+        }) as string,
       );
     } catch (e) {
       onToast("err", e instanceof Error ? e.message : String(e));
@@ -59,7 +64,7 @@
       a.click();
       document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(url), 1000);
-      onToast("ok", `Exportados ${data.courses.length} cursos`);
+      onToast("ok", $t("study.settings_maintenancetab.export_toast", { count: data.courses.length }) as string);
     } catch (e) {
       onToast("err", e instanceof Error ? e.message : String(e));
     } finally {
@@ -109,7 +114,12 @@
       lastImport = r;
       onToast(
         "ok",
-        `Importação ${r.mode}: ${r.imported} importados, ${r.skipped} pulados, ${r.missing} ausentes`,
+        $t("study.settings_maintenancetab.import_toast", {
+          mode: r.mode,
+          imported: r.imported,
+          skipped: r.skipped,
+          missing: r.missing,
+        }) as string,
       );
       importPreview = null;
       importDoubleConfirm = false;
@@ -134,17 +144,19 @@
   <article class="card">
     <header class="card-head">
       <div>
-        <h3>Limpeza</h3>
+        <h3>{$t("study.settings_maintenancetab.cleanup_title")}</h3>
         <p class="hint">
-          Apaga: seek logs com mais de 30 dias, notificações dispensadas com mais de 90 dias,
-          recents fora do top 50.
+          {$t("study.settings_maintenancetab.cleanup_hint")}
         </p>
       </div>
     </header>
     {#if lastVacuum}
       <p class="report">
-        Última: {lastVacuum.seek_logs_deleted} logs · {lastVacuum.notifications_deleted} notificações
-        · {lastVacuum.recents_deleted} recents
+        {$t("study.settings_maintenancetab.last_vacuum", {
+          logs: lastVacuum.seek_logs_deleted,
+          notifications: lastVacuum.notifications_deleted,
+          recents: lastVacuum.recents_deleted,
+        })}
       </p>
     {/if}
     <div class="actions">
@@ -154,7 +166,7 @@
         disabled={vacuumRunning}
         onclick={() => (vacuumConfirmOpen = true)}
       >
-        {vacuumRunning ? "Limpando…" : "Executar limpeza"}
+        {vacuumRunning ? $t("study.settings_maintenancetab.cleaning") : $t("study.settings_maintenancetab.run_cleanup")}
       </button>
     </div>
   </article>
@@ -162,10 +174,9 @@
   <article class="card">
     <header class="card-head">
       <div>
-        <h3>Exportar dados</h3>
+        <h3>{$t("study.settings_maintenancetab.export_title")}</h3>
         <p class="hint">
-          Salva um arquivo JSON com state de todos os cursos (progresso, watched, recents).
-          Útil pra backup ou troca de máquina.
+          {$t("study.settings_maintenancetab.export_hint")}
         </p>
       </div>
     </header>
@@ -176,7 +187,7 @@
         disabled={exporting}
         onclick={exportData}
       >
-        {exporting ? "Exportando…" : "Exportar agora"}
+        {exporting ? $t("study.settings_maintenancetab.exporting") : $t("study.settings_maintenancetab.export_now")}
       </button>
     </div>
   </article>
@@ -184,16 +195,20 @@
   <article class="card">
     <header class="card-head">
       <div>
-        <h3>Importar dados</h3>
+        <h3>{$t("study.settings_maintenancetab.import_title")}</h3>
         <p class="hint">
-          Carrega um backup JSON. Você escolhe o modo de mesclagem antes de aplicar.
+          {$t("study.settings_maintenancetab.import_hint")}
         </p>
       </div>
     </header>
     {#if lastImport}
       <p class="report">
-        Última: {lastImport.imported} importados · {lastImport.skipped} pulados · {lastImport.missing} ausentes
-        ({lastImport.mode})
+        {$t("study.settings_maintenancetab.last_import", {
+          imported: lastImport.imported,
+          skipped: lastImport.skipped,
+          missing: lastImport.missing,
+          mode: lastImport.mode,
+        })}
       </p>
     {/if}
     <div class="actions">
@@ -205,41 +220,41 @@
         style:display="none"
       />
       <button type="button" class="btn ghost" onclick={pickImport}>
-        Selecionar arquivo…
+        {$t("study.settings_maintenancetab.select_file")}
       </button>
     </div>
   </article>
 </section>
 
 {#if vacuumConfirmOpen}
-  <div class="modal-bg" role="dialog" aria-modal="true" aria-label="Confirmar limpeza">
-    <button type="button" class="bg-btn" aria-label="Fechar" onclick={() => (vacuumConfirmOpen = false)}></button>
+  <div class="modal-bg" role="dialog" aria-modal="true" aria-label={$t("study.settings_maintenancetab.confirm_cleanup_aria") as string}>
+    <button type="button" class="bg-btn" aria-label={$t("study.settings_maintenancetab.close") as string} onclick={() => (vacuumConfirmOpen = false)}></button>
     <div class="modal" role="document">
-      <h3>Executar limpeza?</h3>
-      <p>Os seguintes itens serão apagados permanentemente:</p>
+      <h3>{$t("study.settings_maintenancetab.run_cleanup_q")}</h3>
+      <p>{$t("study.settings_maintenancetab.permanently_deleted")}</p>
       <ul>
-        <li>Seek logs com mais de 30 dias</li>
-        <li>Notificações dispensadas com mais de 90 dias</li>
-        <li>Recents fora do top 50 mais usados</li>
+        <li>{$t("study.settings_maintenancetab.item_seek_logs")}</li>
+        <li>{$t("study.settings_maintenancetab.item_notifications")}</li>
+        <li>{$t("study.settings_maintenancetab.item_recents")}</li>
       </ul>
-      <p class="reassure">Não afeta progresso, notas ou bitfield de aulas vistas.</p>
+      <p class="reassure">{$t("study.settings_maintenancetab.reassure")}</p>
       <div class="modal-actions">
-        <button type="button" class="btn ghost" onclick={() => (vacuumConfirmOpen = false)}>Cancelar</button>
-        <button type="button" class="btn primary" onclick={runVacuum}>Confirmar</button>
+        <button type="button" class="btn ghost" onclick={() => (vacuumConfirmOpen = false)}>{$t("study.settings_maintenancetab.cancel")}</button>
+        <button type="button" class="btn primary" onclick={runVacuum}>{$t("study.settings_maintenancetab.confirm")}</button>
       </div>
     </div>
   </div>
 {/if}
 
 {#if importPreview}
-  <div class="modal-bg" role="dialog" aria-modal="true" aria-label="Confirmar importação">
-    <button type="button" class="bg-btn" aria-label="Fechar" onclick={cancelImport}></button>
+  <div class="modal-bg" role="dialog" aria-modal="true" aria-label={$t("study.settings_maintenancetab.confirm_import_aria") as string}>
+    <button type="button" class="bg-btn" aria-label={$t("study.settings_maintenancetab.close") as string} onclick={cancelImport}></button>
     <div class="modal" role="document">
-      <h3>Importar {importPreview.courses.length} {importPreview.courses.length === 1 ? "curso" : "cursos"}?</h3>
-      <p class="hint">Backup exportado em {fmtExportedAt(importPreview.exported_at)}</p>
+      <h3>{$t("study.settings_maintenancetab.import_count_q", { count: importPreview.courses.length })}</h3>
+      <p class="hint">{$t("study.settings_maintenancetab.backup_exported_at", { date: fmtExportedAt(importPreview.exported_at) })}</p>
 
       <fieldset class="modes">
-        <legend>Modo de mesclagem</legend>
+        <legend>{$t("study.settings_maintenancetab.merge_mode")}</legend>
         <label class="mode-row" class:selected={importMode === "skip"}>
           <input
             type="radio"
@@ -252,7 +267,7 @@
             }}
           />
           <span>
-            <strong>Skip</strong> — preserva state existente, só importa cursos sem state local
+            <strong>Skip</strong> — {$t("study.settings_maintenancetab.mode_skip")}
           </span>
         </label>
         <label class="mode-row recommended" class:selected={importMode === "merge"}>
@@ -267,7 +282,7 @@
             }}
           />
           <span>
-            <strong>Merge</strong> <span class="rec-tag">recomendado</span> — mantém o maior progresso entre local e backup
+            <strong>Merge</strong> <span class="rec-tag">{$t("study.settings_maintenancetab.recommended")}</span> — {$t("study.settings_maintenancetab.mode_merge")}
           </span>
         </label>
         <label class="mode-row danger" class:selected={importMode === "overwrite"}>
@@ -282,15 +297,14 @@
             }}
           />
           <span>
-            <strong>Overwrite</strong> — sobrescreve TODO state local com o do backup (irreversível)
+            <strong>Overwrite</strong> — {$t("study.settings_maintenancetab.mode_overwrite")}
           </span>
         </label>
       </fieldset>
 
       {#if importMode === "overwrite" && importDoubleConfirm}
         <div class="warning">
-          <strong>Tem certeza?</strong> Isso vai apagar progresso local que não está no backup.
-          Recomendamos exportar primeiro.
+          <strong>{$t("study.settings_maintenancetab.are_you_sure")}</strong> {$t("study.settings_maintenancetab.overwrite_warning")}
         </div>
       {/if}
 
@@ -305,13 +319,13 @@
           onclick={confirmImport}
         >
           {#if importing}
-            Importando…
+            {$t("study.settings_maintenancetab.importing")}
           {:else if importMode === "overwrite" && !importDoubleConfirm}
-            Avançar com Overwrite
+            {$t("study.settings_maintenancetab.proceed_overwrite")}
           {:else if importMode === "overwrite"}
-            Confirmar Overwrite
+            {$t("study.settings_maintenancetab.confirm_overwrite")}
           {:else}
-            Importar ({importMode})
+            {$t("study.settings_maintenancetab.import_with_mode", { mode: importMode })}
           {/if}
         </button>
       </div>

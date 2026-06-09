@@ -748,3 +748,198 @@ async fn download_aria2c() -> anyhow::Result<PathBuf> {
 
     Ok(aria2c_target)
 }
+
+// --- Udemy DRM toolchain: N_m3u8DL-RE + mp4decrypt (Bento4) ---
+
+/// Pinned Bento4 build (the bok.net binaries are versioned by build number and
+/// have no "latest" API; this build is verified-good across platforms).
+const BENTO4_BUILD: &str = "1-6-0-641";
+
+#[cfg(unix)]
+fn make_executable(path: &std::path::Path) {
+    use std::os::unix::fs::PermissionsExt;
+    let _ = std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o755));
+}
+#[cfg(not(unix))]
+fn make_executable(_path: &std::path::Path) {}
+
+#[cfg(target_os = "macos")]
+async fn dequarantine(path: &std::path::Path) {
+    let p = path.to_path_buf();
+    let _ = tokio::task::spawn_blocking(move || {
+        crate::core::process::std_command("xattr")
+            .args(["-d", "com.apple.quarantine"])
+            .arg(&p)
+            .output()
+    })
+    .await;
+}
+#[cfg(not(target_os = "macos"))]
+async fn dequarantine(_path: &std::path::Path) {}
+
+fn drm_http_client() -> anyhow::Result<reqwest::Client> {
+    Ok(crate::core::http_client::apply_global_proxy(reqwest::Client::builder())
+        .timeout(std::time::Duration::from_secs(300))
+        .build()?)
+}
+
+/// Ensure `N_m3u8DL-RE` is available, auto-downloading the latest GitHub release
+/// asset for this platform if missing.
+pub async fn ensure_n_m3u8dl_re() -> anyhow::Result<PathBuf> {
+    if let Some(path) = find_tool("N_m3u8DL-RE").await {
+        return Ok(path);
+    }
+    let bin_dir = managed_bin_dir().ok_or_else(|| anyhow!("Could not determine data directory"))?;
+    std::fs::create_dir_all(&bin_dir)?;
+    let target = bin_dir.join(bin_name("N_m3u8DL-RE"));
+    if target.exists() {
+        return Ok(target);
+    }
+
+    // Platform asset substring (must avoid musl/android/NT6 variants).
+    let plat = if cfg!(target_os = "windows") {
+        "win-x64"
+    } else if cfg!(target_os = "macos") {
+        if cfg!(target_arch = "aarch64") { "osx-arm64" } else { "osx-x64" }
+    } else if cfg!(target_arch = "aarch64") {
+        "linux-arm64"
+    } else {
+        "linux-x64"
+    };
+
+    let client = drm_http_client()?;
+    let release: serde_json::Value = client
+        .get("https://api.github.com/repos/nilaoda/N_m3u8DL-RE/releases/latest")
+        .header("User-Agent", "omniget")
+        .header("Accept", "application/vnd.github+json")
+        .send()
+        .await?
+        .error_for_status()?
+        .json()
+        .await?;
+
+    let asset = release["assets"]
+        .as_array()
+        .and_then(|assets| {
+            assets.iter().find(|a| {
+                let name = a["name"].as_str().unwrap_or("");
+                name.contains(plat) && !name.contains("musl")
+            })
+        })
+        .ok_or_else(|| anyhow!("No N_m3u8DL-RE release asset for platform '{plat}'"))?;
+
+    let url = asset["browser_download_url"]
+        .as_str()
+        .ok_or_else(|| anyhow!("N_m3u8DL-RE asset has no download URL"))?
+        .to_string();
+    let asset_name = asset["name"].as_str().unwrap_or("").to_string();
+
+    tracing::info!("Downloading N_m3u8DL-RE from {}", url);
+    let bytes = client.get(&url).send().await?.error_for_status()?.bytes().await?.to_vec();
+
+    let member = bin_name("N_m3u8DL-RE");
+    let target_clone = target.clone();
+    let is_zip = asset_name.ends_with(".zip");
+    tokio::task::spawn_blocking(move || -> anyhow::Result<()> {
+        if is_zip {
+            extract_member_from_zip(&bytes, &member, &target_clone)
+        } else {
+            extract_member_from_tar_gz(&bytes, &member, &target_clone)
+        }
+    })
+    .await
+    .map_err(|e| anyhow!("extract task failed: {e}"))??;
+
+    if !target.exists() {
+        return Err(anyhow!("N_m3u8DL-RE binary not found after extraction"));
+    }
+    make_executable(&target);
+    dequarantine(&target).await;
+    tracing::info!("N_m3u8DL-RE installed to {}", target.display());
+    Ok(target)
+}
+
+/// Ensure `mp4decrypt` (Bento4) is available, auto-downloading a pinned Bento4
+/// build for this platform if missing.
+pub async fn ensure_mp4decrypt() -> anyhow::Result<PathBuf> {
+    if let Some(path) = find_tool("mp4decrypt").await {
+        return Ok(path);
+    }
+    let bin_dir = managed_bin_dir().ok_or_else(|| anyhow!("Could not determine data directory"))?;
+    std::fs::create_dir_all(&bin_dir)?;
+    let target = bin_dir.join(bin_name("mp4decrypt"));
+    if target.exists() {
+        return Ok(target);
+    }
+
+    let plat = if cfg!(target_os = "windows") {
+        Some("x86_64-microsoft-win32")
+    } else if cfg!(target_os = "macos") {
+        Some("universal-apple-macosx")
+    } else if cfg!(target_arch = "x86_64") {
+        Some("x86_64-unknown-linux")
+    } else {
+        None
+    };
+    let plat = plat.ok_or_else(|| {
+        anyhow!("No prebuilt Bento4 mp4decrypt for this platform — install it via your package manager (e.g. `brew install bento4`)")
+    })?;
+
+    let url = format!(
+        "https://www.bok.net/Bento4/binaries/Bento4-SDK-{BENTO4_BUILD}.{plat}.zip"
+    );
+    tracing::info!("Downloading Bento4 (mp4decrypt) from {}", url);
+    let client = drm_http_client()?;
+    let bytes = client.get(&url).send().await?.error_for_status()?.bytes().await?.to_vec();
+
+    // The zip nests files under `Bento4-SDK-.../bin/mp4decrypt`.
+    let member = format!("bin/{}", bin_name("mp4decrypt"));
+    let target_clone = target.clone();
+    tokio::task::spawn_blocking(move || extract_member_from_zip(&bytes, &member, &target_clone))
+        .await
+        .map_err(|e| anyhow!("extract task failed: {e}"))??;
+
+    if !target.exists() {
+        return Err(anyhow!("mp4decrypt binary not found after extraction"));
+    }
+    make_executable(&target);
+    dequarantine(&target).await;
+    tracing::info!("mp4decrypt installed to {}", target.display());
+    Ok(target)
+}
+
+/// Extract the first archive member whose path ends with `member_suffix` into
+/// `dest` (a zip blob held in memory).
+fn extract_member_from_zip(data: &[u8], member_suffix: &str, dest: &std::path::Path) -> anyhow::Result<()> {
+    let cursor = std::io::Cursor::new(data);
+    let mut archive = zip::ZipArchive::new(cursor).map_err(|e| anyhow!("open zip: {e}"))?;
+    for i in 0..archive.len() {
+        let mut entry = archive.by_index(i).map_err(|e| anyhow!("zip entry: {e}"))?;
+        let name = entry.name().replace('\\', "/");
+        if name.ends_with(member_suffix) || name.ends_with(&format!("/{member_suffix}")) {
+            let mut buf = Vec::new();
+            std::io::Read::read_to_end(&mut entry, &mut buf)?;
+            std::fs::write(dest, &buf)?;
+            return Ok(());
+        }
+    }
+    Err(anyhow!("member '{member_suffix}' not found in zip"))
+}
+
+/// Extract the first tar.gz member whose filename equals `member_name` into `dest`.
+fn extract_member_from_tar_gz(data: &[u8], member_name: &str, dest: &std::path::Path) -> anyhow::Result<()> {
+    let decoder = flate2::read::GzDecoder::new(std::io::Cursor::new(data));
+    let mut archive = tar::Archive::new(decoder);
+    for entry in archive.entries().map_err(|e| anyhow!("tar entries: {e}"))? {
+        let mut entry = entry.map_err(|e| anyhow!("tar entry: {e}"))?;
+        let path = entry.path().map_err(|e| anyhow!("tar path: {e}"))?;
+        let fname = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+        if fname == member_name {
+            let mut buf = Vec::new();
+            std::io::Read::read_to_end(&mut entry, &mut buf)?;
+            std::fs::write(dest, &buf)?;
+            return Ok(());
+        }
+    }
+    Err(anyhow!("member '{member_name}' not found in tar.gz"))
+}

@@ -61,6 +61,9 @@ pub struct DownloadOptions {
     pub torrent_auto_trackers: bool,
     pub torrent_upnp: bool,
     pub save_encrypted_hls: bool,
+    /// Path to the user's Widevine `.wvd` device file for Udemy DRM decryption.
+    /// `None` lets the CDM helper search its default locations.
+    pub widevine_device_path: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
