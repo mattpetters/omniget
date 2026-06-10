@@ -308,6 +308,8 @@ impl PlatformDownloader for BlueskyDownloader {
                     file_size_bytes: result.file_size,
                     duration_seconds: 0.0,
                     torrent_id: None,
+                    protected_media: result.protected_media,
+                    protection_sidecar_path: result.protection_sidecar_path,
                 })
             }
             MediaType::Photo | MediaType::Carousel => {
@@ -349,6 +351,8 @@ impl PlatformDownloader for BlueskyDownloader {
                     file_size_bytes: total_bytes,
                     duration_seconds: 0.0,
                     torrent_id: None,
+                    protected_media: None,
+                    protection_sidecar_path: None,
                 })
             }
             MediaType::Gif => {
@@ -375,6 +379,8 @@ impl PlatformDownloader for BlueskyDownloader {
                     file_size_bytes: bytes,
                     duration_seconds: 0.0,
                     torrent_id: None,
+                    protected_media: None,
+                    protection_sidecar_path: None,
                 })
             }
             _ => Err(anyhow!("Unsupported media type for download")),

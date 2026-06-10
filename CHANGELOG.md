@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+<!-- git-changelog-on-commit: 35d45f66909ee3c264129720d7b8ea917410f235 -->
+### Changed
+- Updated plan.md,src-tauri/omniget-core/src/core/dependencies.rs src-tauri/omniget-core/src/core/direct_downloader.rs,src-tauri/omniget-core/src/core/hls_downloader.rs src-tauri/omniget-core/src/core/http_fetcher.rs,src-tauri/omniget-core/src/core/udemy/api.rs src-tauri/omniget-core/src/core/udemy/drm.rs,src-tauri/omniget-core/src/core/ytdlp.rs based on the staged diff so the commit records the current implementation changes.
+
 <!-- git-changelog-on-commit: 32cc2bf0665ccc01a87a954bb8e36e1cd5719027 -->
 ### Changed
 - Updated plan.md,src-tauri/omniget-core/src/core/udemy/widevine_cdm.py src-tauri/omniget-core/src/core/ytdlp.rs,src-tauri/src/platforms/udemy/mod.rs src/lib/stores/download-store.svelte.ts based on the staged diff so the commit records the current implementation changes.

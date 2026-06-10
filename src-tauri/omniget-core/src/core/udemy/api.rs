@@ -208,18 +208,29 @@ pub fn select_hls(sources: &[MediaSource]) -> Option<String> {
 
 /// Select the best non-DRM MP4 source: exact quality match, else highest.
 /// Returns `(url, quality_label)`.
-pub fn select_best_mp4(sources: &[MediaSource], preferred_quality: &str) -> Option<(String, String)> {
+pub fn select_best_mp4(
+    sources: &[MediaSource],
+    preferred_quality: &str,
+) -> Option<(String, String)> {
     let target: Option<u32> = preferred_quality.parse().ok();
-    let mp4: Vec<&MediaSource> = sources.iter().filter(|s| s.media_type == "video/mp4").collect();
+    let mp4: Vec<&MediaSource> = sources
+        .iter()
+        .filter(|s| s.media_type == "video/mp4")
+        .collect();
     if mp4.is_empty() {
         return None;
     }
     if let Some(target_q) = target {
-        if let Some(exact) = mp4.iter().find(|s| s.label.parse::<u32>().unwrap_or(0) == target_q) {
+        if let Some(exact) = mp4
+            .iter()
+            .find(|s| s.label.parse::<u32>().unwrap_or(0) == target_q)
+        {
             return Some((exact.src.clone(), exact.label.clone()));
         }
     }
-    let best = mp4.iter().max_by_key(|s| s.label.parse::<u32>().unwrap_or(0))?;
+    let best = mp4
+        .iter()
+        .max_by_key(|s| s.label.parse::<u32>().unwrap_or(0))?;
     Some((best.src.clone(), best.label.clone()))
 }
 

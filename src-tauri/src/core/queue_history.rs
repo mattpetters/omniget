@@ -23,12 +23,16 @@ pub struct HistoryEntry {
     pub total_bytes: Option<u64>,
     pub success: bool,
     #[serde(default)]
+    pub status: String,
+    #[serde(default)]
     pub error: Option<String>,
     pub completed_at: i64,
     #[serde(default)]
     pub thumbnail_url: Option<String>,
     #[serde(default)]
     pub kind: Option<QueueKind>,
+    #[serde(default)]
+    pub protection_sidecar_path: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -51,20 +55,58 @@ fn schema(conn: &Connection) -> rusqlite::Result<()> {
             error TEXT,
             completed_at INTEGER NOT NULL,
             thumbnail_url TEXT,
-            kind TEXT
+            kind TEXT,
+            status TEXT,
+            protection_sidecar_path TEXT
         );
         CREATE INDEX IF NOT EXISTS idx_history_completed
             ON history (completed_at DESC, id DESC);",
-    )
+    )?;
+    ensure_history_column(conn, "status", "TEXT")?;
+    ensure_history_column(conn, "protection_sidecar_path", "TEXT")?;
+    Ok(())
+}
+
+fn ensure_history_column(
+    conn: &Connection,
+    column: &str,
+    definition: &str,
+) -> rusqlite::Result<()> {
+    let mut stmt = conn.prepare("PRAGMA table_info(history)")?;
+    let mut rows = stmt.query([])?;
+    while let Some(row) = rows.next()? {
+        let name: String = row.get(1)?;
+        if name == column {
+            return Ok(());
+        }
+    }
+    conn.execute(
+        &format!("ALTER TABLE history ADD COLUMN {column} {definition}"),
+        [],
+    )?;
+    Ok(())
+}
+
+fn legacy_status(success: bool) -> &'static str {
+    if success {
+        "complete"
+    } else {
+        "error"
+    }
 }
 
 fn db_upsert(conn: &Connection, e: &HistoryEntry) -> rusqlite::Result<()> {
     let kind = e.kind.as_ref().and_then(|k| serde_json::to_string(k).ok());
+    let status = if e.status.is_empty() {
+        legacy_status(e.success)
+    } else {
+        e.status.as_str()
+    };
     conn.execute(
         "INSERT OR REPLACE INTO history
             (id, url, platform, title, file_path, file_size_bytes, total_bytes,
-             success, error, completed_at, thumbnail_url, kind)
-         VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12)",
+             success, error, completed_at, thumbnail_url, kind, status, protection_sidecar_path)
+         VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14)",
         params![
             e.id as i64,
             e.url,
@@ -78,6 +120,8 @@ fn db_upsert(conn: &Connection, e: &HistoryEntry) -> rusqlite::Result<()> {
             e.completed_at,
             e.thumbnail_url,
             kind,
+            status,
+            e.protection_sidecar_path,
         ],
     )?;
     conn.execute(
@@ -94,6 +138,7 @@ fn row_to_entry(row: &rusqlite::Row) -> rusqlite::Result<HistoryEntry> {
     let total: Option<i64> = row.get(6)?;
     let success: i64 = row.get(7)?;
     let kind_text: Option<String> = row.get(11)?;
+    let status: Option<String> = row.get(12)?;
     Ok(HistoryEntry {
         id: id as u64,
         url: row.get(1)?,
@@ -103,17 +148,19 @@ fn row_to_entry(row: &rusqlite::Row) -> rusqlite::Result<HistoryEntry> {
         file_size_bytes: file_size.map(|v| v as u64),
         total_bytes: total.map(|v| v as u64),
         success: success != 0,
+        status: status.unwrap_or_else(|| legacy_status(success != 0).to_string()),
         error: row.get(8)?,
         completed_at: row.get(9)?,
         thumbnail_url: row.get(10)?,
         kind: kind_text.and_then(|t| serde_json::from_str(&t).ok()),
+        protection_sidecar_path: row.get(13)?,
     })
 }
 
 fn db_list(conn: &Connection) -> rusqlite::Result<Vec<HistoryEntry>> {
     let mut stmt = conn.prepare(
         "SELECT id, url, platform, title, file_path, file_size_bytes, total_bytes,
-                success, error, completed_at, thumbnail_url, kind
+                success, error, completed_at, thumbnail_url, kind, status, protection_sidecar_path
          FROM history ORDER BY completed_at DESC, id DESC",
     )?;
     let rows = stmt.query_map([], row_to_entry)?;
@@ -195,10 +242,12 @@ mod tests {
             file_size_bytes: Some(1234),
             total_bytes: Some(2000),
             success: true,
+            status: "complete".into(),
             error: None,
             completed_at,
             thumbnail_url: None,
             kind: Some(QueueKind::Video),
+            protection_sidecar_path: None,
         }
     }
 

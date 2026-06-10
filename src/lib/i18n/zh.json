@@ -96,6 +96,7 @@
       "paused": "已暂停",
       "complete": "已完成",
       "error": "错误",
+      "needs_decryption": "需要解密",
       "seeding": "做种中"
     },
     "section_queued": "排队中",

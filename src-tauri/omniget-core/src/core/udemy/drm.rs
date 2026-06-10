@@ -195,7 +195,10 @@ async fn download_encrypted_hls(
         .stderr(std::process::Stdio::piped());
 
     let mut child = cmd.spawn().with_context(|| {
-        format!("Failed to run N_m3u8DL-RE ({}) — is it installed?", tool.display())
+        format!(
+            "Failed to run N_m3u8DL-RE ({}) — is it installed?",
+            tool.display()
+        )
     })?;
 
     let stdout = child.stdout.take();
@@ -250,7 +253,12 @@ async fn download_encrypted_hls(
     let stderr_out = stderr_task.await.unwrap_or_default();
 
     if !status.success() {
-        let tail = stderr_out.lines().rev().take(3).collect::<Vec<_>>().join(" | ");
+        let tail = stderr_out
+            .lines()
+            .rev()
+            .take(3)
+            .collect::<Vec<_>>()
+            .join(" | ");
         bail!("N_m3u8DL-RE failed (exit {status}): {tail}");
     }
 
@@ -327,7 +335,10 @@ async fn decrypt_with_mp4decrypt(
     cmd.arg(enc).arg(dec);
 
     let status = cmd.status().await.with_context(|| {
-        format!("Failed to run mp4decrypt ({}) — is Bento4 installed?", mp4decrypt.display())
+        format!(
+            "Failed to run mp4decrypt ({}) — is Bento4 installed?",
+            mp4decrypt.display()
+        )
     })?;
     if !status.success() {
         bail!("mp4decrypt failed decrypting: {}", enc.display());
@@ -350,7 +361,10 @@ async fn mux_ffmpeg(
     }
     cmd.args(["-c", "copy", "-f", "mp4"]).arg(output);
 
-    let status = cmd.status().await.context("Failed to run ffmpeg for mux/remux")?;
+    let status = cmd
+        .status()
+        .await
+        .context("Failed to run ffmpeg for mux/remux")?;
     if !status.success() {
         bail!("ffmpeg mux failed for: {}", video.display());
     }
@@ -418,7 +432,10 @@ mod tests {
 
     #[test]
     fn parses_percent_token() {
-        assert_eq!(parse_percent("Vid 1280x720 | 2535 Kbps  45.30%"), Some(45.30));
+        assert_eq!(
+            parse_percent("Vid 1280x720 | 2535 Kbps  45.30%"),
+            Some(45.30)
+        );
         assert_eq!(parse_percent("100.00%"), Some(100.0));
         assert_eq!(parse_percent("no percent here"), None);
         assert_eq!(parse_percent("999% bogus"), None);

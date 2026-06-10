@@ -274,7 +274,7 @@
     onclick={(e) => { if (e.target === e.currentTarget) close(); }}
     onkeydown={(e) => { if (e.key === "Escape") close(); }}
   >
-    <aside class="drawer" role="dialog" aria-modal="true" aria-label="Canal: {chat.title}">
+    <div class="drawer" role="dialog" aria-modal="true" aria-label="Canal: {chat.title}" tabindex="-1">
       <header class="drawer-header">
         <div class="header-info">
           <div class="header-avatar">{chat.title.charAt(0).toUpperCase()}</div>
@@ -300,7 +300,7 @@
       </header>
 
       {#if !isPrivate}
-        <nav class="drawer-tabs" role="tablist">
+        <div class="drawer-tabs" role="tablist">
           <button
             type="button"
             class="tab-btn"
@@ -321,7 +321,7 @@
           >
             Membros
           </button>
-        </nav>
+        </div>
       {/if}
 
       <div class="drawer-body">
@@ -462,7 +462,7 @@
           </section>
         {/if}
       </div>
-    </aside>
+    </div>
   </div>
 {/if}
 

@@ -105,7 +105,7 @@
     }
   }
 
-  let editingValue = $state(source);
+  let editingValue = $state("");
 
   $effect(() => {
     editingValue = source;

@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+use crate::core::hls_downloader::ProtectedMediaInfo;
 use crate::platforms::Platform;
 use tokio_util::sync::CancellationToken;
 
@@ -91,6 +92,10 @@ pub struct DownloadResult {
     /// Torrent ID within the shared librqbit session (magnet downloads only).
     #[serde(default)]
     pub torrent_id: Option<usize>,
+    #[serde(default)]
+    pub protected_media: Option<ProtectedMediaInfo>,
+    #[serde(default)]
+    pub protection_sidecar_path: Option<PathBuf>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

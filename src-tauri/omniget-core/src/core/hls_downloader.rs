@@ -7,7 +7,7 @@ use std::time::Duration;
 use futures::stream::{self, StreamExt};
 use m3u8_rs::{parse_master_playlist, parse_media_playlist, MasterPlaylist, VariantStream};
 use reqwest::Client;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc::{self, UnboundedSender};
 use tokio::sync::Semaphore;
 use tokio_util::sync::CancellationToken;
@@ -29,16 +29,16 @@ pub enum ProtectedHlsPolicy {
     SaveEncrypted,
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ProtectedMediaInfo {
-    pub marker: &'static str,
+    pub marker: String,
     pub encrypted: bool,
     pub encryption_method: String,
     pub source_url: String,
     pub key_uri: Option<String>,
     pub key_format: Option<String>,
-    pub decryption_status: &'static str,
-    pub note: &'static str,
+    pub decryption_status: String,
+    pub note: String,
 }
 
 pub struct HlsDownloader {
@@ -352,6 +352,10 @@ impl HlsDownloader {
         std::fs::rename(&part_path, &output)?;
 
         let file_size = std::fs::metadata(&output)?.len();
+        if file_size == 0 && protected_media.is_none() {
+            let _ = std::fs::remove_file(&output);
+            anyhow::bail!("HLS download produced no data (0 bytes)");
+        }
         let protection_sidecar_path = if let Some(ref protected) = protected_media {
             Some(write_protection_sidecar(&output, protected)?)
         } else {
@@ -401,14 +405,14 @@ impl HlsDownloader {
                         return Ok(EncryptionDecision {
                             aes128: None,
                             protected_media: Some(ProtectedMediaInfo {
-                                marker: "omniget.protected_hls.v1",
+                                marker: "omniget.protected_hls.v1".to_string(),
                                 encrypted: true,
                                 encryption_method: "SAMPLE-AES".to_string(),
                                 source_url: m3u8_url.to_string(),
                                 key_uri: key.uri.clone(),
                                 key_format: key.keyformat.clone(),
-                                decryption_status: "not_decrypted",
-                                note: "Saved encrypted without built-in decryption. If future decryption support is added, this file is eligible once the rights holder grants a valid key.",
+                                decryption_status: "not_decrypted".to_string(),
+                                note: "Saved encrypted without built-in decryption. If future decryption support is added, this file is eligible once the rights holder grants a valid key.".to_string(),
                             }),
                         });
                     }

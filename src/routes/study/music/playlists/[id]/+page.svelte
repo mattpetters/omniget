@@ -275,7 +275,9 @@
             onblur={saveName}
           />
         {:else}
-          <h1 onclick={startEditName} title={$t("study.music.click_to_rename") as string}>{detail.name}</h1>
+          <button type="button" class="title-display" onclick={startEditName} title={$t("study.music.click_to_rename") as string}>
+            {detail.name}
+          </button>
         {/if}
         <div class="info">
           <span>{detail.track_count} faixa(s)</span>
@@ -484,16 +486,21 @@
   }
   .meta { display: flex; flex-direction: column; gap: 10px; min-width: 0; flex: 1; }
   .eyebrow { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--tertiary); }
-  .meta h1 {
+  .title-display {
     margin: 0;
+    padding: 0;
     font-size: clamp(28px, 4.5vw, 56px);
     font-weight: 800;
     letter-spacing: -0.02em;
     color: var(--secondary);
+    background: transparent;
+    border: 0;
+    font-family: inherit;
+    text-align: left;
     cursor: text;
     overflow-wrap: anywhere;
   }
-  .meta h1:hover { color: var(--accent); }
+  .title-display:hover { color: var(--accent); }
   .title-edit {
     margin: 0;
     font-size: clamp(28px, 4.5vw, 56px);

@@ -96,6 +96,7 @@
       "paused": "In pausa",
       "complete": "Completato",
       "error": "Errore",
+      "needs_decryption": "Richiede decrittazione",
       "seeding": "In seeding"
     },
     "section_queued": "In coda",

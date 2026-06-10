@@ -79,6 +79,7 @@ pub async fn enqueue_external_inner(
         total_bytes: args.total_bytes,
         file_path: Some(initial_path),
         file_size_bytes: args.total_bytes,
+        protection_sidecar_path: None,
         file_count: None,
         media_info: None,
         downloader: Arc::new(NoopDownloader::new()),
@@ -190,6 +191,80 @@ pub struct ReportCompleteArgs {
     pub file_path: Option<PathBuf>,
     pub error: Option<String>,
     pub file_size_bytes: Option<u64>,
+    pub decryption_status: Option<String>,
+    pub protection_sidecar_path: Option<PathBuf>,
+}
+
+fn apply_report_complete(it: &mut QueueItem, args: &ReportCompleteArgs) -> Result<(), String> {
+    if it.id != args.queue_id {
+        return Err(format!("queue_id {} not found", args.queue_id));
+    }
+
+    let sidecar_path = args
+        .protection_sidecar_path
+        .as_ref()
+        .map(|p| p.to_string_lossy().to_string());
+    let needs_decryption = args.success
+        && sidecar_path.is_some()
+        && args
+            .decryption_status
+            .as_deref()
+            .map(|s| s == "not_decrypted" || s == "needs_decryption")
+            .unwrap_or(true);
+
+    if needs_decryption {
+        if let Some(ref p) = args.file_path {
+            it.file_path = Some(p.to_string_lossy().to_string());
+        }
+        if let Some(sz) = args.file_size_bytes {
+            it.file_size_bytes = Some(sz);
+            it.downloaded_bytes = sz;
+        }
+        let sidecar_path = sidecar_path.unwrap_or_default();
+        it.protection_sidecar_path = Some(sidecar_path.clone());
+        it.status = QueueStatus::NeedsDecryption {
+            message: crate::core::queue::NEEDS_DECRYPTION_MESSAGE.to_string(),
+            sidecar_path,
+        };
+        it.speed_bytes_per_sec = 0.0;
+        it.eta_seconds = None;
+        return Ok(());
+    }
+
+    let empty_success = args.success
+        && crate::core::queue::successful_output_is_empty(
+            args.file_path.as_deref(),
+            args.file_size_bytes,
+        );
+
+    if args.success && !empty_success {
+        it.percent = 100.0;
+        if let Some(ref p) = args.file_path {
+            it.file_path = Some(p.to_string_lossy().to_string());
+        }
+        if let Some(sz) = args.file_size_bytes {
+            it.file_size_bytes = Some(sz);
+            it.downloaded_bytes = sz;
+        }
+        it.protection_sidecar_path = None;
+        it.status = QueueStatus::Complete { success: true };
+    } else {
+        let msg = if empty_success {
+            crate::core::queue::EMPTY_DOWNLOAD_ERROR.to_string()
+        } else {
+            args.error
+                .clone()
+                .unwrap_or_else(|| "Unknown error".to_string())
+        };
+        let retryable = crate::core::queue::is_retryable_error_message(&msg);
+        it.status = QueueStatus::Error {
+            message: msg,
+            retryable,
+        };
+    }
+    it.speed_bytes_per_sec = 0.0;
+    it.eta_seconds = None;
+    Ok(())
 }
 
 pub async fn report_complete_inner(
@@ -205,26 +280,7 @@ pub async fn report_complete_inner(
                 if !it.external {
                     return Err(format!("queue_id {} is not external", args.queue_id));
                 }
-                if args.success {
-                    it.percent = 100.0;
-                    if let Some(ref p) = args.file_path {
-                        it.file_path = Some(p.to_string_lossy().to_string());
-                    }
-                    if let Some(sz) = args.file_size_bytes {
-                        it.file_size_bytes = Some(sz);
-                    }
-                    it.status = QueueStatus::Complete { success: true };
-                } else {
-                    let msg = args
-                        .error
-                        .clone()
-                        .unwrap_or_else(|| "Unknown error".to_string());
-                    let retryable = crate::core::queue::is_retryable_error_message(&msg);
-                    it.status = QueueStatus::Error {
-                        message: msg,
-                        retryable,
-                    };
-                }
+                apply_report_complete(it, &args)?;
                 Some(q.get_state())
             }
             None => None,
@@ -357,6 +413,7 @@ mod tests {
             total_bytes: None,
             file_path: None,
             file_size_bytes: None,
+            protection_sidecar_path: None,
             file_count: None,
             media_info: None,
             downloader: Arc::new(NoopDownloader::new()),

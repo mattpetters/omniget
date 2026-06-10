@@ -254,11 +254,6 @@
     flex-direction: column;
     gap: 1px;
   }
-  .empty {
-    padding: 64px 24px;
-    text-align: center;
-    color: rgba(255, 255, 255, 0.5);
-  }
   .skel-row {
     display: grid;
     grid-template-columns: 36px 1fr auto;
