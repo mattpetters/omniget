@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
+  import { tick } from "svelte";
   import { t } from "$lib/i18n";
   import { showToast } from "$lib/stores/toast-store.svelte";
   import {
@@ -18,6 +19,7 @@
   let newTitle = $state("");
   let newDescription = $state("");
   let formOpen = $state(false);
+  let titleInput = $state<HTMLInputElement | null>(null);
 
   async function reload() {
     loading = true;
@@ -61,6 +63,11 @@
 
   $effect(() => {
     void reload();
+  });
+
+  $effect(() => {
+    if (!formOpen) return;
+    tick().then(() => titleInput?.focus());
   });
 </script>
 
@@ -112,10 +119,10 @@
       <label>
         <span>{$t("study.music.my_playlists_form_name")}</span>
         <input
+          bind:this={titleInput}
           bind:value={newTitle}
           type="text"
           required
-          autofocus
           maxlength="120"
           placeholder={$t("study.music.my_playlists_form_name_placeholder")}
         />

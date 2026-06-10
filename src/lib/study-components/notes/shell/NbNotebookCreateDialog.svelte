@@ -21,7 +21,6 @@
     onClose: () => void;
   };
 
-  // svelte-ignore state_referenced_locally
   let {
     open,
     initialName = "",
@@ -33,9 +32,9 @@
     onClose,
   }: Props = $props();
 
-  let name = $state(initialName);
-  let icon = $state<string | null>(initialIcon);
-  let color = $state<string | null>(initialColor);
+  let name = $state("");
+  let icon = $state<string | null>(null);
+  let color = $state<string | null>(null);
   let inputRef = $state<HTMLInputElement | null>(null);
 
   function snapshotProps() {

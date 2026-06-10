@@ -174,6 +174,8 @@ async fn api_engine_download(
             .and_then(|i| i.duration_seconds)
             .unwrap_or(0.0),
         torrent_id: None,
+        protected_media: None,
+        protection_sidecar_path: None,
     })
 }
 

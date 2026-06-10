@@ -170,6 +170,7 @@
 
     {#if sourcePath && videoSrc}
       <div class="player-wrap">
+        <!-- svelte-ignore a11y_media_has_caption -->
         <video
           bind:this={videoEl}
           src={videoSrc}

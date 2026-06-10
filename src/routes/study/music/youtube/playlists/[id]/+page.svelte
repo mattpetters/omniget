@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import { goto } from "$app/navigation";
+  import { tick } from "svelte";
   import { t } from "$lib/i18n";
   import { showToast } from "$lib/stores/toast-store.svelte";
   import {
@@ -31,6 +32,7 @@
 
   let renaming = $state(false);
   let renameValue = $state("");
+  let renameInput = $state<HTMLInputElement | null>(null);
 
   let confirmingDelete = $state(false);
   let pendingDelete = $state(false);
@@ -40,6 +42,7 @@
   let addResults = $state<YoutubeSearchVideoItem[]>([]);
   let addLoading = $state(false);
   let addTimer: ReturnType<typeof setTimeout> | null = null;
+  let addSearchInput = $state<HTMLInputElement | null>(null);
 
   type RowItem = YoutubeUserPlaylistItem & { id: string };
 
@@ -101,6 +104,16 @@
     renameValue = detail.summary.title;
     renaming = true;
   }
+
+  $effect(() => {
+    if (!renaming) return;
+    tick().then(() => renameInput?.focus());
+  });
+
+  $effect(() => {
+    if (!addOpen) return;
+    tick().then(() => addSearchInput?.focus());
+  });
 
   async function commitRename() {
     if (!detail || !renaming) return;
@@ -294,6 +307,7 @@
       <div class="title-overlay">
         {#if renaming}
           <input
+            bind:this={renameInput}
             class="title-input"
             type="text"
             bind:value={renameValue}
@@ -303,7 +317,6 @@
               if (e.key === "Enter") { e.preventDefault(); void commitRename(); }
               else if (e.key === "Escape") cancelRename();
             }}
-            autofocus
             maxlength="120"
             aria-label={$t("study.music.my_playlists_rename_aria")}
           />
@@ -389,11 +402,11 @@
         <button type="button" class="close" onclick={closeAdd} aria-label={$t("study.music.add_to_playlist_close")}>×</button>
       </header>
       <input
+        bind:this={addSearchInput}
         type="text"
         placeholder={$t("study.music.add_to_playlist_search_placeholder")}
         bind:value={addQuery}
         oninput={scheduleAddSearch}
-        autofocus
       />
       {#if addLoading}
         <YoutubeSkeleton kind="row" count={4} />

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { t } from "$lib/i18n";
 
-  type CardDownloadStatus = "idle" | "downloading" | "complete" | "error";
+  type CardDownloadStatus = "idle" | "downloading" | "complete" | "error" | "needs_decryption";
 
   type CourseCardProps = {
     name: string;
@@ -23,7 +23,7 @@
     onDownload,
   }: CourseCardProps = $props();
 
-  let isDisabled = $derived(downloadStatus === "complete");
+  let isDisabled = $derived(downloadStatus === "complete" || downloadStatus === "needs_decryption");
 
   function handleClick() {
     if (isDisabled) return;
@@ -124,6 +124,23 @@
           <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
         </svg>
         {$t("hotmart.download_retry")}
+      </button>
+    {:else if downloadStatus === "needs_decryption"}
+      <button class="button elevated card-download status-needs-decryption" disabled>
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect x="3" y="11" width="18" height="10" rx="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+        {$t("downloads.status.needs_decryption")}
       </button>
     {:else}
       <button class="button elevated card-download" onclick={handleClick}>
@@ -276,20 +293,9 @@
     color: #fff;
   }
 
-  .btn-spinner {
-    width: 14px;
-    height: 14px;
-    border: 2px solid var(--input-border);
-    border-top-color: var(--blue);
-    border-radius: 50%;
-    animation: spin 0.6s linear infinite;
-    flex-shrink: 0;
-  }
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
+  .status-needs-decryption {
+    background: var(--orange);
+    color: #000;
   }
 
   .mini-progress-track {

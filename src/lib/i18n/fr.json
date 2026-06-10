@@ -96,6 +96,7 @@
       "paused": "En pause",
       "complete": "Terminé",
       "error": "Erreur",
+      "needs_decryption": "Déchiffrement requis",
       "seeding": "En partage"
     },
     "section_queued": "En file d'attente",

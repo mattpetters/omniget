@@ -178,7 +178,7 @@
 {/if}
 
 {#if drawerOpen && hasJobs}
-  <aside class="drawer" role="dialog" aria-label="Downloads">
+  <div class="drawer" role="dialog" aria-label="Downloads" tabindex="-1">
     <header class="drawer-head">
       <span class="drawer-title">
         Downloads <span class="muted">({jobs.length})</span>
@@ -291,7 +291,7 @@
         </div>
       {/each}
     </div>
-  </aside>
+  </div>
 {/if}
 
 <style>

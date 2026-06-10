@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from "svelte";
   import { showToast } from "$lib/stores/toast-store.svelte";
   import {
     telegramGetSelf,
@@ -24,10 +25,12 @@
   let saveOpen = $state(false);
   let saveLabel = $state("");
   let saveBusy = $state(false);
+  let saveInput = $state<HTMLInputElement | null>(null);
 
   let renameId = $state<string | null>(null);
   let renameLabel = $state("");
   let renameBusy = $state(false);
+  let renameInput = $state<HTMLInputElement | null>(null);
 
   let confirmDeleteId = $state<string | null>(null);
   let confirmRestoreId = $state<string | null>(null);
@@ -35,6 +38,16 @@
 
   $effect(() => {
     if (open) load();
+  });
+
+  $effect(() => {
+    if (!renameId) return;
+    tick().then(() => renameInput?.focus());
+  });
+
+  $effect(() => {
+    if (!saveOpen) return;
+    tick().then(() => saveInput?.focus());
   });
 
   async function load() {
@@ -177,7 +190,7 @@
     onclick={(e) => { if (e.target === e.currentTarget) close(); }}
     onkeydown={(e) => { if (e.key === "Escape") close(); }}
   >
-    <aside class="panel" role="dialog" aria-modal="true" aria-label="Gerenciar contas">
+    <div class="panel" role="dialog" aria-modal="true" aria-label="Gerenciar contas" tabindex="-1">
       <header class="panel-header">
         <div>
           <h2>Contas Telegram</h2>
@@ -254,11 +267,11 @@
                         onsubmit={(e) => { e.preventDefault(); commitRename(); }}
                       >
                         <input
+                          bind:this={renameInput}
                           type="text"
                           class="input"
                           bind:value={renameLabel}
                           disabled={renameBusy}
-                          autofocus
                         />
                         <button type="submit" class="ghost-btn" disabled={renameBusy || !renameLabel.trim()}>OK</button>
                         <button type="button" class="ghost-btn" onclick={() => (renameId = null)} disabled={renameBusy}>Cancelar</button>
@@ -316,7 +329,7 @@
           </section>
         {/if}
       </div>
-    </aside>
+    </div>
   </div>
 
   {#if saveOpen}
@@ -326,17 +339,17 @@
       onclick={(e) => { if (e.target === e.currentTarget && !saveBusy) saveOpen = false; }}
       onkeydown={() => {}}
     >
-      <div class="dialog" role="dialog" aria-modal="true">
+      <div class="dialog" role="dialog" aria-modal="true" tabindex="-1">
         <h3>Salvar conta atual como perfil</h3>
         <p>Crie um nome pra reconhecer essa conta depois (ex: "Pessoal", "Trabalho").</p>
         <form onsubmit={(e) => { e.preventDefault(); commitSave(); }}>
           <input
+            bind:this={saveInput}
             type="text"
             class="input"
             placeholder="Nome do perfil"
             bind:value={saveLabel}
             disabled={saveBusy}
-            autofocus
             required
           />
           <div class="dialog-actions">
@@ -358,7 +371,7 @@
       onclick={(e) => { if (e.target === e.currentTarget && !actionBusy) confirmRestoreId = null; }}
       onkeydown={() => {}}
     >
-      <div class="dialog" role="dialog" aria-modal="true">
+      <div class="dialog" role="dialog" aria-modal="true" tabindex="-1">
         <h3>Ativar perfil "{p?.label}"?</h3>
         <p>
           Sua sessão atual será preservada como backup automático. O app precisa ser reiniciado para concluir a troca.
@@ -381,7 +394,7 @@
       onclick={(e) => { if (e.target === e.currentTarget && !actionBusy) confirmDeleteId = null; }}
       onkeydown={() => {}}
     >
-      <div class="dialog" role="dialog" aria-modal="true">
+      <div class="dialog" role="dialog" aria-modal="true" tabindex="-1">
         <h3>Remover perfil "{p?.label}"?</h3>
         <p class="warn">
           A sessão deste perfil será apagada permanentemente. Você precisará refazer login pra acessar essa conta novamente.

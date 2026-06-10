@@ -81,6 +81,7 @@
       role="dialog"
       aria-modal="true"
       aria-labelledby="paste-lyrics-title"
+      tabindex="-1"
       onkeydown={handleKey}
       onclick={(e) => e.stopPropagation()}
     >

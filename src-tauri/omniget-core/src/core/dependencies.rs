@@ -778,9 +778,11 @@ async fn dequarantine(path: &std::path::Path) {
 async fn dequarantine(_path: &std::path::Path) {}
 
 fn drm_http_client() -> anyhow::Result<reqwest::Client> {
-    Ok(crate::core::http_client::apply_global_proxy(reqwest::Client::builder())
-        .timeout(std::time::Duration::from_secs(300))
-        .build()?)
+    Ok(
+        crate::core::http_client::apply_global_proxy(reqwest::Client::builder())
+            .timeout(std::time::Duration::from_secs(300))
+            .build()?,
+    )
 }
 
 /// Ensure `N_m3u8DL-RE` is available, auto-downloading the latest GitHub release
@@ -800,7 +802,11 @@ pub async fn ensure_n_m3u8dl_re() -> anyhow::Result<PathBuf> {
     let plat = if cfg!(target_os = "windows") {
         "win-x64"
     } else if cfg!(target_os = "macos") {
-        if cfg!(target_arch = "aarch64") { "osx-arm64" } else { "osx-x64" }
+        if cfg!(target_arch = "aarch64") {
+            "osx-arm64"
+        } else {
+            "osx-x64"
+        }
     } else if cfg!(target_arch = "aarch64") {
         "linux-arm64"
     } else {
@@ -835,7 +841,14 @@ pub async fn ensure_n_m3u8dl_re() -> anyhow::Result<PathBuf> {
     let asset_name = asset["name"].as_str().unwrap_or("").to_string();
 
     tracing::info!("Downloading N_m3u8DL-RE from {}", url);
-    let bytes = client.get(&url).send().await?.error_for_status()?.bytes().await?.to_vec();
+    let bytes = client
+        .get(&url)
+        .send()
+        .await?
+        .error_for_status()?
+        .bytes()
+        .await?
+        .to_vec();
 
     let member = bin_name("N_m3u8DL-RE");
     let target_clone = target.clone();
@@ -885,12 +898,17 @@ pub async fn ensure_mp4decrypt() -> anyhow::Result<PathBuf> {
         anyhow!("No prebuilt Bento4 mp4decrypt for this platform — install it via your package manager (e.g. `brew install bento4`)")
     })?;
 
-    let url = format!(
-        "https://www.bok.net/Bento4/binaries/Bento4-SDK-{BENTO4_BUILD}.{plat}.zip"
-    );
+    let url = format!("https://www.bok.net/Bento4/binaries/Bento4-SDK-{BENTO4_BUILD}.{plat}.zip");
     tracing::info!("Downloading Bento4 (mp4decrypt) from {}", url);
     let client = drm_http_client()?;
-    let bytes = client.get(&url).send().await?.error_for_status()?.bytes().await?.to_vec();
+    let bytes = client
+        .get(&url)
+        .send()
+        .await?
+        .error_for_status()?
+        .bytes()
+        .await?
+        .to_vec();
 
     // The zip nests files under `Bento4-SDK-.../bin/mp4decrypt`.
     let member = format!("bin/{}", bin_name("mp4decrypt"));
@@ -910,7 +928,11 @@ pub async fn ensure_mp4decrypt() -> anyhow::Result<PathBuf> {
 
 /// Extract the first archive member whose path ends with `member_suffix` into
 /// `dest` (a zip blob held in memory).
-fn extract_member_from_zip(data: &[u8], member_suffix: &str, dest: &std::path::Path) -> anyhow::Result<()> {
+fn extract_member_from_zip(
+    data: &[u8],
+    member_suffix: &str,
+    dest: &std::path::Path,
+) -> anyhow::Result<()> {
     let cursor = std::io::Cursor::new(data);
     let mut archive = zip::ZipArchive::new(cursor).map_err(|e| anyhow!("open zip: {e}"))?;
     for i in 0..archive.len() {
@@ -927,7 +949,11 @@ fn extract_member_from_zip(data: &[u8], member_suffix: &str, dest: &std::path::P
 }
 
 /// Extract the first tar.gz member whose filename equals `member_name` into `dest`.
-fn extract_member_from_tar_gz(data: &[u8], member_name: &str, dest: &std::path::Path) -> anyhow::Result<()> {
+fn extract_member_from_tar_gz(
+    data: &[u8],
+    member_name: &str,
+    dest: &std::path::Path,
+) -> anyhow::Result<()> {
     let decoder = flate2::read::GzDecoder::new(std::io::Cursor::new(data));
     let mut archive = tar::Archive::new(decoder);
     for entry in archive.entries().map_err(|e| anyhow!("tar entries: {e}"))? {

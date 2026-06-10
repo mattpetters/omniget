@@ -84,11 +84,19 @@ impl PlatformDownloader for UdemyDownloader {
 
     async fn get_media_info(&self, url: &str) -> Result<MediaInfo> {
         let (_client, slug, detail) = Self::fetch_detail(url).await?;
-        let title = if detail.title.is_empty() { slug } else { detail.title };
+        let title = if detail.title.is_empty() {
+            slug
+        } else {
+            detail.title
+        };
 
         // Carry the lecture URL through MediaInfo so download() can recover it.
         let quality = VideoQuality {
-            label: if detail.is_drmed { "DRM".into() } else { "best".into() },
+            label: if detail.is_drmed {
+                "DRM".into()
+            } else {
+                "best".into()
+            },
             width: 0,
             height: 0,
             url: url.to_string(),
@@ -125,14 +133,20 @@ impl PlatformDownloader for UdemyDownloader {
         let _ = progress.send(ProgressUpdate::percent(-1.0)).await; // Preparing
         let (client, slug, detail) = Self::fetch_detail(&lecture_url).await?;
 
-        let raw_name = if detail.title.is_empty() { &slug } else { &detail.title };
+        let raw_name = if detail.title.is_empty() {
+            &slug
+        } else {
+            &detail.title
+        };
         let base_name = sanitize_filename::sanitize(raw_name);
         std::fs::create_dir_all(&opts.output_dir)?;
         let quality = normalize_quality(opts.quality.as_deref());
 
         if detail.is_drmed {
-            return Self::download_drm_lecture(&client, &detail, &base_name, &quality, opts, &progress)
-                .await;
+            return Self::download_drm_lecture(
+                &client, &detail, &base_name, &quality, opts, &progress,
+            )
+            .await;
         }
 
         // --- Non-DRM: prefer a direct MP4, else fall back to plain HLS. ---
@@ -165,14 +179,16 @@ impl PlatformDownloader for UdemyDownloader {
                 file_size_bytes: size,
                 duration_seconds: 0.0,
                 torrent_id: None,
+                protected_media: None,
+                protection_sidecar_path: None,
             });
         }
 
         if let Some(hls_url) = api::select_hls(&detail.media_sources) {
             let output = opts.output_dir.join(format!("{base_name}.mp4"));
             let jar = cookie_parser::load_extension_cookies_for_url(&hls_url);
-            let mut builder =
-                http_client::apply_global_proxy(reqwest::Client::builder()).user_agent(udemy::UDEMY_UA);
+            let mut builder = http_client::apply_global_proxy(reqwest::Client::builder())
+                .user_agent(udemy::UDEMY_UA);
             if let Some(j) = jar {
                 builder = builder.cookie_provider(j);
             }
@@ -197,6 +213,8 @@ impl PlatformDownloader for UdemyDownloader {
                 file_size_bytes: result.file_size,
                 duration_seconds: 0.0,
                 torrent_id: None,
+                protected_media: result.protected_media,
+                protection_sidecar_path: result.protection_sidecar_path,
             });
         }
 
@@ -260,13 +278,18 @@ impl UdemyDownloader {
 
         let size = std::fs::metadata(&path)?.len();
         if size == 0 {
-            bail!("Decrypted Udemy lecture is empty (0 bytes): {}", path.display());
+            bail!(
+                "Decrypted Udemy lecture is empty (0 bytes): {}",
+                path.display()
+            );
         }
         Ok(DownloadResult {
             file_path: path,
             file_size_bytes: size,
             duration_seconds: 0.0,
             torrent_id: None,
+            protected_media: None,
+            protection_sidecar_path: None,
         })
     }
 }

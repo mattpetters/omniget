@@ -2616,6 +2616,8 @@ pub async fn download_video(
                 file_size_bytes,
                 duration_seconds: 0.0,
                 torrent_id: None,
+                protected_media: None,
+                protection_sidecar_path: None,
             });
         }
 

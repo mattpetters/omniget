@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import { pluginInvoke } from "$lib/plugin-invoke";
   import PageHero from "$lib/study-components/PageHero.svelte";
   import ConfirmDialog from "$lib/study-components/ConfirmDialog.svelte";
@@ -49,6 +49,7 @@
 
   let editingId = $state<number | null>(null);
   let editingValue = $state("");
+  let renameInput = $state<HTMLInputElement | null>(null);
 
   let confirmOpen = $state(false);
   let pendingDelete = $state<DeckTreeNode | null>(null);
@@ -67,6 +68,7 @@
   let createName = $state("");
   let createParentId = $state<number | null>(null);
   let createBusy = $state(false);
+  let createInput = $state<HTMLInputElement | null>(null);
 
   function flatten(nodes: DeckTreeNode[]): DeckTreeNode[] {
     const out: DeckTreeNode[] = [];
@@ -117,6 +119,16 @@
   }
 
   onMount(load);
+
+  $effect(() => {
+    if (editingId == null) return;
+    tick().then(() => renameInput?.focus());
+  });
+
+  $effect(() => {
+    if (!createOpen) return;
+    tick().then(() => createInput?.focus());
+  });
 
   function startRename(node: DeckTreeNode) {
     editingId = node.deck_id;
@@ -330,6 +342,7 @@
         <div class="row-main">
           {#if editingId === node.deck_id}
             <input
+              bind:this={renameInput}
               class="rename-input"
               bind:value={editingValue}
               onblur={() => commitRename(node)}
@@ -337,7 +350,6 @@
                 if (e.key === "Enter") commitRename(node);
                 if (e.key === "Escape") cancelRename();
               }}
-              autofocus
             />
           {:else}
             <button
@@ -465,13 +477,13 @@
       <label>
         <span>{$t("study.anki_decks.name")}</span>
         <input
+          bind:this={createInput}
           type="text"
           bind:value={createName}
           placeholder={$t("study.anki_decks.name_placeholder") as string}
           onkeydown={(e) => {
             if (e.key === "Enter") commitCreate();
           }}
-          autofocus
         />
       </label>
       <div class="modal-actions">

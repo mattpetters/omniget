@@ -96,6 +96,7 @@
       "paused": "Pausado",
       "complete": "Concluído",
       "error": "Erro",
+      "needs_decryption": "Precisa de descriptografia",
       "seeding": "Semeando"
     },
     "section_queued": "Na fila",

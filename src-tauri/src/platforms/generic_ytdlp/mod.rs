@@ -364,13 +364,17 @@ impl PlatformDownloader for GenericYtdlpDownloader {
                 )
                 .await?;
 
-            let _ = progress.send(ProgressUpdate::percent(100.0)).await;
+            if !result.protected_passthrough {
+                let _ = progress.send(ProgressUpdate::percent(100.0)).await;
+            }
 
             return Ok(DownloadResult {
                 file_path: result.path,
                 file_size_bytes: result.file_size,
                 duration_seconds: 0.0,
                 torrent_id: None,
+                protected_media: result.protected_media,
+                protection_sidecar_path: result.protection_sidecar_path,
             });
         }
 
@@ -431,6 +435,8 @@ impl PlatformDownloader for GenericYtdlpDownloader {
                 file_size_bytes: bytes,
                 duration_seconds: 0.0,
                 torrent_id: None,
+                protected_media: None,
+                protection_sidecar_path: None,
             });
         }
 

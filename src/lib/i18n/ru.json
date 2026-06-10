@@ -96,6 +96,7 @@
       "paused": "На паузе",
       "complete": "Завершено",
       "error": "Ошибка",
+      "needs_decryption": "Требуется расшифровка",
       "seeding": "Раздача"
     },
     "section_queued": "В очереди",

@@ -172,7 +172,7 @@
     </div>
   </header>
 
-  <nav class="tabs" role="tablist" aria-label={$t("study.settings.categories_aria") as string}>
+  <div class="tabs" role="tablist" aria-label={$t("study.settings.categories_aria") as string}>
     {#each TABS as tab (tab.key)}
       <button
         type="button"
@@ -185,7 +185,7 @@
         {tab.label}
       </button>
     {/each}
-  </nav>
+  </div>
 
   <div class="tab-body">
     {#if loading}

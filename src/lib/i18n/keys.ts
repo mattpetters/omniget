@@ -207,6 +207,7 @@ export type TranslationKeys =
   | 'downloads.status.complete'
   | 'downloads.status.downloading'
   | 'downloads.status.error'
+  | 'downloads.status.needs_decryption'
   | 'downloads.status.paused'
   | 'downloads.status.queued'
   | 'downloads.status.seeding'

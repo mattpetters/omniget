@@ -96,6 +96,7 @@
       "paused": "Σε παύση",
       "complete": "Ολοκληρωμένη",
       "error": "Σφάλμα",
+      "needs_decryption": "Απαιτεί αποκρυπτογράφηση",
       "seeding": "Διαμοιρασμός"
     },
     "section_queued": "Στην ουρά",

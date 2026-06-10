@@ -363,7 +363,7 @@
 
 {#if showWarning}
   <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-  <div class="modal-overlay" onclick={() => (showWarning = false)}></div>
+  <div class="modal-overlay" role="presentation" onclick={() => (showWarning = false)}></div>
   <div class="modal" role="dialog" tabindex="-1" aria-label="warning">
     <header class="modal-head">
       <h2>{$t("study.read.annas_warning_modal_title")}</h2>

@@ -400,11 +400,6 @@
     gap: 2px;
   }
 
-  .ring-flame {
-    font-size: 16px;
-    line-height: 1;
-  }
-
   .ring-current {
     font-family: var(--font-display);
     font-size: var(--text-3xl);

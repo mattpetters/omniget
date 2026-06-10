@@ -96,6 +96,7 @@
       "paused": "Paused",
       "complete": "Complete",
       "error": "Error",
+      "needs_decryption": "Needs decryption",
       "seeding": "Seeding"
     },
     "section_queued": "Queued",

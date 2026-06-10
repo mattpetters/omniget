@@ -1,420 +1,230 @@
-# Execution Plan: stop empty downloads from reporting success; make them retryable & clearable
+# Handoff Plan: DRM Completion, Empty Output, and Course-ID Fixes
 
-> Audience: an implementing model. Follow steps in order. Each edit gives the EXACT file,
-> an anchor (unique existing text), and the replacement. After each phase run the stated
-> build/check command and do not proceed if it fails. Do not refactor anything not listed.
+Audience: smaller implementation models working from this repo. Treat this file as the current
+source of truth. The red-test checkpoint is already committed:
 
-## Problem (verified root causes)
-
-The Downloads page shows course/lecture cards as **COMPLETE / 100%** with **0 bytes** and an
-empty log, the header reads **"0 B saved"**, and the filter chips all read **0**. There are
-**three** places an item is marked complete with no zero-byte check, plus two frontend display
-bugs:
-
-1. `src-tauri/src/core/queue.rs` ~1604-1624 — internal downloads: `Ok(dl)` → `mark_complete(..true.., Some(dl.file_size_bytes))` with no `> 0` check.
-2. `src-tauri/src/commands/host_queue.rs` 208-216 — external/course-lesson downloads (the study plugin): `if args.success { percent=100; status=Complete }` with no `file_size_bytes > 0` check.
-3. `src/lib/stores/download-listener.ts` 191-208 & 234-236 — course aggregate: marks complete on the plugin's `success` flag; line 200 hardcodes `recordDownloadComplete(0)` → "0 B saved".
-4. `src/routes/downloads/+page.svelte` 107-113 — filter chip counts derive only from `genericList`; course items (`kind:"course"`) are counted nowhere → all chips read 0.
-5. `src/routes/downloads/+page.svelte` 450-451 — header bytes come from a lifetime stats store that courses always feed `0`.
-
-Fix every seam where success is declared so 0-byte output becomes a **retryable Error**, and
-make the counts/header reflect what is actually on screen.
-
----
-
-## Phase 1 — Backend: internal download path (queue.rs)
-
-File: `src-tauri/src/core/queue.rs`
-
-Find this block (inside the `Ok(dl) => {` arm, around line 1604):
-
-```rust
-            let state = {
-                let mut q = queue.lock().await;
-                if platform_name == "magnet" && dl.torrent_id.is_some() {
-                    q.mark_seeding(
-                        item_id,
-                        Some(dl.file_path.to_string_lossy().to_string()),
-                        Some(dl.file_size_bytes),
-                        dl.torrent_id,
-                    );
-                } else {
-                    q.mark_complete(
-                        item_id,
-                        true,
-                        None,
-                        Some(dl.file_path.to_string_lossy().to_string()),
-                        Some(dl.file_size_bytes),
-                    );
-                }
-                q.get_state()
-            };
-            emit_queue_state_from_state(&app, state);
+```sh
+git show --name-only --oneline 4cd95f90
 ```
 
-Replace it with:
+Expected commit:
 
-```rust
-            let is_magnet_seed = platform_name == "magnet" && dl.torrent_id.is_some();
-            // An exit-0 download that produced no bytes (e.g. a skipped DRM/region-locked
-            // stream) must NOT be reported as success — that hides the failure and blocks
-            // retry. Treat 0 bytes or a missing output file as a retryable failure.
-            let empty_output =
-                !is_magnet_seed && (dl.file_size_bytes == 0 || !dl.file_path.exists());
-            if empty_output {
-                append_download_log(
-                    &app,
-                    item_id,
-                    "[omniget] download produced no data (0 bytes) — marking as failed".to_string(),
-                );
-            }
-            let state = {
-                let mut q = queue.lock().await;
-                if is_magnet_seed {
-                    q.mark_seeding(
-                        item_id,
-                        Some(dl.file_path.to_string_lossy().to_string()),
-                        Some(dl.file_size_bytes),
-                        dl.torrent_id,
-                    );
-                } else if empty_output {
-                    q.mark_complete(
-                        item_id,
-                        false,
-                        Some(EMPTY_DOWNLOAD_ERROR.to_string()),
-                        None,
-                        None,
-                    );
-                } else {
-                    q.mark_complete(
-                        item_id,
-                        true,
-                        None,
-                        Some(dl.file_path.to_string_lossy().to_string()),
-                        Some(dl.file_size_bytes),
-                    );
-                }
-                q.get_state()
-            };
-            emit_queue_state_from_state(&app, state);
+```text
+4cd95f90 test(downloads): add red DRM completion contracts
 ```
 
-Then add this constant near the top of `queue.rs` (just after the existing `use` lines, before
-the first `pub fn`/`pub struct`):
+Do not remove or weaken the tests in that commit. Implement until those tests pass, then run the
+full verification commands at the end.
 
-```rust
-/// Message used when a download exits cleanly but wrote 0 bytes. Wording is deliberate: it must
-/// NOT contain any keyword that `classify_download_error` maps to a non-retryable category
-/// (e.g. "login", "cookie", "403", "404", "not found", "private", "ffmpeg", "yt-dlp"), so that
-/// `is_retryable_error_message` returns true and the UI shows a Retry button.
-pub const EMPTY_DOWNLOAD_ERROR: &str =
-    "Download produced no data (0 bytes). The stream may be DRM-protected or temporarily blocked. Retry after re-checking access.";
+## Current Red Tests
+
+The red tests intentionally describe the contract before implementation.
+
+Backend:
+
+- `queue_empty_output_is_retryable_error`
+- `host_queue_empty_success_is_retryable_error`
+- `protected_hls_saved_encrypted_becomes_needs_decryption`
+- `protected_hls_saved_encrypted_becomes_needs_decryption_history_row`
+
+Frontend:
+
+- `course_completion_requires_course_id`
+- `course_completion_without_course_id_is_ignored`
+- `downloads_filter_counts_include_courses_and_needs_decryption`
+- `clear_finished_clears_frontend_course_terminal_items`
+
+Run the red checks before implementing:
+
+```sh
+cd src-tauri && cargo test completion_contract_tests
+cargo test host_queue_empty_success_is_retryable_error
+cargo test protected_hls_saved_encrypted_becomes_needs_decryption_history_row
+cd .. && pnpm test src/lib/stores/download-store.svelte.test.ts
 ```
 
-Verify: `is_retryable_error_message(EMPTY_DOWNLOAD_ERROR)` must return `true`
-(`classify_download_error` returns `("unknown", _)` for this string → retryable). Do not change
-the wording without re-checking `src-tauri/omniget-core/src/core/errors.rs`.
+Known red failures on the checkpoint:
 
-**Check:** `cd src-tauri && cargo check`
+- Rust compile failures for missing `QueueStatus::NeedsDecryption`,
+  `DownloadQueue::mark_needs_decryption`, `QueueItem.protection_sidecar_path`,
+  `HistoryEntry.status`, `HistoryEntry.protection_sidecar_path`,
+  `ReportCompleteArgs.decryption_status`, `ReportCompleteArgs.protection_sidecar_path`, and
+  host completion classification helper.
+- Frontend Vitest failures for missing `markCompleteById` and current name-based completion.
 
----
+These failures are good. They prove the tests are pointed at the missing contract.
 
-## Phase 2 — Backend: external / course-lesson path (host_queue.rs)
+## Contract To Implement
 
-File: `src-tauri/src/commands/host_queue.rs`, function `report_complete_inner`.
+### Queue Status
 
-Find (around line 208):
-
-```rust
-                if args.success {
-                    it.percent = 100.0;
-                    if let Some(ref p) = args.file_path {
-                        it.file_path = Some(p.to_string_lossy().to_string());
-                    }
-                    if let Some(sz) = args.file_size_bytes {
-                        it.file_size_bytes = Some(sz);
-                    }
-                    it.status = QueueStatus::Complete { success: true };
-                } else {
-```
-
-Replace the `if args.success {` line and its body so a success report carrying 0 bytes is
-downgraded to a retryable failure. New version:
+Add a distinct terminal attention state:
 
 ```rust
-                // A "success" report that carries no bytes is not a success — the external
-                // downloader skipped or produced an empty file. Downgrade to a retryable error
-                // so the user can retry instead of seeing a false COMPLETE.
-                let reported_empty = args.success
-                    && args.file_size_bytes.unwrap_or(0) == 0
-                    && args
-                        .file_path
-                        .as_ref()
-                        .map(|p| std::fs::metadata(p).map(|m| m.len() == 0).unwrap_or(true))
-                        .unwrap_or(true);
-                if args.success && !reported_empty {
-                    it.percent = 100.0;
-                    if let Some(ref p) = args.file_path {
-                        it.file_path = Some(p.to_string_lossy().to_string());
-                    }
-                    if let Some(sz) = args.file_size_bytes {
-                        it.file_size_bytes = Some(sz);
-                    }
-                    it.status = QueueStatus::Complete { success: true };
-                } else if reported_empty {
-                    it.status = QueueStatus::Error {
-                        message: crate::core::queue::EMPTY_DOWNLOAD_ERROR.to_string(),
-                        retryable: true,
-                    };
-                } else {
+QueueStatus::NeedsDecryption { message, sidecar_path }
 ```
 
-(The original `else {` branch that handled `args.success == false` becomes this final `else`.
-Its body — building `msg`/`retryable` and setting `QueueStatus::Error` — stays unchanged.)
-
-**Check:** `cd src-tauri && cargo check`
-
----
-
-## Phase 3 — Backend: defense-in-depth in leaf downloaders
-
-These make a 0-byte result fail at the source with a clearer message. The Phase 1/2 guards are
-authoritative; these are belt-and-suspenders.
-
-### 3a. `src-tauri/omniget-core/src/core/direct_downloader.rs` (~line 227)
-
-Find:
-
-```rust
-    std::fs::rename(&part_path, output)?;
-    let _ = progress_tx.send(ProgressUpdate::percent(100.0)).await;
-
-    let size = std::fs::metadata(output)?.len();
-    Ok(size)
-```
-
-Replace with:
-
-```rust
-    std::fs::rename(&part_path, output)?;
-
-    let size = std::fs::metadata(output)?.len();
-    if size == 0 {
-        let _ = std::fs::remove_file(output);
-        anyhow::bail!("direct download produced no data (0 bytes)");
-    }
-    let _ = progress_tx.send(ProgressUpdate::percent(100.0)).await;
-    Ok(size)
-```
-
-### 3b. `src-tauri/omniget-core/src/core/hls_downloader.rs` (~line 352)
-
-Find:
-
-```rust
-        std::fs::rename(&part_path, &output)?;
-
-        let file_size = std::fs::metadata(&output)?.len();
-        let protection_sidecar_path = if let Some(ref protected) = protected_media {
-```
-
-Replace the first two lines so an empty mux fails — but only when this is NOT a protected
-passthrough (a protected sidecar legitimately produces a tiny/zero main file):
-
-```rust
-        std::fs::rename(&part_path, &output)?;
-
-        let file_size = std::fs::metadata(&output)?.len();
-        if file_size == 0 && protected_media.is_none() {
-            let _ = std::fs::remove_file(&output);
-            anyhow::bail!("HLS download produced no data (0 bytes)");
-        }
-        let protection_sidecar_path = if let Some(ref protected) = protected_media {
-```
-
-**Check:** `cd src-tauri && cargo check` (this compiles omniget-core too).
-
----
-
-## Phase 4 — Frontend: course aggregate completion guard + honest saved-bytes
-
-File: `src/lib/stores/download-listener.ts`
-
-### 4a. `download-complete` listener (around line 191-208)
-
-Find:
+Add TypeScript status:
 
 ```ts
-  const unlistenComplete = await listen<CompletePayload>("download-complete", (event) => {
-    const d = event.payload;
-    markComplete(d.course_name, d.success, d.error ?? undefined);
-
-    const tr = get(t);
-    if (d.success) {
-      showToast("success", tr("toast.download_complete", { name: d.course_name }));
-      void notifyComplete(d.course_name);
-      addLog("info", "download", `Course download complete: ${d.course_name}`);
-      recordDownloadComplete(0);
-      void rpcSyncIdleStats();
-    } else {
+"needs_decryption"
 ```
 
-Replace with (treat a "success" with 0 downloaded bytes as failure; record real bytes):
+This is not `complete` and not retryable `error`. It should be clearable as finished/terminal, but
+should not show Retry.
 
-```ts
-  const unlistenComplete = await listen<CompletePayload>("download-complete", (event) => {
-    const d = event.payload;
-    const item = getDownloads().get(d.course_id);
-    const bytes = item && item.kind === "course" ? item.bytesDownloaded : 0;
-    const reallySucceeded = d.success && bytes > 0;
-    markComplete(
-      d.course_name,
-      reallySucceeded,
-      reallySucceeded
-        ? undefined
-        : (d.error ?? "Download produced no files (0 bytes). Retry after checking access."),
-    );
+### Empty Output
 
-    const tr = get(t);
-    if (reallySucceeded) {
-      showToast("success", tr("toast.download_complete", { name: d.course_name }));
-      void notifyComplete(d.course_name);
-      addLog("info", "download", `Course download complete: ${d.course_name}`);
-      recordDownloadComplete(bytes);
-      void rpcSyncIdleStats();
-    } else {
+Unprotected successful downloads with a missing output file or `file_size_bytes == 0` must become a
+retryable error:
+
+- Backend internal queue completion: retryable `Error`, percent not forced to `100`.
+- Host/external queue completion: `report_complete_inner(success: true, file_size_bytes: Some(0))`
+  becomes retryable `Error`, not `Complete`.
+- Do not record a successful history row for empty unprotected output.
+- Do not increment saved-byte stats for empty failures.
+
+Use one shared message/constant for this path so tests and UI behavior remain stable.
+
+### Protected HLS / DRM
+
+Protected HLS saved encrypted is not playable completion. It should become `needs_decryption`:
+
+- Preserve encrypted sidecar behavior.
+- Carry `protected_media` and `protection_sidecar_path` from HLS result into the queue decision.
+- Persist history with `status = "needs_decryption"` and `protection_sidecar_path`.
+- Hydrate history back into `QueueStatus::NeedsDecryption`.
+- UI should label it “Needs decryption” and show the message/sidecar path.
+
+Udemy Widevine decrypted MP4 must still be normal `complete`, but only when the final playable file
+exists and has nonzero size.
+
+### Course Completion Events
+
+Course completion must be ID-based:
+
+- Add/require `course_id` on completion event payload types:
+  `download-complete`, `udemy-download-complete`, and platform-specific equivalents if found.
+- Frontend must call `markCompleteById(courseId, ...)`, never match by course name.
+- Malformed completion without `course_id` must be ignored/logged, not name-matched.
+
+### Downloads Store / UI
+
+- Add `markCompleteById`.
+- `clearFinished()` must remove `complete`, `error`, and `needs_decryption` course/generic items.
+- Counts must include both generic queue items and course items.
+- Count `needs_decryption` under finished/attention/failed-style counts, not completed.
+- Retry button only for retryable errors, not `needs_decryption`.
+- Clear finished should call the backend and then clear frontend-only terminal course items.
+- Avoid `NaN%`; do not force empty/protected pending-decryption items to `100%`.
+
+### History / Database
+
+Add explicit persisted status while keeping legacy `success` compatibility:
+
+- `success=true` legacy rows map to `complete`.
+- `success=false` legacy rows map to `error`.
+- New protected encrypted rows persist `needs_decryption`.
+- Add `protection_sidecar_path`.
+- UI should read explicit `status`, not infer everything from `success`.
+
+## Suggested Implementation Order
+
+1. Add backend types/fields:
+   - `QueueStatus::NeedsDecryption`.
+   - `QueueItem.protection_sidecar_path`.
+   - `QueueItemInfo.protection_sidecar_path`.
+   - History `status` and `protection_sidecar_path` with SQLite migration.
+2. Add queue helpers:
+   - Shared empty-output message.
+   - `mark_needs_decryption`.
+   - Completion classification for native queue path.
+3. Add host/external completion classification:
+   - Extend `ReportCompleteArgs` with optional protected metadata.
+   - Empty success -> retryable `Error`.
+   - Protected metadata -> `NeedsDecryption`.
+4. Carry HLS protected metadata:
+   - Make `ProtectedMediaInfo` serializable/deserializable if needed.
+   - Extend `DownloadResult`.
+   - Populate fields from protected HLS SaveEncrypted paths.
+   - Keep Udemy Widevine decrypted output plain complete.
+5. Update frontend store/listener/UI:
+   - `markCompleteById`.
+   - completion payloads with `course_id`.
+   - `needs_decryption` status mapping and sidecar display.
+   - counts and clear-finished behavior.
+6. Update i18n keys for:
+   - `downloads.status.needs_decryption`
+   - any detail/label text used by UI.
+
+Keep changes tightly scoped. Do not refactor unrelated queue, history, or course UI code.
+
+## Verification Commands
+
+Run these after implementation:
+
+```sh
+cd src-tauri && cargo test
+cd src-tauri && cargo check
+pnpm test src/lib/stores/download-store.svelte.test.ts
+pnpm check
 ```
 
-> Note: the original `else {` branch (the failure toast/log) stays as-is; it now also catches
-> the downgraded "empty success" case.
+If a command fails because dependencies/tooling need network access, request approval rather than
+skipping it.
 
-If `getDownloads` is not already imported in this file, add it to the existing import from
-`download-store.svelte` (the file already imports `upsertProgress`, `markComplete`).
+Manual acceptance:
 
-### 4b. `udemy-download-complete` listener (around line 234-236)
+- Empty skipped downloads show retryable Error, never Complete/100%.
+- Protected HLS saved encrypted shows Needs decryption with sidecar metadata.
+- Udemy Widevine successful decrypt produces playable nonzero MP4 and shows Complete.
+- Course completion updates by `course_id`, not name.
+- Completion without `course_id` is ignored/logged as malformed.
+- Counts include visible course and generic items.
+- Saved bytes count playable completed downloads only.
+- Clear finished removes backend terminal items and frontend course terminal items.
+- Retry appears for retryable Error, not for Needs decryption.
+- No `NaN%`.
 
-Find:
+## Worktree Setup For Multiple Models
 
-```ts
-  const unlistenUdemyComplete = await listen<UdemyCompletePayload>("udemy-download-complete", (event) => {
-    const d = event.payload;
-    markComplete(d.course_name, d.success, d.error ?? undefined);
+From the main repo:
+
+```sh
+cd /Users/mattpetters/code/omniget
+git fetch --all --prune
 ```
 
-Replace the `markComplete(...)` line with the same byte-aware guard:
+Create one worktree per model from the red-test checkpoint:
 
-```ts
-  const unlistenUdemyComplete = await listen<UdemyCompletePayload>("udemy-download-complete", (event) => {
-    const d = event.payload;
-    const uItem = getDownloads().get(d.course_id);
-    const uBytes = uItem && uItem.kind === "course" ? uItem.bytesDownloaded : 0;
-    const uSucceeded = d.success && uBytes > 0;
-    markComplete(
-      d.course_name,
-      uSucceeded,
-      uSucceeded ? undefined : (d.error ?? "Download produced no files (0 bytes). Retry after checking access."),
-    );
+```sh
+git worktree add ../omniget-model-a 4cd95f90 -b impl/drm-completion-model-a
+git worktree add ../omniget-model-b 4cd95f90 -b impl/drm-completion-model-b
+git worktree add ../omniget-model-c 4cd95f90 -b impl/drm-completion-model-c
 ```
 
-If this listener also calls `recordDownloadComplete(0)` on success below, change that argument
-to `uBytes` (search the rest of this listener block for `recordDownloadComplete`).
+Then hand each model a separate directory:
 
-**Check:** `pnpm check`
-
----
-
-## Phase 5 — Frontend: filter chip counts include all items
-
-File: `src/routes/downloads/+page.svelte`
-
-Find (around line 107):
-
-```svelte
-  let filterCounts = $derived({
-    all: genericList.length,
-    active: grouped.active.length + grouped.paused.length,
-    queued: grouped.queued.length,
-    completed: grouped.completed.length,
-    failed: grouped.errored.length,
-  });
+```sh
+cd ../omniget-model-a
+git status --short
+cd src-tauri && cargo test completion_contract_tests
+cd .. && pnpm test src/lib/stores/download-store.svelte.test.ts
 ```
 
-Replace with a single source of truth that counts BOTH course and generic items by status:
+Those tests should be red before the model starts implementing.
 
-```svelte
-  let filterCounts = $derived.by(() => {
-    let all = 0, active = 0, queued = 0, completed = 0, failed = 0;
-    for (const d of downloads.values()) {
-      all++;
-      switch (d.status) {
-        case "downloading":
-        case "seeding":
-        case "paused":
-          active++;
-          break;
-        case "queued":
-          queued++;
-          break;
-        case "complete":
-          completed++;
-          break;
-        case "error":
-          failed++;
-          break;
-      }
-    }
-    return { all, active, queued, completed, failed };
-  });
+To compare a model’s solution later:
+
+```sh
+cd /Users/mattpetters/code/omniget
+git diff 4cd95f90..impl/drm-completion-model-a --stat
+git diff 4cd95f90..impl/drm-completion-model-a
 ```
 
-(`downloads` is the existing `$derived(getDownloads())` at line 76 and already includes course
-items. This mirrors the logic in `getCounts()` in the store, which is the canonical counter.)
+To remove a completed/abandoned worktree:
 
-**Check:** `pnpm check`
-
----
-
-## Phase 6 — Tests
-
-### 6a. Rust (queue guard) — add to the `#[cfg(test)]` module in `src-tauri/src/core/queue.rs`:
-
-- A test asserting `is_retryable_error_message(EMPTY_DOWNLOAD_ERROR) == true`.
-- If there is an existing test that drives `mark_complete`, add one that calls
-  `mark_complete(id, false, Some(EMPTY_DOWNLOAD_ERROR.into()), None, None)` and asserts the
-  item's status is `QueueStatus::Error { retryable: true, .. }`.
-
-### 6b. Rust (leaf downloaders): mirror the existing `verify_nonempty_output` test style in
-`omniget-core/src/core/ytdlp.rs` — a small test writing a 0-byte file and asserting the new
-`bail!`s fire. Only add if a straightforward unit hook exists; otherwise rely on 6a.
-
-**Check:** `cd src-tauri && cargo test`
-
----
-
-## Final verification (end-to-end — required, not synthetic-only)
-
-1. `cd src-tauri && cargo test` passes; `pnpm check` clean.
-2. `source .venv/bin/activate && pnpm tauri dev`.
-3. Trigger a download that yields 0 bytes (a DRM lecture without valid `.wvd`/cookies):
-   - Card shows **FAILED** with the empty-download message and a **Retry** button — NOT
-     COMPLETE/100%.
-4. Trigger a working download:
-   - Card shows COMPLETE with real bytes; header "N downloads · X saved" shows non-zero X.
-5. Filter chips (`All/Active/Queued/Completed/Failed`) show non-zero counts matching the
-   visible cards.
-6. Click **Clear finished** → the failed/empty items are removed. A stuck `DOWNLOADING 0%`
-   item can be cancelled (X) and then cleared.
-7. No `NaN%` anywhere; previously-working platforms still download (no regression).
-
-## Files touched (summary)
-- `src-tauri/src/core/queue.rs` — empty-output guard + `EMPTY_DOWNLOAD_ERROR` const + test.
-- `src-tauri/src/commands/host_queue.rs` — empty-success downgrade in `report_complete_inner`.
-- `src-tauri/omniget-core/src/core/direct_downloader.rs` — 0-byte bail.
-- `src-tauri/omniget-core/src/core/hls_downloader.rs` — 0-byte bail (non-protected only).
-- `src/lib/stores/download-listener.ts` — course completion byte-guard + real `recordDownloadComplete`.
-- `src/routes/downloads/+page.svelte` — `filterCounts` counts all items.
-
-## Out of scope
-- The Udemy Widevine pipeline itself (already ported).
-- Study-tab Portuguese localization.
-- Any new multi-select/bulk-delete UI beyond the existing "Clear finished".
+```sh
+git worktree remove ../omniget-model-a
+git branch -D impl/drm-completion-model-a
+```

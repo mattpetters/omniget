@@ -563,7 +563,9 @@
     role="dialog"
     aria-modal="true"
     aria-labelledby="cpf-dialog-title"
+    tabindex="-1"
     onclick={(e) => { if (e.target === e.currentTarget) showCpfDialog = false; }}
+    onkeydown={(e) => { if (e.key === "Escape") showCpfDialog = false; }}
   >
     <form class="dialog" onsubmit={submitCpf}>
       <header class="dialog-head">
@@ -609,7 +611,9 @@
     role="dialog"
     aria-modal="true"
     aria-labelledby="remove-confirm-title"
+    tabindex="-1"
     onclick={(e) => { if (e.target === e.currentTarget && !removing) showRemoveConfirm = false; }}
+    onkeydown={(e) => { if (e.key === "Escape" && !removing) showRemoveConfirm = false; }}
   >
     <div class="dialog confirm-dialog">
       <header class="dialog-head">
