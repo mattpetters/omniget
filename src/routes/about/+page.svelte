@@ -35,7 +35,7 @@
             <div class="about-name-row">
                 <h1>OmniGet</h1>
                 {#if version}
-                    <span class="tag about-version">{$t("about.version")} {version}</span>
+                    <span class="tag about-version">{$t("about.version")} {version}-mpfork</span>
                 {/if}
             </div>
             <p class="about-tagline">{$t("about.tagline")}</p>
