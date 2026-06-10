@@ -29,7 +29,7 @@
         <p class="about-tagline">{$t("about.tagline")}</p>
         <p class="about-desc">{$t("about.description")}</p>
         {#if version}
-            <span class="about-version">{$t("about.version")} {version}</span>
+            <span class="about-version">{$t("about.version")} {version}-mpfork</span>
         {/if}
         {#if buildDetails}
             <span class="about-build">{buildDetails}</span>

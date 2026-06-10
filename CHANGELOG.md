@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+<!-- git-changelog-on-commit: d5754f10a070e4b468e30f04e130f9070edcc0d2 -->
+### Changed
+- Updated src/routes/about/+page.svelte based on the staged diff so the commit records the current implementation changes.
+
 <!-- git-changelog-on-commit: 35d45f66909ee3c264129720d7b8ea917410f235 -->
 ### Changed
 - Updated plan.md,src-tauri/omniget-core/src/core/dependencies.rs src-tauri/omniget-core/src/core/direct_downloader.rs,src-tauri/omniget-core/src/core/hls_downloader.rs src-tauri/omniget-core/src/core/http_fetcher.rs,src-tauri/omniget-core/src/core/udemy/api.rs src-tauri/omniget-core/src/core/udemy/drm.rs,src-tauri/omniget-core/src/core/ytdlp.rs based on the staged diff so the commit records the current implementation changes.
