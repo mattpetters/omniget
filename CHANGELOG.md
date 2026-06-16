@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+<!-- git-changelog-on-commit: d42db7094cb67bb1cae67694fd3dbdd7d851a37e -->
+### Changed
+- Updated src-tauri/tauri.conf.json based on the staged diff so the commit records the current implementation changes.
+
 <!-- git-changelog-on-commit: 0fc2fd8681fea9b085cedf083696497eba80bf6e -->
 ### Changed
 - Updated .github/workflows/release.yml,package.json plan.md,src-tauri/Cargo.lock src-tauri/Cargo.toml,src-tauri/omniget-core/src/core/dependencies.rs src-tauri/omniget-core/src/core/direct_downloader.rs,src-tauri/omniget-core/src/core/hls_downloader.rs based on the staged diff so the commit records the current implementation changes.
