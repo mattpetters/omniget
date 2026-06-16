@@ -70,7 +70,7 @@
   <header class="dock-head">
     <span class="dock-title">Backlinks</span>
   </header>
-  <nav class="tabs" role="tablist">
+  <div class="tabs" role="tablist">
     <button
       type="button"
       class="tab"
@@ -101,7 +101,7 @@
     >
       Props <span class="count">{props.length}</span>
     </button>
-  </nav>
+  </div>
   <div class="body">
     {#if pageId == null}
       <p class="empty">Sem página ativa.</p>

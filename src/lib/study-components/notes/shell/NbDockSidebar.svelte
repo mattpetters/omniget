@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from "$lib/i18n";
   import { docksStore, DOCK_META, type DockIconKey } from "$lib/study-notes/docks-store.svelte";
   import type { DockPosition } from "$lib/notes-bridge";
 
@@ -43,14 +44,14 @@
   }
 </script>
 
-<aside class="nb-dock-sidebar" data-side={side} aria-label="Toggle docks {side}">
+<aside class="nb-dock-sidebar" data-side={side} aria-label={$t("study.notes_shell_nbdocksidebar.toggle_docks", { side }) as string}>
   {#each items as item (item.id)}
     <button
       type="button"
       class="icon-btn"
       class:active={isVisible(item.id)}
       onclick={() => toggle(item.id)}
-      title="{item.label} ({isVisible(item.id) ? 'visível' : 'oculto'})"
+      title={`${item.label} (${isVisible(item.id) ? ($t('study.notes_shell_nbdocksidebar.visible') as string) : ($t('study.notes_shell_nbdocksidebar.hidden') as string)})`}
       aria-pressed={isVisible(item.id)}
       aria-label={item.label}
     >

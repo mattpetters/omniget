@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
+  import { t } from "$lib/i18n";
 
   type Props = {
     source: string;
@@ -114,7 +115,7 @@
     }
   }
 
-  let editingValue = $state(source);
+  let editingValue = $state("");
 
   $effect(() => {
     editingValue = source;
@@ -178,7 +179,7 @@
       onblur={onSourceBlur}
       spellcheck="false"
       rows={Math.max(4, editingValue.split("\n").length)}
-      aria-label="Source do mindmap (markdown indentado)"
+      aria-label={$t("study.notes_mindmapview.source_aria") as string}
     ></textarea>
   {:else if renderState.kind === "idle"}
     <p class="mindmap-state">Sem source. Clique em ‹/› para editar.</p>

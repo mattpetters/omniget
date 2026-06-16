@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { pluginInvoke } from "$lib/plugin-invoke";
   import PageHero from "$lib/study-components/PageHero.svelte";
+  import { t } from "$lib/i18n";
 
   type MediaEntry = {
     fname: string;
@@ -86,7 +87,7 @@
         "study:anki:media:check",
       );
       report = r;
-      showToast("ok", "Verificação concluída");
+      showToast("ok", $t("study.anki_media.check_complete") as string);
     } catch (e) {
       showToast("err", e instanceof Error ? e.message : String(e));
     } finally {
@@ -186,7 +187,7 @@
       );
       showToast(
         "ok",
-        r.moved === 1 ? "1 arquivo não usado movido pro lixo" : `${r.moved} arquivos não usados movidos pro lixo`,
+        r.moved === 1 ? ($t("study.anki_media.moved_one") as string) : ($t("study.anki_media.moved_many", { count: r.moved }) as string),
       );
       if (r.moved > 0) {
         recentTrash = [
@@ -236,9 +237,9 @@
       );
       showToast(
         "ok",
-        r.removed === 0 ? "Lixeira já estava vazia" :
-        r.removed === 1 ? "1 arquivo apagado pra sempre" :
-        `${r.removed} arquivos apagados pra sempre`,
+        r.removed === 0 ? ($t("study.anki_media.trash_was_empty") as string) :
+        r.removed === 1 ? ($t("study.anki_media.deleted_one") as string) :
+        ($t("study.anki_media.deleted_many", { count: r.removed }) as string),
       );
       recentTrash = [];
     } catch (e) {
@@ -280,14 +281,14 @@
 
 <section class="study-page">
   <PageHero
-    title="Mídia"
+    title={$t("study.anki_media.title") as string}
     subtitle={loading
-      ? "Carregando…"
+      ? ($t("study.anki_media.loading") as string)
       : entries.length === 0
-        ? "Imagens, áudio e vídeo da coleção"
+        ? ($t("study.anki_media.subtitle") as string)
         : entries.length === 1
-          ? "1 arquivo"
-          : `${entries.length} arquivos`}
+          ? ($t("study.anki_media.one_file") as string)
+          : ($t("study.anki_media.many_files", { count: entries.length }) as string)}
   />
 
   {#if toast}
@@ -297,7 +298,7 @@
   {/if}
 
   <div class="toolbar">
-    <div class="tabs" role="tablist" aria-label="Filtro de mídia">
+    <div class="tabs" role="tablist" aria-label={$t("study.anki_media.filter_aria") as string}>
       <button
         type="button"
         class="tab"
@@ -306,7 +307,7 @@
         aria-selected={view === "all"}
         onclick={() => (view = "all")}
       >
-        Tudo
+        {$t("study.anki_media.tab_all")}
         <span class="count">{entries.length}</span>
       </button>
       <button
@@ -318,9 +319,9 @@
         aria-selected={view === "unused"}
         onclick={() => (view = "unused")}
         disabled={!report}
-        title={report ? "" : "Rode \"Verificar\" primeiro"}
+        title={report ? "" : ($t("study.anki_media.run_check_first") as string)}
       >
-        Não usados
+        {$t("study.anki_media.tab_unused")}
         <span class="count">{report?.unused.length ?? "—"}</span>
       </button>
       <button
@@ -332,9 +333,9 @@
         aria-selected={view === "missing"}
         onclick={() => (view = "missing")}
         disabled={!report}
-        title={report ? "" : "Rode \"Verificar\" primeiro"}
+        title={report ? "" : ($t("study.anki_media.run_check_first") as string)}
       >
-        Faltando
+        {$t("study.anki_media.tab_missing")}
         <span class="count">{report?.missing.length ?? "—"}</span>
       </button>
     </div>
@@ -346,7 +347,7 @@
         onclick={runCheck}
         disabled={checking}
       >
-        {checking ? "Verificando…" : "Verificar"}
+        {checking ? ($t("study.anki_media.checking") as string) : ($t("study.anki_media.check") as string)}
       </button>
       <button
         type="button"
@@ -354,21 +355,21 @@
         onclick={pickAndAdd}
         disabled={adding}
       >
-        {adding ? "Adicionando…" : "Adicionar arquivo"}
+        {adding ? ($t("study.anki_media.adding") as string) : ($t("study.anki_media.add_file") as string)}
       </button>
     </div>
   </div>
 
   {#if report && view === "unused" && report.unused.length > 0}
     <div class="unused-banner">
-      <span>{report.unused.length} {report.unused.length === 1 ? "arquivo não está" : "arquivos não estão"} sendo usado</span>
+      <span>{$t("study.anki_media.unused_banner", { count: report.unused.length })}</span>
       <button
         type="button"
         class="btn ghost sm"
         onclick={trashUnused}
         disabled={trashing}
       >
-        {trashing ? "Movendo…" : "Mover todos pro lixo"}
+        {trashing ? ($t("study.anki_media.moving") as string) : ($t("study.anki_media.move_all_trash") as string)}
       </button>
     </div>
   {/if}
@@ -378,19 +379,19 @@
       <input
         type="search"
         class="search"
-        placeholder="Filtrar arquivos…"
+        placeholder={$t("study.anki_media.filter_placeholder") as string}
         bind:value={filter}
       />
       {#if selected.size > 0}
         <span class="sel-count">
-          {selected.size} {selected.size === 1 ? "selecionado" : "selecionados"}
+          {$t("study.anki_media.selected_count", { count: selected.size })}
         </span>
         <button
           type="button"
           class="btn ghost sm"
           onclick={clearSelection}
         >
-          Limpar
+          {$t("study.anki_media.clear")}
         </button>
         <button
           type="button"
@@ -398,7 +399,7 @@
           onclick={trashSelected}
           disabled={trashing}
         >
-          {trashing ? "Movendo…" : "Mover pro lixo"}
+          {trashing ? ($t("study.anki_media.moving") as string) : ($t("study.anki_media.move_to_trash") as string)}
         </button>
       {:else if visible.length > 0}
         <button
@@ -406,34 +407,34 @@
           class="btn ghost sm"
           onclick={selectAllVisible}
         >
-          Selecionar visíveis
+          {$t("study.anki_media.select_visible")}
         </button>
       {/if}
     </div>
   {/if}
 
   {#if loading}
-    <div class="state">Carregando arquivos…</div>
+    <div class="state">{$t("study.anki_media.loading_files")}</div>
   {:else if error}
     <div class="state err">{error}</div>
-    <button class="btn ghost" onclick={load}>Tentar de novo</button>
+    <button class="btn ghost" onclick={load}>{$t("study.anki_media.try_again")}</button>
   {:else if visible.length === 0}
     <div class="empty">
       {#if view === "missing"}
-        <p>Nenhum arquivo faltando.</p>
+        <p>{$t("study.anki_media.no_missing")}</p>
         {#if !report}
-          <p class="hint">Rode "Verificar" pra começar.</p>
+          <p class="hint">{$t("study.anki_media.run_check_to_start")}</p>
         {/if}
       {:else if view === "unused"}
         {#if !report}
-          <p>Verificação ainda não rodada.</p>
-          <p class="hint">Clique em "Verificar" pra encontrar arquivos não usados.</p>
+          <p>{$t("study.anki_media.check_not_run")}</p>
+          <p class="hint">{$t("study.anki_media.click_check_unused")}</p>
         {:else}
-          <p>Nada não usado — coleção limpa.</p>
+          <p>{$t("study.anki_media.nothing_unused")}</p>
         {/if}
       {:else}
-        <p>Nenhum arquivo de mídia ainda.</p>
-        <p class="hint">Adicione arquivos com o botão acima ou via importação.</p>
+        <p>{$t("study.anki_media.no_media")}</p>
+        <p class="hint">{$t("study.anki_media.add_files_hint")}</p>
       {/if}
     </div>
   {:else if view === "missing"}
@@ -444,7 +445,7 @@
             <path d="M12 3l10 18H2z M12 10v5 M12 18v.5" />
           </svg>
           <span class="fname">{fname}</span>
-          <span class="muted">no DB mas não no disco</span>
+          <span class="muted">{$t("study.anki_media.in_db_not_disk")}</span>
         </li>
       {/each}
     </ul>
@@ -458,7 +459,7 @@
             class="row-check"
             checked={selected.has(fname)}
             onchange={() => toggleSelect(fname)}
-            aria-label="Selecionar {fname}"
+            aria-label={$t("study.anki_media.select_file", { name: fname }) as string}
           />
           <span class="fname">{fname}</span>
           {#if entry}
@@ -475,18 +476,18 @@
   {#if recentTrash.length > 0}
     <section class="trash-section">
       <header class="trash-head">
-        <h3>Lixeira (sessão atual)</h3>
+        <h3>{$t("study.anki_media.trash_title")}</h3>
         <button
           type="button"
           class="btn ghost sm danger"
           onclick={() => (confirmEmpty = true)}
           disabled={emptying}
         >
-          {emptying ? "Esvaziando…" : "Esvaziar lixeira"}
+          {emptying ? ($t("study.anki_media.emptying") as string) : ($t("study.anki_media.empty_trash") as string)}
         </button>
       </header>
       <p class="trash-lede">
-        Restaurar move o arquivo de volta. Esvaziar apaga permanentemente.
+        {$t("study.anki_media.trash_lede")}
       </p>
       <ul class="trash-list">
         {#each recentTrash as group (group.id)}
@@ -494,18 +495,18 @@
             <div class="trash-info">
               <span class="trash-count">
                 {group.fnames.length === 1
-                  ? "1 arquivo"
-                  : `${group.fnames.length} arquivos`}
+                  ? ($t("study.anki_media.one_file") as string)
+                  : ($t("study.anki_media.many_files", { count: group.fnames.length }) as string)}
               </span>
               <span class="trash-when">{fmtRelative(group.timestamp)}</span>
               <details class="trash-detail">
-                <summary>Ver lista</summary>
+                <summary>{$t("study.anki_media.view_list")}</summary>
                 <ul class="trash-fnames">
                   {#each group.fnames.slice(0, 20) as f (f)}
                     <li>{f}</li>
                   {/each}
                   {#if group.fnames.length > 20}
-                    <li class="muted">… mais {group.fnames.length - 20}</li>
+                    <li class="muted">{$t("study.anki_media.more_count", { count: group.fnames.length - 20 })}</li>
                   {/if}
                 </ul>
               </details>
@@ -516,7 +517,7 @@
               onclick={() => restoreGroup(group)}
               disabled={restoring !== null}
             >
-              {restoring === group.id ? "Restaurando…" : "Restaurar"}
+              {restoring === group.id ? ($t("study.anki_media.restoring") as string) : ($t("study.anki_media.restore") as string)}
             </button>
           </li>
         {/each}
@@ -541,9 +542,9 @@
       onclick={(e) => e.stopPropagation()}
       onkeydown={(e) => { if (e.key === "Escape") { e.stopPropagation(); confirmEmpty = false; } }}
     >
-      <h3 id="empty-title">Esvaziar lixeira?</h3>
+      <h3 id="empty-title">{$t("study.anki_media.empty_trash_q")}</h3>
       <p class="modal-body">
-        Os arquivos serão apagados do disco permanentemente. Não dá pra desfazer.
+        {$t("study.anki_media.empty_trash_body")}
       </p>
       <footer class="modal-foot">
         <button
@@ -551,14 +552,14 @@
           class="btn ghost"
           onclick={() => (confirmEmpty = false)}
         >
-          Cancelar
+          {$t("study.anki_media.cancel")}
         </button>
         <button
           type="button"
           class="btn primary danger"
           onclick={emptyTrash}
         >
-          Esvaziar
+          {$t("study.anki_media.empty")}
         </button>
       </footer>
     </div>

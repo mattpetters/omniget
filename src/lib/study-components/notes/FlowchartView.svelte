@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
+  import { t } from "$lib/i18n";
 
   type Props = {
     source: string;
@@ -60,8 +61,8 @@
       fill: surface,
       "line-width": 2,
       "font-size": 14,
-      "yes-text": "sim",
-      "no-text": "não",
+      "yes-text": $t("study.notes_flowchartview.yes") as string,
+      "no-text": $t("study.notes_flowchartview.no") as string,
     };
   }
 
@@ -104,7 +105,7 @@
     }
   }
 
-  let editingValue = $state(source);
+  let editingValue = $state("");
 
   $effect(() => {
     editingValue = source;
@@ -168,7 +169,7 @@
       onblur={onSourceBlur}
       spellcheck="false"
       rows={Math.max(4, editingValue.split("\n").length)}
-      aria-label="Source do diagrama flowchart"
+      aria-label={$t("study.notes_flowchartview.source_aria") as string}
     ></textarea>
   {:else if renderState.kind === "idle"}
     <p class="flowchart-state">Sem source. Clique em ‹/› para editar.</p>

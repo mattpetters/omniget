@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
+  import { onMount } from "svelte";
   import { pluginInvoke } from "$lib/plugin-invoke";
   import PageHero from "$lib/study-components/PageHero.svelte";
 
@@ -22,6 +23,11 @@
   let searched = $state(false);
   let toast = $state<{ kind: "ok" | "err"; msg: string } | null>(null);
   let timer: ReturnType<typeof setTimeout> | null = null;
+  let searchInput = $state<HTMLInputElement | null>(null);
+
+  onMount(() => {
+    searchInput?.focus();
+  });
 
   function showToast(kind: "ok" | "err", msg: string) {
     toast = { kind, msg };
@@ -113,11 +119,11 @@
 
   <div class="search-box">
     <input
+      bind:this={searchInput}
       type="search"
       class="search-input"
       placeholder="Texto, palavra-chave ou frase…"
       bind:value={query}
-      autofocus
     />
     <button
       type="button"

@@ -5029,39 +5029,6 @@
   .avatar.small .initial {
     font-size: 0.95rem;
   }
-  .keymap-modal {
-    width: min(440px, 92vw);
-  }
-  .keymap-dl {
-    display: grid;
-    grid-template-columns: max-content 1fr;
-    column-gap: 16px;
-    row-gap: 8px;
-    margin: 0;
-    padding: 4px 0 0;
-  }
-  .keymap-dl dt {
-    color: var(--secondary);
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 12px;
-  }
-  .keymap-dl dd {
-    margin: 0;
-    color: var(--tertiary);
-    font-size: 12px;
-    align-self: center;
-  }
-  .keymap-dl kbd {
-    padding: 2px 6px;
-    background: var(--surface);
-    border: 1px solid var(--input-border);
-    border-radius: 4px;
-    font-family: var(--font-mono, "IBM Plex Mono", monospace);
-    font-size: 11px;
-    color: var(--secondary);
-  }
   .title-input {
     width: 100%;
     padding: 2px 6px;

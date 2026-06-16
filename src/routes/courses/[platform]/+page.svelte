@@ -327,7 +327,7 @@
     }
   }
 
-  function getDownloadStatus(item: any): "idle" | "downloading" | "complete" | "error" {
+  function getDownloadStatus(item: any): "idle" | "downloading" | "complete" | "error" | "needs_decryption" {
     const id = Number(getItemId(item));
     const dl = downloads.get(id);
     if (!dl) return "idle";
@@ -355,7 +355,7 @@
       }
       return;
     }
-    if (status === "complete") return;
+    if (status === "complete" || status === "needs_decryption") return;
 
     const appSettings = getSettings();
     let outputDir: string | null = null;

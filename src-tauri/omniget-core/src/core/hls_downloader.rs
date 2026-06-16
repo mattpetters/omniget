@@ -7,6 +7,7 @@ use std::time::Duration;
 use futures::stream::{self, StreamExt};
 use m3u8_rs::{parse_master_playlist, parse_media_playlist, MasterPlaylist, VariantStream};
 use reqwest::Client;
+use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc::{self, UnboundedSender};
 use tokio::sync::Semaphore;
 use tokio_util::sync::CancellationToken;
@@ -19,6 +20,27 @@ pub struct HlsDownloadResult {
     pub path: PathBuf,
     pub file_size: u64,
     pub segments: usize,
+    pub protected_passthrough: bool,
+    pub protected_media: Option<ProtectedMediaInfo>,
+    pub protection_sidecar_path: Option<PathBuf>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ProtectedHlsPolicy {
+    Fail,
+    SaveEncrypted,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ProtectedMediaInfo {
+    pub marker: String,
+    pub encrypted: bool,
+    pub encryption_method: String,
+    pub source_url: String,
+    pub key_uri: Option<String>,
+    pub key_format: Option<String>,
+    pub decryption_status: String,
+    pub note: String,
 }
 
 pub struct HlsDownloader {
@@ -27,6 +49,7 @@ pub struct HlsDownloader {
     /// Optional rich progress channel; receives percent (completed/total
     /// segments) plus accumulated downloaded bytes as segments finish.
     progress_tx: Option<mpsc::Sender<ProgressUpdate>>,
+    protected_hls_policy: ProtectedHlsPolicy,
 }
 
 impl Default for HlsDownloader {
@@ -59,6 +82,7 @@ impl HlsDownloader {
             client,
             user_agent_override: None,
             progress_tx: None,
+            protected_hls_policy: ProtectedHlsPolicy::Fail,
         }
     }
 
@@ -71,6 +95,11 @@ impl HlsDownloader {
     /// (percent = completed / total segments, with accumulated bytes).
     pub fn with_progress(mut self, tx: mpsc::Sender<ProgressUpdate>) -> Self {
         self.progress_tx = Some(tx);
+        self
+    }
+
+    pub fn with_protected_hls_policy(mut self, policy: ProtectedHlsPolicy) -> Self {
+        self.protected_hls_policy = policy;
         self
     }
 
@@ -221,6 +250,7 @@ impl HlsDownloader {
         let encryption = self
             .fetch_encryption_info(&playlist, m3u8_url, referer)
             .await?;
+        let protected_media = encryption.protected_media.clone();
 
         let output = PathBuf::from(output_path);
         let part_path = {
@@ -232,19 +262,17 @@ impl HlsDownloader {
             std::fs::create_dir_all(parent)?;
         }
 
-        let (seg_tx, seg_rx) = mpsc::channel::<(usize, Vec<u8>)>(max_concurrent as usize);
+        let download_units = build_download_units(&playlist, m3u8_url)?;
+        let total_units = download_units.len();
+
+        let (seg_tx, seg_rx) = mpsc::channel::<(usize, DownloadedHlsUnit)>(max_concurrent as usize);
 
         let writer_output = part_path.clone();
         let media_sequence = playlist.media_sequence;
+        let aes128 = encryption.aes128;
         let writer = tokio::spawn(async move {
-            write_segments_ordered(
-                seg_rx,
-                &writer_output,
-                &encryption,
-                media_sequence,
-                total_segments,
-            )
-            .await
+            write_segments_ordered(seg_rx, &writer_output, &aes128, media_sequence, total_units)
+                .await
         });
 
         let semaphore = Arc::new(Semaphore::new(max_concurrent as usize));
@@ -253,13 +281,6 @@ impl HlsDownloader {
         let fail_token = cancel_token.child_token();
         let errors: Arc<tokio::sync::Mutex<HashMap<String, u32>>> =
             Arc::new(tokio::sync::Mutex::new(HashMap::new()));
-
-        let segment_urls: Vec<(usize, String)> = playlist
-            .segments
-            .iter()
-            .enumerate()
-            .map(|(i, seg)| (i, resolve_url(m3u8_url, &seg.uri)))
-            .collect();
 
         let client = &self.client;
         let errors_ref = &errors;
@@ -271,8 +292,8 @@ impl HlsDownloader {
         let user_agent_ref = &user_agent;
         let progress_ref = &self.progress_tx;
 
-        stream::iter(segment_urls)
-            .map(|(i, url)| {
+        stream::iter(download_units)
+            .map(|unit| {
                 let bytes_tx = bytes_tx.clone();
                 let seg_tx = seg_tx.clone();
                 let referer = referer.to_string();
@@ -283,7 +304,8 @@ impl HlsDownloader {
                     }
                     match download_segment_with_retry(
                         client,
-                        &url,
+                        &unit.url,
+                        unit.byte_range.as_ref(),
                         &referer,
                         user_agent_ref,
                         max_retries,
@@ -295,7 +317,11 @@ impl HlsDownloader {
                             if let Some(ref btx) = bytes_tx {
                                 let _ = btx.send(data.len() as u64);
                             }
-                            let done = completed_ref.fetch_add(1, Ordering::Relaxed) + 1;
+                            let done = if matches!(unit.kind, HlsOutputUnitKind::Segment { .. }) {
+                                completed_ref.fetch_add(1, Ordering::Relaxed) + 1
+                            } else {
+                                completed_ref.load(Ordering::Relaxed)
+                            };
                             let total_dl = downloaded_ref
                                 .fetch_add(data.len() as u64, Ordering::Relaxed)
                                 + data.len() as u64;
@@ -315,7 +341,15 @@ impl HlsDownloader {
                                     None,
                                 ));
                             }
-                            let _ = seg_tx.send((i, data)).await;
+                            let _ = seg_tx
+                                .send((
+                                    unit.order,
+                                    DownloadedHlsUnit {
+                                        kind: unit.kind,
+                                        data,
+                                    },
+                                ))
+                                .await;
                         }
                         Err(e) => {
                             let key = e.to_string();
@@ -364,11 +398,23 @@ impl HlsDownloader {
         std::fs::rename(&part_path, &output)?;
 
         let file_size = std::fs::metadata(&output)?.len();
+        if file_size == 0 && protected_media.is_none() {
+            let _ = std::fs::remove_file(&output);
+            anyhow::bail!("HLS download produced no data (0 bytes)");
+        }
+        let protection_sidecar_path = if let Some(ref protected) = protected_media {
+            Some(write_protection_sidecar(&output, protected)?)
+        } else {
+            None
+        };
 
         Ok(HlsDownloadResult {
             path: output,
             file_size,
             segments: total_segments,
+            protected_passthrough: protected_media.is_some(),
+            protected_media,
+            protection_sidecar_path,
         })
     }
 
@@ -377,7 +423,7 @@ impl HlsDownloader {
         playlist: &m3u8_rs::MediaPlaylist,
         m3u8_url: &str,
         referer: &str,
-    ) -> anyhow::Result<Option<EncryptionInfo>> {
+    ) -> anyhow::Result<EncryptionDecision> {
         for segment in &playlist.segments {
             if let Some(key) = &segment.key {
                 match key.method {
@@ -386,17 +432,41 @@ impl HlsDownloader {
                             let key_url = resolve_url(m3u8_url, uri);
                             let key_bytes = self.fetch_key_with_retry(&key_url, referer, 3).await?;
                             let iv = key.iv.as_ref().map(|iv_str| parse_hex_iv(iv_str));
-                            return Ok(Some(EncryptionInfo { key_bytes, iv }));
+                            return Ok(EncryptionDecision {
+                                aes128: Some(EncryptionInfo { key_bytes, iv }),
+                                protected_media: None,
+                            });
                         }
                     }
                     m3u8_rs::KeyMethod::SampleAES => {
-                        anyhow::bail!("HLS stream uses SAMPLE-AES (FairPlay DRM), cannot decrypt");
+                        if self.protected_hls_policy == ProtectedHlsPolicy::Fail {
+                            anyhow::bail!(
+                                "HLS stream uses SAMPLE-AES (DRM-protected), cannot decrypt"
+                            );
+                        }
+
+                        tracing::warn!(
+                            "[hls] SAMPLE-AES protected HLS detected; saving encrypted media"
+                        );
+                        return Ok(EncryptionDecision {
+                            aes128: None,
+                            protected_media: Some(ProtectedMediaInfo {
+                                marker: "omniget.protected_hls.v1".to_string(),
+                                encrypted: true,
+                                encryption_method: "SAMPLE-AES".to_string(),
+                                source_url: m3u8_url.to_string(),
+                                key_uri: key.uri.clone(),
+                                key_format: key.keyformat.clone(),
+                                decryption_status: "not_decrypted".to_string(),
+                                note: "Saved encrypted without built-in decryption. If future decryption support is added, this file is eligible once the rights holder grants a valid key.".to_string(),
+                            }),
+                        });
                     }
                     _ => {}
                 }
             }
         }
-        Ok(None)
+        Ok(EncryptionDecision::default())
     }
 
     async fn fetch_key_with_retry(
@@ -434,6 +504,7 @@ impl HlsDownloader {
     }
 }
 
+#[derive(Debug)]
 struct EncryptionInfo {
     key_bytes: Vec<u8>,
     iv: Option<[u8; 16]>,
@@ -462,6 +533,143 @@ fn url_origin(url: &str) -> Option<String> {
         Some(port) => format!("{}://{}:{}", scheme, host, port),
         None => format!("{}://{}", scheme, host),
     })
+}
+
+#[derive(Debug, Default)]
+struct EncryptionDecision {
+    aes128: Option<EncryptionInfo>,
+    protected_media: Option<ProtectedMediaInfo>,
+}
+
+#[derive(Clone, Debug)]
+struct DownloadHlsUnit {
+    order: usize,
+    url: String,
+    byte_range: Option<ResolvedByteRange>,
+    kind: HlsOutputUnitKind,
+}
+
+#[derive(Clone, Debug)]
+struct DownloadedHlsUnit {
+    kind: HlsOutputUnitKind,
+    data: Vec<u8>,
+}
+
+#[derive(Clone, Copy, Debug)]
+enum HlsOutputUnitKind {
+    InitMap,
+    Segment { segment_index: usize },
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct ResolvedByteRange {
+    start: u64,
+    end: u64,
+}
+
+impl ResolvedByteRange {
+    fn header_value(&self) -> String {
+        format!("bytes={}-{}", self.start, self.end)
+    }
+}
+
+#[derive(Clone, PartialEq, Eq)]
+struct MapIdentity {
+    uri: String,
+    byte_range: Option<(u64, Option<u64>)>,
+}
+
+fn map_identity(map: &m3u8_rs::Map) -> MapIdentity {
+    MapIdentity {
+        uri: map.uri.clone(),
+        byte_range: map.byte_range.as_ref().map(|br| (br.length, br.offset)),
+    }
+}
+
+fn build_download_units(
+    playlist: &m3u8_rs::MediaPlaylist,
+    m3u8_url: &str,
+) -> anyhow::Result<Vec<DownloadHlsUnit>> {
+    let mut units = Vec::new();
+    let mut last_map: Option<MapIdentity> = None;
+    let mut byte_range_offsets: HashMap<String, u64> = HashMap::new();
+
+    for (segment_index, segment) in playlist.segments.iter().enumerate() {
+        if let Some(map) = &segment.map {
+            let identity = map_identity(map);
+            if last_map.as_ref() != Some(&identity) {
+                let map_url = resolve_url(m3u8_url, &map.uri);
+                let byte_range =
+                    resolve_byte_range(&map_url, map.byte_range.as_ref(), &mut byte_range_offsets)?;
+                units.push(DownloadHlsUnit {
+                    order: units.len(),
+                    url: map_url,
+                    byte_range,
+                    kind: HlsOutputUnitKind::InitMap,
+                });
+                last_map = Some(identity);
+            }
+        } else {
+            last_map = None;
+        }
+
+        let segment_url = resolve_url(m3u8_url, &segment.uri);
+        let byte_range = resolve_byte_range(
+            &segment_url,
+            segment.byte_range.as_ref(),
+            &mut byte_range_offsets,
+        )?;
+        units.push(DownloadHlsUnit {
+            order: units.len(),
+            url: segment_url,
+            byte_range,
+            kind: HlsOutputUnitKind::Segment { segment_index },
+        });
+    }
+
+    Ok(units)
+}
+
+fn resolve_byte_range(
+    url: &str,
+    byte_range: Option<&m3u8_rs::ByteRange>,
+    offsets: &mut HashMap<String, u64>,
+) -> anyhow::Result<Option<ResolvedByteRange>> {
+    let Some(byte_range) = byte_range else {
+        return Ok(None);
+    };
+    if byte_range.length == 0 {
+        anyhow::bail!("HLS byte range length cannot be zero");
+    }
+
+    let start = byte_range
+        .offset
+        .unwrap_or_else(|| *offsets.get(url).unwrap_or(&0));
+    let end = start
+        .checked_add(byte_range.length - 1)
+        .ok_or_else(|| anyhow::anyhow!("HLS byte range overflow"))?;
+    let next = end
+        .checked_add(1)
+        .ok_or_else(|| anyhow::anyhow!("HLS byte range overflow"))?;
+    offsets.insert(url.to_string(), next);
+
+    Ok(Some(ResolvedByteRange { start, end }))
+}
+
+pub fn protection_sidecar_path(output_path: &std::path::Path) -> PathBuf {
+    let mut path = output_path.as_os_str().to_owned();
+    path.push(".encrypted.json");
+    PathBuf::from(path)
+}
+
+pub fn write_protection_sidecar(
+    output_path: &std::path::Path,
+    protected: &ProtectedMediaInfo,
+) -> anyhow::Result<PathBuf> {
+    let path = protection_sidecar_path(output_path);
+    let json = serde_json::to_vec_pretty(protected)?;
+    std::fs::write(&path, json)?;
+    Ok(path)
 }
 
 fn select_best_variant(master: &MasterPlaylist, max_height: u32) -> Option<&VariantStream> {
@@ -512,28 +720,35 @@ fn resolve_url(base: &str, relative: &str) -> String {
 }
 
 async fn write_segments_ordered(
-    mut rx: mpsc::Receiver<(usize, Vec<u8>)>,
+    mut rx: mpsc::Receiver<(usize, DownloadedHlsUnit)>,
     output_path: &PathBuf,
     encryption: &Option<EncryptionInfo>,
     media_sequence: u64,
-    total_segments: usize,
+    total_units: usize,
 ) -> anyhow::Result<()> {
     use std::io::Write;
     let mut file =
         std::io::BufWriter::with_capacity(256 * 1024, std::fs::File::create(output_path)?);
     let mut next_expected: usize = 0;
-    let mut pending: BTreeMap<usize, Vec<u8>> = BTreeMap::new();
+    let mut pending: BTreeMap<usize, DownloadedHlsUnit> = BTreeMap::new();
 
-    while let Some((idx, data)) = rx.recv().await {
-        pending.insert(idx, data);
+    while let Some((idx, unit)) = rx.recv().await {
+        pending.insert(idx, unit);
 
-        while let Some(segment_data) = pending.remove(&next_expected) {
+        while let Some(unit) = pending.remove(&next_expected) {
             if let Some(enc) = encryption {
                 use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, KeyIvInit};
                 type Aes128CbcDec = cbc::Decryptor<aes::Aes128>;
 
-                let iv = compute_iv(enc, next_expected, media_sequence);
-                let mut buf = segment_data;
+                let iv = match unit.kind {
+                    HlsOutputUnitKind::Segment { segment_index } => {
+                        compute_iv(enc, segment_index, media_sequence)
+                    }
+                    HlsOutputUnitKind::InitMap => enc.iv.ok_or_else(|| {
+                        anyhow::anyhow!("AES-128 encrypted HLS init map requires explicit IV")
+                    })?,
+                };
+                let mut buf = unit.data;
                 let decryptor = Aes128CbcDec::new_from_slices(&enc.key_bytes, &iv)
                     .map_err(|e| anyhow::anyhow!("AES init: {:?}", e))?;
                 let decrypted = decryptor
@@ -541,7 +756,7 @@ async fn write_segments_ordered(
                     .map_err(|e| anyhow::anyhow!("AES decrypt: {:?}", e))?;
                 file.write_all(decrypted)?;
             } else {
-                file.write_all(&segment_data)?;
+                file.write_all(&unit.data)?;
             }
             next_expected += 1;
         }
@@ -549,11 +764,11 @@ async fn write_segments_ordered(
 
     file.flush()?;
 
-    if next_expected < total_segments {
+    if next_expected < total_units {
         anyhow::bail!(
-            "Only {} of {} segments were written",
+            "Only {} of {} HLS units were written",
             next_expected,
-            total_segments
+            total_units
         );
     }
 
@@ -565,6 +780,7 @@ const SEGMENT_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(60);
 async fn download_segment_with_retry(
     client: &Client,
     url: &str,
+    byte_range: Option<&ResolvedByteRange>,
     referer: &str,
     user_agent: &str,
     max_retries: u32,
@@ -577,10 +793,12 @@ async fn download_segment_with_retry(
         }
 
         let result = tokio::time::timeout(SEGMENT_TIMEOUT, async {
-            let resp = apply_referer_headers(client.get(url), referer)
-                .header("User-Agent", user_agent)
-                .send()
-                .await?;
+            let mut request = apply_referer_headers(client.get(url), referer)
+                .header("User-Agent", user_agent);
+            if let Some(byte_range) = byte_range {
+                request = request.header(reqwest::header::RANGE, byte_range.header_value());
+            }
+            let resp = request.send().await?;
 
             let status = resp.status();
             if !status.is_success() {
@@ -643,6 +861,23 @@ fn parse_hex_iv(iv_str: &str) -> [u8; 16] {
 mod tests {
     use super::*;
     use m3u8_rs::{MasterPlaylist, Resolution, VariantStream};
+
+    fn parse_test_media_playlist(text: &str) -> m3u8_rs::MediaPlaylist {
+        parse_media_playlist(text.as_bytes()).unwrap().1
+    }
+
+    fn temp_hls_output(name: &str) -> PathBuf {
+        let nanos = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        std::env::temp_dir().join(format!(
+            "omniget-hls-{}-{}-{}",
+            name,
+            std::process::id(),
+            nanos
+        ))
+    }
 
     #[test]
     fn url_origin_basic() {
@@ -710,6 +945,144 @@ mod tests {
     #[test]
     fn resolve_url_no_slash_in_base() {
         assert_eq!(resolve_url("master.m3u8", "segment0.ts"), "segment0.ts");
+    }
+
+    #[test]
+    fn build_download_units_includes_init_map_and_byte_ranges() {
+        let playlist = parse_test_media_playlist(
+            r#"#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:4
+#EXT-X-MAP:URI="init.mp4",BYTERANGE="8@10"
+#EXTINF:4.0,
+#EXT-X-BYTERANGE:4@20
+media.mp4
+#EXTINF:4.0,
+#EXT-X-BYTERANGE:4
+media.mp4
+#EXT-X-ENDLIST
+"#,
+        );
+
+        let units =
+            build_download_units(&playlist, "https://cdn.example.com/course/master.m3u8").unwrap();
+
+        assert_eq!(units.len(), 3);
+        assert!(matches!(units[0].kind, HlsOutputUnitKind::InitMap));
+        assert_eq!(units[0].url, "https://cdn.example.com/course/init.mp4");
+        assert_eq!(
+            units[0].byte_range,
+            Some(ResolvedByteRange { start: 10, end: 17 })
+        );
+        assert!(matches!(
+            units[1].kind,
+            HlsOutputUnitKind::Segment { segment_index: 0 }
+        ));
+        assert_eq!(
+            units[1].byte_range,
+            Some(ResolvedByteRange { start: 20, end: 23 })
+        );
+        assert!(matches!(
+            units[2].kind,
+            HlsOutputUnitKind::Segment { segment_index: 1 }
+        ));
+        assert_eq!(
+            units[2].byte_range,
+            Some(ResolvedByteRange { start: 24, end: 27 })
+        );
+    }
+
+    #[test]
+    fn byte_range_header_uses_inclusive_end() {
+        assert_eq!(
+            ResolvedByteRange { start: 3, end: 9 }.header_value(),
+            "bytes=3-9"
+        );
+    }
+
+    #[tokio::test]
+    async fn sample_aes_fails_by_default() {
+        let playlist = parse_test_media_playlist(
+            r#"#EXTM3U
+#EXT-X-TARGETDURATION:4
+#EXT-X-KEY:METHOD=SAMPLE-AES,URI="skd://asset",KEYFORMAT="com.widevine"
+#EXTINF:4.0,
+seg0.m4s
+"#,
+        );
+
+        let err = HlsDownloader::new()
+            .fetch_encryption_info(&playlist, "https://cdn.example.com/master.m3u8", "")
+            .await
+            .unwrap_err();
+
+        assert!(err.to_string().contains("SAMPLE-AES"));
+    }
+
+    #[tokio::test]
+    async fn sample_aes_save_encrypted_marks_protected_media() {
+        let playlist = parse_test_media_playlist(
+            r#"#EXTM3U
+#EXT-X-TARGETDURATION:4
+#EXT-X-KEY:METHOD=SAMPLE-AES,URI="skd://asset",KEYFORMAT="com.widevine"
+#EXTINF:4.0,
+seg0.m4s
+"#,
+        );
+
+        let decision = HlsDownloader::new()
+            .with_protected_hls_policy(ProtectedHlsPolicy::SaveEncrypted)
+            .fetch_encryption_info(&playlist, "https://cdn.example.com/master.m3u8", "")
+            .await
+            .unwrap();
+
+        assert!(decision.aes128.is_none());
+        let protected = decision.protected_media.unwrap();
+        assert!(protected.encrypted);
+        assert_eq!(protected.encryption_method, "SAMPLE-AES");
+        assert_eq!(protected.key_uri.as_deref(), Some("skd://asset"));
+        assert_eq!(protected.decryption_status, "not_decrypted");
+    }
+
+    #[tokio::test]
+    async fn write_segments_ordered_writes_init_map_before_segment() {
+        let output = temp_hls_output("ordered-units");
+        let (tx, rx) = mpsc::channel(2);
+
+        tx.send((
+            1,
+            DownloadedHlsUnit {
+                kind: HlsOutputUnitKind::Segment { segment_index: 0 },
+                data: b"segment".to_vec(),
+            },
+        ))
+        .await
+        .unwrap();
+        tx.send((
+            0,
+            DownloadedHlsUnit {
+                kind: HlsOutputUnitKind::InitMap,
+                data: b"init".to_vec(),
+            },
+        ))
+        .await
+        .unwrap();
+        drop(tx);
+
+        write_segments_ordered(rx, &output, &None, 0, 2)
+            .await
+            .unwrap();
+
+        assert_eq!(std::fs::read(&output).unwrap(), b"initsegment");
+        let _ = std::fs::remove_file(output);
+    }
+
+    #[test]
+    fn protection_sidecar_path_appends_marker_extension() {
+        assert_eq!(
+            protection_sidecar_path(std::path::Path::new("/tmp/video.mp4")),
+            PathBuf::from("/tmp/video.mp4.encrypted.json")
+        );
     }
 
     #[test]

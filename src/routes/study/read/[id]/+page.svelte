@@ -2227,13 +2227,11 @@
                 class:pointer-off={!inkMode}
                 viewBox="0 0 {textRects.page_width_pt} {textRects.page_height_pt}"
                 preserveAspectRatio="none"
-                aria-hidden="true"
               >
                 {#each pageInks as ink (ink.id)}
                   {@const data = (() => { try { return JSON.parse(ink.ink_json ?? "{}"); } catch { return null; } })()}
                   {#if data}
                     {#each data.paths ?? [] as path, pi (pi)}
-                      <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
                       <path
                         d={buildPathD(path)}
                         stroke={data.color ?? "#1f2937"}
@@ -2242,7 +2240,16 @@
                         stroke-linecap="round"
                         stroke-linejoin="round"
                         class="ink-path"
+                        role="button"
+                        tabindex="0"
+                        aria-label="delete highlight"
                         onclick={() => deleteHighlight(ink)}
+                        onkeydown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            deleteHighlight(ink);
+                          }
+                        }}
                       ></path>
                     {/each}
                   {/if}
@@ -3339,6 +3346,7 @@
     overflow: hidden;
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
   }
   .ep-section {

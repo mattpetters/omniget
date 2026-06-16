@@ -604,6 +604,7 @@ impl InstagramDownloader {
             false,
             &[],
             opts.audio_format.as_deref(),
+            opts.save_encrypted_hls,
         )
         .await
     }
@@ -794,6 +795,8 @@ impl PlatformDownloader for InstagramDownloader {
                         file_size_bytes: bytes,
                         duration_seconds: 0.0,
                         torrent_id: None,
+                        protected_media: None,
+                        protection_sidecar_path: None,
                     });
                 }
                 Err(e) => {
@@ -867,6 +870,8 @@ impl PlatformDownloader for InstagramDownloader {
             file_size_bytes: total_bytes,
             duration_seconds: 0.0,
             torrent_id: None,
+            protected_media: None,
+            protection_sidecar_path: None,
         })
     }
 }
@@ -900,6 +905,8 @@ mod tests {
             torrent_files: None,
             torrent_auto_trackers: false,
             torrent_upnp: false,
+            save_encrypted_hls: false,
+            widevine_device_path: None,
         }
     }
 

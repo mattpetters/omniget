@@ -223,14 +223,14 @@
         showToast(
           "ok",
           r.probed === 1
-            ? "1 duração detectada"
-            : `${r.probed} durações detectadas`,
+            ? ($t("study.course_id.duration_detected_one") as string)
+            : ($t("study.course_id.duration_detected_many", { count: r.probed }) as string),
         );
         await load();
       } else if (r.failed > 0 && r.probed === 0) {
-        showToast("err", "ffprobe falhou — verifique se está instalado");
+        showToast("err", $t("study.course_id.ffprobe_failed") as string);
       } else {
-        showToast("ok", "Tudo já tinha duração");
+        showToast("ok", $t("study.course_id.all_had_duration") as string);
       }
     } catch (e) {
       showToast("err", e instanceof Error ? e.message : String(e));
@@ -473,7 +473,7 @@
       </section>
 
       <section class="meta-subjects">
-        <h3>Matérias</h3>
+        <h3>{$t("study.course_id.subjects")}</h3>
         <div class="chip-row">
           {#each courseSubjects as subj (subj.id)}
             <span
@@ -489,13 +489,13 @@
             class="subj-edit"
             onclick={() => (subjectsModalOpen = true)}
           >
-            {courseSubjects.length === 0 ? "+ Atribuir matérias" : "Editar"}
+            {courseSubjects.length === 0 ? ($t("study.course_id.assign_subjects") as string) : ($t("study.course_id.edit") as string)}
           </button>
         </div>
       </section>
 
       <section class="meta-actions">
-        <h3>Ações</h3>
+        <h3>{$t("study.course_id.actions")}</h3>
         <div class="action-row">
           <button
             type="button"
@@ -505,7 +505,7 @@
           >
             <span aria-hidden="true">⏱</span>
             <span>
-              {probing ? "Detectando…" : "Detectar durações (ffprobe)"}
+              {probing ? ($t("study.course_id.detecting") as string) : ($t("study.course_id.detect_durations") as string)}
             </span>
             {#if totalDurationMs > 0}
               <span class="action-meta">total: {fmtDuration(totalDurationMs)}</span>
@@ -681,7 +681,7 @@
     onClose={() => (subjectsModalOpen = false)}
     onSaved={() => {
       void loadCourseSubjects();
-      showToast("ok", "Matérias atualizadas");
+      showToast("ok", $t("study.course_id.subjects_updated") as string);
     }}
   />
 
@@ -692,7 +692,7 @@
   {/if}
 
   {#if selectedLessons.size > 0}
-    <div class="selection-bar" role="toolbar" aria-label="Ações em massa">
+    <div class="selection-bar" role="toolbar" aria-label={$t("study.course_id.bulk_actions") as string}>
       <span class="sel-count">
         <strong>{selectedLessons.size}</strong>
         {selectedLessons.size === 1 ? "selecionada" : "selecionadas"}

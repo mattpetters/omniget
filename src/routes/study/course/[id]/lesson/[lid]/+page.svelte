@@ -860,7 +860,7 @@
   async function captureScreenshot() {
     if (!videoRef || !lesson) return;
     if (!videoRef.videoWidth || !videoRef.videoHeight) {
-      screenshotToast = "Vídeo ainda não carregou";
+      screenshotToast = $t("study.lesson.video_not_loaded") as string;
       setTimeout(() => (screenshotToast = ""), 2400);
       return;
     }
@@ -1291,7 +1291,7 @@
         </div>
       </div>
 
-      <nav class="panel-tabs" aria-label="painéis da aula">
+      <nav class="panel-tabs" aria-label={$t("study.lesson.panel_tabs_aria") as string}>
         <SegmentedControl
           bind:value={activePanel}
           options={panelOptions}
@@ -1318,7 +1318,7 @@
             </ul>
           </div>
         {:else}
-          <p class="muted panel-empty">Sem anexos nesta aula.</p>
+          <p class="muted panel-empty">{$t("study.lesson.no_attachments")}</p>
         {/if}
       {/if}
 
@@ -1326,18 +1326,18 @@
         <div class="info-panel">
           {#if lesson}
             <dl class="info-grid">
-              <dt>Aula</dt>
+              <dt>{$t("study.lesson.info_lesson")}</dt>
               <dd>{lesson.title}</dd>
-              <dt>Posição</dt>
+              <dt>{$t("study.lesson.info_position")}</dt>
               <dd>#{lesson.position}</dd>
               {#if lesson.duration_ms}
-                <dt>Duração</dt>
+                <dt>{$t("study.lesson.info_duration")}</dt>
                 <dd>{formatTime(lesson.duration_ms / 1000)}</dd>
               {/if}
-              <dt>Status</dt>
-              <dd>{markedComplete ? "Completa" : "Em andamento"}</dd>
+              <dt>{$t("study.lesson.info_status")}</dt>
+              <dd>{markedComplete ? ($t("study.lesson.status_complete") as string) : ($t("study.lesson.status_in_progress") as string)}</dd>
               {#if videoRef && isFinite(videoRef.duration)}
-                <dt>Tempo atual</dt>
+                <dt>{$t("study.lesson.info_current_time")}</dt>
                 <dd>
                   {formatTime(videoRef.currentTime)} /
                   {formatTime(videoRef.duration)}
@@ -1488,12 +1488,15 @@
     class="viewer-backdrop"
     role="presentation"
     onclick={closeViewer}
+    onkeydown={(e) => { if (e.key === "Escape") closeViewer(); }}
   >
     <div
       class="viewer"
       role="dialog"
       aria-modal="true"
+      tabindex="-1"
       onclick={(e) => e.stopPropagation()}
+      onkeydown={(e) => e.stopPropagation()}
     >
       <header class="viewer-head">
         <span class="viewer-title">
@@ -1620,72 +1623,6 @@
     gap: var(--padding);
     min-width: 0;
     min-height: 0;
-  }
-  .player-shell {
-    background: black;
-    border-radius: var(--border-radius);
-    overflow: hidden;
-    aspect-ratio: 16 / 9;
-    position: relative;
-  }
-  .player-shell video {
-    width: 100%;
-    height: 100%;
-    display: block;
-  }
-  .player-toolbar {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    display: flex;
-    gap: 6px;
-    align-items: center;
-    background: rgba(0, 0, 0, 0.55);
-    border-radius: 6px;
-    padding: 4px 6px;
-    color: #f5f5f5;
-    font-size: 12px;
-    backdrop-filter: blur(4px);
-    pointer-events: auto;
-    z-index: 2;
-  }
-  .speed-control {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-  }
-  .speed-label {
-    font-size: 11px;
-    opacity: 0.7;
-  }
-  .speed-select {
-    background: rgba(255, 255, 255, 0.12);
-    color: #f5f5f5;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: 4px;
-    padding: 2px 4px;
-    font-size: 12px;
-    font-variant-numeric: tabular-nums;
-    cursor: pointer;
-  }
-  .speed-select option {
-    background: #1a1a1a;
-    color: #f5f5f5;
-  }
-  .theater-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: transparent;
-    color: inherit;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: 4px;
-    padding: 2px 8px;
-    font-size: 11px;
-    cursor: pointer;
-  }
-  .theater-toggle.active {
-    background: rgba(255, 255, 255, 0.18);
   }
   :global(.lesson-page[data-theater="1"] .sidebar),
   :global(.lesson-page[data-theater="1"] .head),
@@ -2019,14 +1956,6 @@
     border: 1px solid var(--input-border);
     border-radius: var(--border-radius);
   }
-  .attachments-head h2 {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--tertiary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin: 0;
-  }
   .attachments-list {
     list-style: none;
     margin: 0;
@@ -2133,35 +2062,6 @@
     max-height: 100%;
     object-fit: contain;
   }
-  .lesson-progress {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin: 0 0 calc(var(--padding) * 0.75);
-  }
-  .lesson-progress-track {
-    flex: 1;
-    height: 4px;
-    background: color-mix(in oklab, var(--input-border) 30%, transparent);
-    border-radius: 999px;
-    overflow: hidden;
-  }
-  .lesson-progress-fill {
-    height: 100%;
-    background: var(--accent);
-    transition: width 200ms ease;
-  }
-  .lesson-progress-fill.complete {
-    background: var(--success);
-  }
-  .lesson-progress-pct {
-    font-family: var(--font-mono, ui-monospace, monospace);
-    font-size: 11px;
-    color: var(--tertiary);
-    min-width: 36px;
-    text-align: right;
-  }
-
   .panel-tabs {
     margin-bottom: calc(var(--padding) * 0.75);
   }
@@ -2192,17 +2092,6 @@
     color: var(--text);
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    .lesson-progress-fill {
-      transition: none;
-    }
-  }
-
-  .btn.screenshot {
-    padding: 6px 10px;
-    font-size: 14px;
-    line-height: 1;
-  }
   .screenshot-toast {
     font-size: 11px;
     color: var(--success, var(--accent));

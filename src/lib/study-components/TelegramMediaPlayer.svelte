@@ -31,7 +31,7 @@
   let flipRoot: HTMLElement | null = $state(null);
   let flipPlayed = $state(false);
 
-  let idx = $state(initialIdx);
+  let idx = $state(0);
   let streamUrl = $state("");
   let loading = $state(false);
   let error = $state("");
@@ -44,6 +44,10 @@
   let playbackRate = $state(1);
 
   const item = $derived(playlist[idx] ?? null);
+
+  $effect(() => {
+    idx = initialIdx;
+  });
 
   function speedKey() {
     return `${SPEED_KEY_PREFIX}${chat.chat_type}:${chat.id}`;
@@ -483,6 +487,7 @@
       onpointerup={onStagePointerUp}
       onpointercancel={onStagePointerUp}
       onclick={onStageClick}
+      onkeydown={() => {}}
     >
       {#if loading}
         <p class="muted">{$t("study.common.loading")}</p>
@@ -594,8 +599,8 @@
         class:chrome-hidden={!chromeVisible}
         class:expanded={captionExpanded}
       >
-        <!-- svelte-ignore a11y_no_noninteractive_element_interactions a11y_click_events_have_key_events -->
-        <p
+        <button
+          type="button"
           class="caption-text"
           onclick={(e) => {
             e.stopPropagation();
@@ -603,7 +608,7 @@
           }}
         >
           {item.caption}
-        </p>
+        </button>
       </div>
     {/if}
 
@@ -681,6 +686,10 @@
     user-select: text;
     background: rgba(0, 0, 0, 0.45);
     backdrop-filter: blur(6px);
+    border: 0;
+    color: inherit;
+    font: inherit;
+    text-align: left;
     border-radius: 6px;
     padding: 6px 10px;
   }

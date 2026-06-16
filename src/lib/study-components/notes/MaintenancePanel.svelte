@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from "$lib/i18n";
   import {
     notesSearchRebuild,
     notesRefsRebuildAll,
@@ -23,7 +24,7 @@
     busy = "search";
     try {
       const r = await notesSearchRebuild();
-      onToast("ok", `Busca reindexada: ${r.indexed} blocos`);
+      onToast("ok", $t("study.notes_maintenancepanel.search_reindexed", { count: r.indexed }) as string);
     } catch (e) {
       onToast("err", e instanceof Error ? e.message : String(e));
     } finally {
@@ -35,7 +36,7 @@
     busy = "refs";
     try {
       const r = await notesRefsRebuildAll();
-      onToast("ok", `Backlinks reconstruídos: ${r.total_refs} refs`);
+      onToast("ok", $t("study.notes_maintenancepanel.backlinks_rebuilt", { count: r.total_refs }) as string);
     } catch (e) {
       onToast("err", e instanceof Error ? e.message : String(e));
     } finally {
@@ -47,7 +48,7 @@
     busy = "qcache";
     try {
       const r = await notesQueryInvalidateCache();
-      onToast("ok", `Cache limpo (${r.size_after} entradas restantes)`);
+      onToast("ok", $t("study.notes_maintenancepanel.cache_cleared", { count: r.size_after }) as string);
     } catch (e) {
       onToast("err", e instanceof Error ? e.message : String(e));
     } finally {
@@ -69,7 +70,7 @@
       a.click();
       document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(url), 1000);
-      onToast("ok", "Grafo exportado");
+      onToast("ok", $t("study.notes_maintenancepanel.graph_exported") as string);
     } catch (e) {
       onToast("err", e instanceof Error ? e.message : String(e));
     } finally {
@@ -112,7 +113,7 @@
         name: importPreview.name,
         markdown: importPreview.markdown,
       });
-      onToast("ok", `Importado: ${r.blocks_created} blocos em "${importPreview.name}"`);
+      onToast("ok", $t("study.notes_maintenancepanel.imported", { count: r.blocks_created, name: importPreview.name }) as string);
       importPreview = null;
     } catch (e) {
       onToast("err", e instanceof Error ? e.message : String(e));
@@ -123,10 +124,9 @@
 </script>
 
 <article class="card">
-  <h3>Manutenção</h3>
+  <h3>{$t("study.notes_maintenancepanel.heading")}</h3>
   <p class="hint">
-    Tarefas de housekeeping. Reconstruir índices é seguro mas pode levar alguns segundos
-    em databases grandes.
+    {$t("study.notes_maintenancepanel.intro")}
   </p>
 
   <div class="actions-grid">
@@ -135,45 +135,45 @@
       class="btn"
       onclick={rebuildSearch}
       disabled={busy !== null}
-      title="Reindexa FTS5 (notes_v2). Use se a busca estiver retornando resultados desatualizados."
+      title={$t("study.notes_maintenancepanel.rebuild_search_title") as string}
     >
-      {busy === "search" ? "Reindexando…" : "Reconstruir busca"}
+      {busy === "search" ? ($t("study.notes_maintenancepanel.reindexing") as string) : ($t("study.notes_maintenancepanel.rebuild_search") as string)}
     </button>
     <button
       type="button"
       class="btn"
       onclick={rebuildRefs}
       disabled={busy !== null}
-      title="Recalcula a tabela de refs/backlinks varrendo todo o conteúdo."
+      title={$t("study.notes_maintenancepanel.rebuild_backlinks_title") as string}
     >
-      {busy === "refs" ? "Calculando…" : "Reconstruir backlinks"}
+      {busy === "refs" ? ($t("study.notes_maintenancepanel.calculating") as string) : ($t("study.notes_maintenancepanel.rebuild_backlinks") as string)}
     </button>
     <button
       type="button"
       class="btn"
       onclick={clearQueryCache}
       disabled={busy !== null}
-      title="Limpa cache de queries. Inofensivo; queries serão recalculadas."
+      title={$t("study.notes_maintenancepanel.clear_cache_title") as string}
     >
-      {busy === "qcache" ? "Limpando…" : "Limpar cache de queries"}
+      {busy === "qcache" ? $t("study.notes_maintenancepanel.clearing") : $t("study.notes_maintenancepanel.clear_cache")}
     </button>
     <button
       type="button"
       class="btn"
       onclick={exportGraph}
       disabled={busy !== null}
-      title="Baixa o grafo de notes (nodes + edges) como JSON pra inspeção/backup."
+      title={$t("study.notes_maintenancepanel.export_graph_title") as string}
     >
-      {busy === "graph" ? "Exportando…" : "Exportar grafo (JSON)"}
+      {busy === "graph" ? $t("study.notes_maintenancepanel.exporting") : $t("study.notes_maintenancepanel.export_graph")}
     </button>
     <button
       type="button"
       class="btn"
       onclick={pickImport}
       disabled={busy !== null || importing}
-      title="Lê um .md do disco e cria uma página com o conteúdo."
+      title={$t("study.notes_maintenancepanel.import_md_title") as string}
     >
-      Importar markdown
+      {$t("study.notes_maintenancepanel.import_md")}
     </button>
     <input
       type="file"
@@ -195,20 +195,18 @@
       if (e.target === e.currentTarget) cancelImport();
     }}
   >
-    <div class="modal" role="dialog" aria-label="Confirmar importação" aria-modal="true">
-      <h3>Importar markdown?</h3>
+    <div class="modal" role="dialog" aria-label={$t("study.notes_maintenancepanel.confirm_import_aria") as string} aria-modal="true">
+      <h3>{$t("study.notes_maintenancepanel.import_md_q")}</h3>
       <p class="meta">
         <strong>{importPreview.name}</strong>
-        <span class="muted">· {importPreview.lines} linhas</span>
+        <span class="muted">· {$t("study.notes_maintenancepanel.lines", { count: importPreview.lines })}</span>
       </p>
       <p class="hint">
-        Vai criar uma página chamada <code>{importPreview.name}</code> e parsear o markdown
-        em blocos hierárquicos.
+        {$t("study.notes_maintenancepanel.import_desc_before")}<code>{importPreview.name}</code>{$t("study.notes_maintenancepanel.import_desc_after")}
       </p>
 
       <p class="warn-soft">
-        Se já existir uma página com esse nome, o backend devolve erro e nada
-        é importado.
+        {$t("study.notes_maintenancepanel.import_warn")}
       </p>
 
       <footer class="foot">
@@ -219,7 +217,7 @@
           onclick={cancelImport}
           disabled={importing}
         >
-          Cancelar
+          {$t("study.notes_maintenancepanel.cancel")}
         </button>
         <button
           type="button"
@@ -227,7 +225,7 @@
           onclick={confirmImport}
           disabled={importing}
         >
-          {importing ? "Importando…" : "Importar"}
+          {importing ? $t("study.notes_maintenancepanel.importing") : $t("study.notes_maintenancepanel.import")}
         </button>
       </footer>
     </div>

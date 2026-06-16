@@ -3,7 +3,7 @@ import { get } from "svelte/store";
 import { t } from "$lib/i18n";
 import {
   upsertProgress,
-  markComplete,
+  markCompleteById,
   syncQueueState,
   upsertGenericProgress,
   getDownloads,
@@ -53,6 +53,7 @@ type ProgressPayload = {
 };
 
 type CompletePayload = {
+  course_id?: number;
   course_name: string;
   success: boolean;
   error: string | null;
@@ -131,11 +132,14 @@ type UdemyProgressPayload = {
 };
 
 type UdemyCompletePayload = {
+  course_id?: number;
   course_name: string;
   success: boolean;
   error: string | null;
   drm_skipped: number;
 };
+
+const EMPTY_COURSE_OUTPUT_ERROR = "Download produced no playable output (0 bytes). Retry after checking access.";
 
 const seenCourseIds = new Set<number>();
 const seenUdemyCourseIds = new Set<number>();
@@ -190,20 +194,35 @@ export async function initDownloadListener(): Promise<() => void> {
 
   const unlistenComplete = await listen<CompletePayload>("download-complete", (event) => {
     const d = event.payload;
-    markComplete(d.course_name, d.success, d.error ?? undefined);
+    if (typeof d.course_id !== "number") {
+      console.warn("Ignoring malformed download-complete event without course_id", d);
+      addLog("warn", "download", "Ignoring malformed course completion without course_id", d.course_name);
+      return;
+    }
+
+    const item = getDownloads().get(d.course_id);
+    const bytes = item && item.kind === "course" ? item.bytesDownloaded : 0;
+    const succeeded = d.success && bytes > 0;
+    markCompleteById(
+      d.course_id,
+      succeeded,
+      succeeded ? undefined : (d.error ?? EMPTY_COURSE_OUTPUT_ERROR),
+    );
+    seenCourseIds.delete(d.course_id);
 
     const tr = get(t);
-    if (d.success) {
+    if (succeeded) {
       showToast("success", tr("toast.download_complete", { name: d.course_name }));
       void notifyComplete(d.course_name);
       addLog("info", "download", `Course download complete: ${d.course_name}`);
-      recordDownloadComplete(0);
+      recordDownloadComplete(bytes);
       void rpcSyncIdleStats();
     } else {
       let msg = tr("toast.download_error", { name: d.course_name });
-      if (d.error) msg += ` — ${d.error}`;
+      const err = d.error ?? EMPTY_COURSE_OUTPUT_ERROR;
+      msg += ` — ${err}`;
       showToast("error", msg);
-      addLog("error", "download", `Course download failed: ${d.course_name}`, d.error ?? undefined);
+      addLog("error", "download", `Course download failed: ${d.course_name}`, err);
     }
   });
 
@@ -233,18 +252,28 @@ export async function initDownloadListener(): Promise<() => void> {
 
   const unlistenUdemyComplete = await listen<UdemyCompletePayload>("udemy-download-complete", (event) => {
     const d = event.payload;
-    markComplete(d.course_name, d.success, d.error ?? undefined);
-    seenUdemyCourseIds.delete([...seenUdemyCourseIds].find(id => {
-      const item = getDownloads().get(id);
-      return item?.name === d.course_name;
-    }) ?? -1);
+    if (typeof d.course_id !== "number") {
+      console.warn("Ignoring malformed udemy-download-complete event without course_id", d);
+      addLog("warn", "download", "Ignoring malformed Udemy completion without course_id", d.course_name);
+      return;
+    }
+
+    const item = getDownloads().get(d.course_id);
+    const bytes = item && item.kind === "course" ? item.bytesDownloaded : 0;
+    const succeeded = d.success && bytes > 0;
+    markCompleteById(
+      d.course_id,
+      succeeded,
+      succeeded ? undefined : (d.error ?? EMPTY_COURSE_OUTPUT_ERROR),
+    );
+    seenUdemyCourseIds.delete(d.course_id);
 
     const tr = get(t);
-    if (d.success) {
+    if (succeeded) {
       showToast("success", tr("toast.download_complete", { name: d.course_name }));
       void notifyComplete(d.course_name);
       addLog("info", "download", `Udemy download complete: ${d.course_name}`);
-      recordDownloadComplete(0);
+      recordDownloadComplete(bytes);
       void rpcSyncIdleStats();
       if (d.drm_skipped > 0) {
         showToast("info", tr("toast.drm_skipped", { count: String(d.drm_skipped) }));
@@ -252,9 +281,10 @@ export async function initDownloadListener(): Promise<() => void> {
       }
     } else {
       let msg = tr("toast.download_error", { name: d.course_name });
-      if (d.error) msg += ` — ${d.error}`;
+      const err = d.error ?? EMPTY_COURSE_OUTPUT_ERROR;
+      msg += ` — ${err}`;
       showToast("error", msg);
-      addLog("error", "download", `Udemy download failed: ${d.course_name}`, d.error ?? undefined);
+      addLog("error", "download", `Udemy download failed: ${d.course_name}`, err);
     }
   });
 
@@ -264,7 +294,7 @@ export async function initDownloadListener(): Promise<() => void> {
       const payload = event.payload;
       if (!queueStateInitialized) {
         for (const item of payload) {
-          if (item.status.type === "Complete" || item.status.type === "Error") {
+          if (item.status.type === "Complete" || item.status.type === "Error" || item.status.type === "NeedsDecryption") {
             loggedQueueTerminal.add(item.id);
           } else {
             queueToastEligibleIds.add(item.id);
@@ -276,7 +306,7 @@ export async function initDownloadListener(): Promise<() => void> {
       }
 
       for (const item of payload) {
-        if (item.status.type !== "Complete" && item.status.type !== "Error") {
+        if (item.status.type !== "Complete" && item.status.type !== "Error" && item.status.type !== "NeedsDecryption") {
           queueToastEligibleIds.add(item.id);
           continue;
         }
@@ -285,13 +315,13 @@ export async function initDownloadListener(): Promise<() => void> {
           loggedQueueTerminal.add(item.id);
           continue;
         }
-        if (item.status.type === "Error") {
+        if (item.status.type === "Error" || item.status.type === "NeedsDecryption") {
           loggedQueueTerminal.add(item.id);
           queueToastEligibleIds.delete(item.id);
           const errMsg = typeof item.status.data === "string"
             ? item.status.data
             : (item.status.data as { message?: string } | undefined)?.message;
-          addLog("error", "download", `Download error: ${item.title}`, errMsg ?? undefined);
+          addLog(item.status.type === "NeedsDecryption" ? "warn" : "error", "download", `Download ${item.status.type === "NeedsDecryption" ? "needs decryption" : "error"}: ${item.title}`, errMsg ?? undefined);
         } else if (item.status.type === "Complete") {
           loggedQueueTerminal.add(item.id);
           queueToastEligibleIds.delete(item.id);

@@ -322,6 +322,8 @@ impl PlatformDownloader for GalleryDlDownloader {
             file_size_bytes: total_bytes,
             duration_seconds: 0.0,
             torrent_id: None,
+            protected_media: None,
+            protection_sidecar_path: None,
         })
     }
 }

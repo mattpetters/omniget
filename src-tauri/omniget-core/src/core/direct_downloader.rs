@@ -225,9 +225,13 @@ async fn download_attempt(
     }
 
     std::fs::rename(&part_path, output)?;
-    let _ = progress_tx.send(ProgressUpdate::percent(100.0)).await;
 
     let size = std::fs::metadata(output)?.len();
+    if size == 0 {
+        let _ = std::fs::remove_file(output);
+        anyhow::bail!("direct download produced no data (0 bytes)");
+    }
+    let _ = progress_tx.send(ProgressUpdate::percent(100.0)).await;
     Ok(size)
 }
 

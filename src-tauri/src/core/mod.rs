@@ -18,6 +18,7 @@ pub use omniget_core::core::pot_provider;
 pub use omniget_core::core::process;
 pub use omniget_core::core::redirect;
 pub use omniget_core::core::registry;
+pub use omniget_core::core::udemy;
 pub use omniget_core::core::ytdlp;
 
 pub mod awake;

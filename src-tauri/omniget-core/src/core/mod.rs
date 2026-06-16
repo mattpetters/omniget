@@ -27,4 +27,5 @@ pub mod process;
 pub mod redirect;
 pub mod registry;
 pub mod subtitle_merge;
+pub mod udemy;
 pub mod ytdlp;

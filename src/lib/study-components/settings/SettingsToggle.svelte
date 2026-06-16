@@ -6,7 +6,7 @@
   };
 
   let { value, onChange, ariaLabel }: Props = $props();
-  let local = $state(value);
+  let local = $state(false);
 
   $effect(() => {
     if (value !== local) local = value;

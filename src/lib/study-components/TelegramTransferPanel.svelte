@@ -48,7 +48,7 @@
     onclick={(e) => { if (e.target === e.currentTarget) close(); }}
     onkeydown={(e) => { if (e.key === "Escape") close(); }}
   >
-    <aside class="drawer" role="dialog" aria-modal="true" aria-label="Transferências">
+    <div class="drawer" role="dialog" aria-modal="true" aria-label="Transferências" tabindex="-1">
       <header class="drawer-header">
         <div>
           <h2>Transferências</h2>
@@ -113,7 +113,7 @@
           {/if}
         </section>
       </div>
-    </aside>
+    </div>
   </div>
 {/if}
 

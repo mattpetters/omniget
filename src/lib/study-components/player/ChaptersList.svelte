@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from "$lib/i18n";
   import type { YoutubeChapter } from "$lib/study-bridge";
 
   type Props = {
@@ -35,7 +36,7 @@
 </script>
 
 {#if chapters.length > 0}
-  <ol class="chapters" class:compact aria-label="Capítulos">
+  <ol class="chapters" class:compact aria-label={$t("study.player_chapterslist.chapters") as string}>
     {#each chapters as chapter, i (chapter.start_ms + ":" + chapter.title)}
       <li>
         <button
@@ -110,6 +111,7 @@
     text-overflow: ellipsis;
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
   }
 

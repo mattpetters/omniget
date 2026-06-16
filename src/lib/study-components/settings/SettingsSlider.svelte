@@ -9,7 +9,7 @@
   };
 
   let { value, min, max, step = 1, onChange, debounceMs = 500 }: Props = $props();
-  let local = $state(value);
+  let local = $state(0);
   let timer: ReturnType<typeof setTimeout> | null = null;
 
   $effect(() => {

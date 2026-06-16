@@ -719,7 +719,9 @@
     role="dialog"
     aria-modal="true"
     aria-labelledby="add-dialog-title"
+    tabindex="-1"
     onclick={(e) => { if (e.target === e.currentTarget) closeAddDialog(); }}
+    onkeydown={(e) => { if (e.key === "Escape") closeAddDialog(); }}
   >
     <form class="dialog" onsubmit={onSubmitAdd}>
       <header class="dialog-head">
@@ -805,7 +807,9 @@
     role="dialog"
     aria-modal="true"
     aria-labelledby="confirm-remove-title"
+    tabindex="-1"
     onclick={(e) => { if (e.target === e.currentTarget && !confirmRemoving) confirmTarget = null; }}
+    onkeydown={(e) => { if (e.key === "Escape" && !confirmRemoving) confirmTarget = null; }}
   >
     <div class="dialog confirm-dialog">
       <header class="dialog-head">

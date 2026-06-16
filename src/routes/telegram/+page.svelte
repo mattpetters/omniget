@@ -15,7 +15,7 @@
   import TelegramAccountPanel from "$lib/study-components/TelegramAccountPanel.svelte";
   import TelegramSyncIndicator from "$lib/study-components/TelegramSyncIndicator.svelte";
   import { telegramCreateFolder, isOmnigetFolder, type TelegramGlobalSearchHit } from "$lib/study-telegram-bridge";
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import { t } from "$lib/i18n";
 
   type PluginStatus =
@@ -115,6 +115,7 @@
   let createFolderName = $state("");
   let createFolderBusy = $state(false);
   let createFolderError = $state("");
+  let createFolderInput = $state<HTMLInputElement | null>(null);
   let globalSearchOpen = $state(false);
 
   type TransferRecord = {
@@ -240,6 +241,11 @@
       createFolderBusy = false;
     }
   }
+
+  $effect(() => {
+    if (!createFolderOpen) return;
+    tick().then(() => createFolderInput?.focus());
+  });
 
   function handleKeydown(e: KeyboardEvent) {
     if ((e.ctrlKey || e.metaKey) && e.key === "f" && view === "media" && searchInputRef) {
@@ -1582,12 +1588,12 @@
       <p class="dialog-hint">Cria um canal Telegram com sufixo <code>[og]</code> para você usar como pasta privada de mídias.</p>
       <form onsubmit={(e) => { e.preventDefault(); commitCreateFolder(); }}>
         <input
+          bind:this={createFolderInput}
           type="text"
           class="input"
           placeholder="Nome da pasta"
           bind:value={createFolderName}
           disabled={createFolderBusy}
-          autofocus
           required
         />
         {#if createFolderError}
