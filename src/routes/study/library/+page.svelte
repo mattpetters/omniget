@@ -3191,22 +3191,6 @@
     outline: var(--focus-ring, 2px solid var(--accent));
     outline-offset: 2px;
   }
-  .sort {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    color: var(--tertiary);
-  }
-  .sort select {
-    background: var(--input-bg);
-    border: 1px solid var(--input-border);
-    border-radius: var(--border-radius);
-    color: var(--secondary);
-    padding: 6px 8px;
-    font-size: 13px;
-    font-family: inherit;
-  }
   .fav-toggle {
     display: flex;
     align-items: center;

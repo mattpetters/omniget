@@ -6,7 +6,7 @@ use async_trait::async_trait;
 use tokio::sync::mpsc;
 
 use crate::core::direct_downloader;
-use crate::core::hls_downloader::HlsDownloader;
+use crate::core::hls_downloader::{HlsDownloader, ProtectedHlsPolicy};
 use crate::core::ytdlp;
 use crate::models::media::{
     DownloadOptions, DownloadResult, MediaInfo, MediaType, VideoQuality as MediaVideoQuality,
@@ -342,8 +342,14 @@ impl PlatformDownloader for GenericYtdlpDownloader {
             }
 
             let client = builder.build().unwrap_or_default();
+            let protected_policy = if opts.save_encrypted_hls {
+                ProtectedHlsPolicy::SaveEncrypted
+            } else {
+                ProtectedHlsPolicy::Fail
+            };
             let downloader = HlsDownloader::with_client(client)
-                .with_user_agent_override(opts.user_agent.clone());
+                .with_user_agent_override(opts.user_agent.clone())
+                .with_protected_hls_policy(protected_policy);
             let _ = progress.send(ProgressUpdate::percent(0.0)).await;
 
             let result = downloader
@@ -358,13 +364,17 @@ impl PlatformDownloader for GenericYtdlpDownloader {
                 )
                 .await?;
 
-            let _ = progress.send(ProgressUpdate::percent(100.0)).await;
+            if !result.protected_passthrough {
+                let _ = progress.send(ProgressUpdate::percent(100.0)).await;
+            }
 
             return Ok(DownloadResult {
                 file_path: result.path,
                 file_size_bytes: result.file_size,
                 duration_seconds: 0.0,
                 torrent_id: None,
+                protected_media: result.protected_media,
+                protection_sidecar_path: result.protection_sidecar_path,
             });
         }
 
@@ -425,6 +435,8 @@ impl PlatformDownloader for GenericYtdlpDownloader {
                 file_size_bytes: bytes,
                 duration_seconds: 0.0,
                 torrent_id: None,
+                protected_media: None,
+                protection_sidecar_path: None,
             });
         }
 
@@ -474,6 +486,7 @@ impl PlatformDownloader for GenericYtdlpDownloader {
                 opts.download_subtitles,
                 &extra_flags_owned,
                 opts.audio_format.as_deref(),
+                opts.save_encrypted_hls,
             )
             .await;
 

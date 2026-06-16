@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+use crate::core::hls_downloader::ProtectedMediaInfo;
 use crate::platforms::Platform;
 use tokio_util::sync::CancellationToken;
 
@@ -61,6 +62,10 @@ pub struct DownloadOptions {
     pub torrent_files: Option<Vec<usize>>,
     pub torrent_auto_trackers: bool,
     pub torrent_upnp: bool,
+    pub save_encrypted_hls: bool,
+    /// Path to the user's Widevine `.wvd` device file for Udemy DRM decryption.
+    /// `None` lets the CDM helper search its default locations.
+    pub widevine_device_path: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -88,6 +93,10 @@ pub struct DownloadResult {
     /// Torrent ID within the shared librqbit session (magnet downloads only).
     #[serde(default)]
     pub torrent_id: Option<usize>,
+    #[serde(default)]
+    pub protected_media: Option<ProtectedMediaInfo>,
+    #[serde(default)]
+    pub protection_sidecar_path: Option<PathBuf>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

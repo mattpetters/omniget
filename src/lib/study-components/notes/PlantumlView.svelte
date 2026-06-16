@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
+  import { t } from "$lib/i18n";
 
   type Props = {
     source: string;
@@ -116,7 +117,7 @@
       CompressionStream?: new (format: string) => GenericTransformStream;
     };
     if (!G.CompressionStream) {
-      throw new Error("CompressionStream indisponível neste runtime");
+      throw new Error("CompressionStream unavailable in this runtime");
     }
     const ds = new G.CompressionStream("deflate-raw");
     const stream = new Blob([text]).stream().pipeThrough(ds);
@@ -156,7 +157,7 @@
     }
   }
 
-  let editingValue = $state(source);
+  let editingValue = $state("");
 
   $effect(() => {
     editingValue = source;
@@ -224,28 +225,28 @@
       onblur={onSourceBlur}
       spellcheck="false"
       rows={Math.max(6, editingValue.split("\n").length)}
-      aria-label="Source do diagrama PlantUML"
+      aria-label={$t("study.notes_plantumlview.source_aria") as string}
     ></textarea>
   {:else if renderState.kind === "idle"}
-    <p class="puml-state">Sem source. Clique em ‹/› para editar.</p>
+    <p class="puml-state">{$t("study.notes_plantumlview.no_source")}</p>
   {:else if renderState.kind === "loading"}
-    <p class="puml-state">renderizando…</p>
+    <p class="puml-state">{$t("study.notes_plantumlview.rendering")}</p>
   {:else if renderState.kind === "remote-rendering"}
-    <p class="puml-state">enviando a plantuml.com…</p>
+    <p class="puml-state">{$t("study.notes_plantumlview.sending")}</p>
   {:else if renderState.kind === "error"}
     <div class="puml-error">
-      <p class="puml-error-msg">erro local: {renderState.message}</p>
+      <p class="puml-error-msg">{$t("study.notes_plantumlview.local_error", { message: renderState.message })}</p>
       <div class="puml-error-actions">
         <button
           type="button"
           class="puml-edit-btn"
-          onclick={toggleMode}>Editar source</button>
+          onclick={toggleMode}>{$t("study.notes_plantumlview.edit_source")}</button>
         <button
           type="button"
           class="puml-remote-btn"
           onclick={() => void renderRemote(source)}
-          title="Envia o diagrama pra plantuml.com (terceiro pode logar)"
-        >Render via plantuml.com</button>
+          title={$t("study.notes_plantumlview.render_remote_title") as string}
+        >{$t("study.notes_plantumlview.render_remote")}</button>
       </div>
     </div>
   {/if}

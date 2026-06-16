@@ -5,6 +5,7 @@
   } from "$lib/study-bridge";
   import Shelf from "./Shelf.svelte";
   import CourseCard from "./CourseCard.svelte";
+  import { t } from "$lib/i18n";
 
   type Props = {
     courseId: number;
@@ -34,9 +35,9 @@
 </script>
 
 {#if loading}
-  <Shelf title="Você pode gostar" eyebrow="Sugestões" isLoading={true} />
+  <Shelf title={$t('study.shelves_courserecommendationsshelf.title') as string} eyebrow={$t('study.shelves_courserecommendationsshelf.eyebrow') as string} isLoading={true} />
 {:else if items.length > 0}
-  <Shelf title="Você pode gostar" eyebrow="Sugestões">
+  <Shelf title={$t('study.shelves_courserecommendationsshelf.title') as string} eyebrow={$t('study.shelves_courserecommendationsshelf.eyebrow') as string}>
     {#each items as it (it.id)}
       <CourseCard
         courseId={it.id}

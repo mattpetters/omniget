@@ -220,7 +220,7 @@
     onclick={(e) => { if (e.target === e.currentTarget) close(); }}
     onkeydown={(e) => { if (e.key === "Escape") close(); }}
   >
-    <aside class="panel" role="dialog" aria-modal="true" aria-label="Clonar canais">
+    <div class="panel" role="dialog" aria-modal="true" aria-label="Clonar canais" tabindex="-1">
       <header class="panel-header">
         <div>
           <h2>Clonar canais</h2>
@@ -234,7 +234,7 @@
         </button>
       </header>
 
-      <nav class="tabs" role="tablist">
+      <div class="tabs" role="tablist">
         <button
           type="button"
           class="tab"
@@ -255,7 +255,7 @@
         >
           Nova
         </button>
-      </nav>
+      </div>
 
       <div class="body">
         {#if view === "new"}
@@ -409,7 +409,7 @@
           </section>
         {/if}
       </div>
-    </aside>
+    </div>
   </div>
 {/if}
 

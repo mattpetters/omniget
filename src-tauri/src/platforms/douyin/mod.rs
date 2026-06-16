@@ -288,6 +288,7 @@ impl PlatformDownloader for DouyinDownloader {
             opts.download_subtitles,
             &extra,
             opts.audio_format.as_deref(),
+            opts.save_encrypted_hls,
         )
         .await
     }

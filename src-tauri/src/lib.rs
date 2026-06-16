@@ -61,6 +61,10 @@ pub fn run() {
     registry.register(Arc::new(platforms::p2p::P2pDownloader::new()));
     registry.register(Arc::new(platforms::gallerydl::GalleryDlDownloader::new()));
     registry.register(Arc::new(platforms::direct_file::DirectFileDownloader::new()));
+    // Udemy must precede the generic yt-dlp fallback so its real Widevine DRM
+    // pipeline handles `*.udemy.com` lecture URLs (first match wins).
+    #[cfg(not(target_os = "android"))]
+    registry.register(Arc::new(platforms::udemy::UdemyDownloader::new()));
     registry.register(Arc::new(
         platforms::generic_ytdlp::GenericYtdlpDownloader::new(),
     ));

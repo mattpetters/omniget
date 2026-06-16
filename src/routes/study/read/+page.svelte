@@ -1119,7 +1119,7 @@
 
 {#if tagBook}
   <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-  <div class="drawer-overlay" onclick={() => (tagBook = null)}></div>
+  <div class="drawer-overlay" role="presentation" onclick={() => (tagBook = null)}></div>
   <div class="drawer drawer-narrow" role="dialog" tabindex="-1" aria-label={$t("study.read.tags_edit")}>
     <header class="drawer-head">
       <h2>{$t("study.read.tags_edit")}</h2>
@@ -1162,7 +1162,7 @@
 
 {#if enrichBook}
   <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-  <div class="drawer-overlay" onclick={() => (enrichBook = null)}></div>
+  <div class="drawer-overlay" role="presentation" onclick={() => (enrichBook = null)}></div>
   <div class="drawer" role="dialog" tabindex="-1" aria-label={$t("study.read.enrich_metadata")}>
     <header class="drawer-head">
       <h2>{$t("study.read.enrich_metadata")}</h2>
@@ -1228,7 +1228,7 @@
 
 {#if collectionsOpen}
   <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-  <div class="drawer-overlay" onclick={() => (collectionsOpen = false)}></div>
+  <div class="drawer-overlay" role="presentation" onclick={() => (collectionsOpen = false)}></div>
   <div class="drawer" role="dialog" tabindex="-1" aria-label={$t("study.read.collections_title")}>
     <header class="drawer-head">
       <h2>{$t("study.read.collections_title")}</h2>
@@ -1303,7 +1303,7 @@
 
 {#if rootsOpen}
   <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-  <div class="drawer-overlay" onclick={() => (rootsOpen = false)}></div>
+  <div class="drawer-overlay" role="presentation" onclick={() => (rootsOpen = false)}></div>
   <div class="drawer" role="dialog" tabindex="-1" aria-label={$t("study.read.roots_title")}>
     <header class="drawer-head">
       <h2>{$t("study.read.roots_title")}</h2>

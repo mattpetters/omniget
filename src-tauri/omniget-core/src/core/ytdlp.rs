@@ -1239,6 +1239,23 @@ fn is_youtube_url(url: &str) -> bool {
     lower.contains("youtube.com") || lower.contains("youtu.be")
 }
 
+/// Validate that a finished download produced real data. Returns the file size
+/// on success; errors if the file is missing or empty (0 bytes). This is the
+/// guard that prevents a yt-dlp exit-0 *skip* (DRM/unplayable, "already
+/// downloaded", etc.) from being laundered into a green "COMPLETE / 0 B".
+fn verify_nonempty_output(path: &std::path::Path) -> anyhow::Result<u64> {
+    let meta = std::fs::metadata(path)
+        .map_err(|e| anyhow!("downloaded file missing ({}): {e}", path.display()))?;
+    if meta.len() == 0 {
+        anyhow::bail!(
+            "yt-dlp produced no data (0 bytes) — the stream may be DRM-protected or was skipped. \
+             For Udemy DRM courses, omniget's dedicated decryption path handles this; \
+             for other sources, check authentication/cookies."
+        );
+    }
+    Ok(meta.len())
+}
+
 /// Extracts the most meaningful error line from yt-dlp stderr output.
 /// Prefers lines starting with "ERROR:", falls back to "WARNING:", then raw trimmed output.
 fn extract_error_message(stderr: &str) -> String {
@@ -1346,23 +1363,22 @@ pub async fn get_video_info(
             attempt + 1
         );
 
-        let result =
-            tokio::time::timeout(
-                std::time::Duration::from_secs(VIDEO_INFO_PROCESS_TIMEOUT_SECS),
-                child.wait_with_output(),
+        let result = tokio::time::timeout(
+            std::time::Duration::from_secs(VIDEO_INFO_PROCESS_TIMEOUT_SECS),
+            child.wait_with_output(),
+        )
+        .await
+        .map_err(|_| {
+            tracing::debug!("[perf] get_video_info took {:?}", _timer_start.elapsed());
+            anyhow!(
+                "Timeout fetching video info ({}s)",
+                VIDEO_INFO_PROCESS_TIMEOUT_SECS
             )
-                .await
-                .map_err(|_| {
-                    tracing::debug!("[perf] get_video_info took {:?}", _timer_start.elapsed());
-                    anyhow!(
-                        "Timeout fetching video info ({}s)",
-                        VIDEO_INFO_PROCESS_TIMEOUT_SECS
-                    )
-                })?
-                .map_err(|e| {
-                    tracing::debug!("[perf] get_video_info took {:?}", _timer_start.elapsed());
-                    anyhow!("Failed to run yt-dlp: {}", e)
-                })?;
+        })?
+        .map_err(|e| {
+            tracing::debug!("[perf] get_video_info took {:?}", _timer_start.elapsed());
+            anyhow!("Failed to run yt-dlp: {}", e)
+        })?;
 
         tracing::debug!(
             "[perf] get_video_info: yt-dlp process exited at {:?} (attempt {})",
@@ -1889,6 +1905,10 @@ pub async fn download_video(
     download_subtitles: bool,
     extra_flags: &[String],
     audio_format: Option<&str>,
+    // Retained for call-site compatibility; the Udemy DRM path now lives in the
+    // dedicated `core::udemy` pipeline, and non-Udemy SAMPLE-AES is handled by
+    // the HLS downloader. yt-dlp no longer saves undecryptable "encrypted" stubs.
+    _save_encrypted_hls: bool,
 ) -> anyhow::Result<DownloadResult> {
     let _timer_start = std::time::Instant::now();
 
@@ -2071,7 +2091,7 @@ pub async fn download_video(
         "--encoding".to_string(),
         "utf-8".to_string(),
         "--print".to_string(),
-        "after_video:OMNIGET_FILEPATH:%(filepath)s".to_string(),
+        "after_move:OMNIGET_FILEPATH:%(filepath)s".to_string(),
     ];
     base_args.extend(js_runtime_args());
 
@@ -2411,6 +2431,20 @@ pub async fn download_video(
             let mut last_send = std::time::Instant::now();
             let throttle = std::time::Duration::from_millis(250);
             while let Ok(Some(line)) = lines.next_line().await {
+                if let Some(maybe_path) = parse_internal_filepath_marker(&line) {
+                    if let Some(final_path) = maybe_path {
+                        authoritative_capture = true;
+                        let mut guard = captured_path_writer.lock().unwrap();
+                        *guard = Some(final_path.clone());
+                        if let Some(id) = log_id {
+                            log_hook::emit_log(
+                                id,
+                                &format!("[download] resolved file path: {}", final_path.display()),
+                            );
+                        }
+                    }
+                    continue;
+                }
                 if let Some(id) = log_id {
                     log_hook::emit_log(id, &line);
                 }
@@ -2420,15 +2454,6 @@ pub async fn download_video(
                         "[perf] download_video first_byte_time: {:?}",
                         _timer_start.elapsed()
                     );
-                }
-                if let Some(rest) = line.strip_prefix("OMNIGET_FILEPATH:") {
-                    let final_path = rest.trim();
-                    if !final_path.is_empty() && final_path != "NA" {
-                        authoritative_capture = true;
-                        let mut guard = captured_path_writer.lock().unwrap();
-                        *guard = Some(PathBuf::from(final_path));
-                    }
-                    continue;
                 }
                 if let Some(dest) = parse_destination_line(&line) {
                     let dest_path = PathBuf::from(&dest);
@@ -2569,13 +2594,15 @@ pub async fn download_video(
                         if mp4_candidate.exists() {
                             mp4_candidate
                         } else {
-                            find_downloaded_file(output_dir, url).await.unwrap_or(p)
+                            find_downloaded_file(output_dir, url, download_started_at)
+                                .await
+                                .unwrap_or(p)
                         }
                     } else {
                         p
                     }
                 }
-                _ => find_downloaded_file(output_dir, url).await?,
+                _ => find_downloaded_file(output_dir, url, download_started_at).await?,
             };
             if download_subtitles {
                 let moved = ensure_subtitles_next_to_media(
@@ -2597,13 +2624,24 @@ pub async fn download_video(
                 convert_vtt_sidecars_to_srt(&file_path).await;
             }
 
-            let meta = std::fs::metadata(&file_path)?;
+            // Guard against a false "success": yt-dlp can exit 0 after *skipping*
+            // a format (DRM/unplayable, "already downloaded", etc.) leaving an
+            // empty or missing file. Never report a 0-byte download as complete.
+            let file_size_bytes = match verify_nonempty_output(&file_path) {
+                Ok(size) => size,
+                Err(e) => {
+                    let _ = std::fs::remove_file(&file_path);
+                    return Err(e);
+                }
+            };
             tracing::debug!("[perf] download_video took {:?}", _timer_start.elapsed());
             return Ok(DownloadResult {
                 file_path,
-                file_size_bytes: meta.len(),
+                file_size_bytes,
                 duration_seconds: 0.0,
                 torrent_id: None,
+                protected_media: None,
+                protection_sidecar_path: None,
             });
         }
 
@@ -3231,7 +3269,32 @@ fn parse_default_download_line(line: &str) -> Option<(f64, f64)> {
     Some((size, speed))
 }
 
-async fn find_downloaded_file(output_dir: &Path, url: &str) -> anyhow::Result<PathBuf> {
+fn parse_internal_filepath_marker(line: &str) -> Option<Option<PathBuf>> {
+    let final_path = line.strip_prefix("OMNIGET_FILEPATH:")?.trim();
+    if final_path.is_empty() || final_path == "NA" {
+        Some(None)
+    } else {
+        Some(Some(PathBuf::from(final_path)))
+    }
+}
+
+fn modified_after_download_started(
+    modified: std::time::SystemTime,
+    download_started_at: std::time::SystemTime,
+) -> bool {
+    const CLOCK_SKEW_TOLERANCE: std::time::Duration = std::time::Duration::from_secs(2);
+    modified >= download_started_at
+        || download_started_at
+            .duration_since(modified)
+            .map(|delta| delta <= CLOCK_SKEW_TOLERANCE)
+            .unwrap_or(false)
+}
+
+async fn find_downloaded_file(
+    output_dir: &Path,
+    url: &str,
+    download_started_at: std::time::SystemTime,
+) -> anyhow::Result<PathBuf> {
     let video_id = extract_id_from_url(url).unwrap_or_default();
     let media_extensions: &[&str] = &[
         "mp4", "mkv", "webm", "m4a", "mp3", "ogg", "opus", "flac", "avi", "mov", "ts", "m4v",
@@ -3242,7 +3305,7 @@ async fn find_downloaded_file(output_dir: &Path, url: &str) -> anyhow::Result<Pa
 
     std::fs::create_dir_all(output_dir)?;
     let read_dir = std::fs::read_dir(output_dir)?;
-    let mut candidates: Vec<(PathBuf, std::time::SystemTime, bool)> = Vec::new();
+    let mut candidates: Vec<(PathBuf, std::time::SystemTime, bool, bool)> = Vec::new();
 
     for entry in read_dir.flatten() {
         let path = entry.path();
@@ -3270,17 +3333,23 @@ async fn find_downloaded_file(output_dir: &Path, url: &str) -> anyhow::Result<Pa
             if let Ok(modified) = meta.modified() {
                 let is_recent = now.duration_since(modified).unwrap_or_default() < recency_limit;
                 let matches_id = !video_id.is_empty() && name.contains(&video_id);
+                let is_current_download =
+                    modified_after_download_started(modified, download_started_at);
 
-                if matches_id || is_recent {
-                    candidates.push((path, modified, matches_id));
+                if matches_id || (is_recent && is_current_download) {
+                    candidates.push((path, modified, is_current_download, matches_id));
                 }
             }
         }
     }
 
-    candidates.sort_by(|a, b| b.2.cmp(&a.2).then_with(|| b.1.cmp(&a.1)));
+    candidates.sort_by(|a, b| {
+        b.2.cmp(&a.2)
+            .then_with(|| b.3.cmp(&a.3))
+            .then_with(|| b.1.cmp(&a.1))
+    });
 
-    if let Some((p, _, _)) = candidates.into_iter().next() {
+    if let Some((p, _, _, _)) = candidates.into_iter().next() {
         return Ok(p);
     }
 
@@ -3301,7 +3370,9 @@ async fn find_downloaded_file(output_dir: &Path, url: &str) -> anyhow::Result<Pa
                     continue;
                 }
                 if let Ok(modified) = meta.modified() {
-                    if now.duration_since(modified).unwrap_or_default() < fallback_limit {
+                    if modified_after_download_started(modified, download_started_at)
+                        && now.duration_since(modified).unwrap_or_default() < fallback_limit
+                    {
                         if newest.as_ref().map_or(true, |(_, t)| modified > *t) {
                             newest = Some((path, modified));
                         }
@@ -3426,6 +3497,15 @@ fn extract_id_from_url(url: &str) -> Option<String> {
                 || (seg.starts_with("av") && seg.len() > 2)
             {
                 return Some(seg.trim_end_matches('/').to_string());
+            }
+        }
+    }
+
+    if host.contains("udemy.com") {
+        let segments: Vec<&str> = parsed.path().split('/').filter(|s| !s.is_empty()).collect();
+        for pair in segments.windows(2) {
+            if pair[0] == "lecture" && pair[1].chars().all(|c| c.is_ascii_digit()) {
+                return Some(pair[1].to_string());
             }
         }
     }
@@ -3560,6 +3640,23 @@ e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  yt-dlp.exe\n\
     }
 
     #[test]
+    fn parse_internal_filepath_marker_ignores_na() {
+        assert_eq!(
+            parse_internal_filepath_marker("OMNIGET_FILEPATH:NA"),
+            Some(None)
+        );
+        assert_eq!(parse_internal_filepath_marker("download:100%"), None);
+    }
+
+    #[test]
+    fn parse_internal_filepath_marker_captures_path() {
+        assert_eq!(
+            parse_internal_filepath_marker("OMNIGET_FILEPATH:/tmp/video.mp4"),
+            Some(Some(PathBuf::from("/tmp/video.mp4")))
+        );
+    }
+
+    #[test]
     fn parse_progress_with_eta_field() {
         assert_eq!(parse_progress_line("download:  45.2%|eta:30"), Some(45.2));
     }
@@ -3654,6 +3751,31 @@ e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  yt-dlp.exe\n\
     }
 
     #[test]
+    fn verify_nonempty_output_rejects_empty_and_missing() {
+        use std::io::Write;
+        let dir = std::env::temp_dir().join(format!("omniget_nonempty_{}", std::process::id()));
+        let _ = std::fs::create_dir_all(&dir);
+
+        // 0-byte file (a skipped DRM "download") → rejected.
+        let empty = dir.join("empty.mp4");
+        std::fs::File::create(&empty).unwrap();
+        assert!(verify_nonempty_output(&empty).is_err());
+
+        // Real data → accepted, returns the size.
+        let nonempty = dir.join("data.mp4");
+        std::fs::File::create(&nonempty)
+            .unwrap()
+            .write_all(b"hello")
+            .unwrap();
+        assert_eq!(verify_nonempty_output(&nonempty).unwrap(), 5);
+
+        // Missing file → rejected.
+        assert!(verify_nonempty_output(&dir.join("nope.mp4")).is_err());
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
     fn is_youtube_url_case_insensitive() {
         assert!(is_youtube_url("https://www.YouTube.com/watch?v=test"));
     }
@@ -3661,6 +3783,15 @@ e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  yt-dlp.exe\n\
     #[test]
     fn is_youtube_url_other_site() {
         assert!(!is_youtube_url("https://vimeo.com/123456"));
+    }
+
+    #[test]
+    fn extract_id_from_udemy_lecture_url() {
+        assert_eq!(
+            extract_id_from_url("https://www.udemy.com/course/startup-customer-development-finding-product-market-fit/learn/lecture/24036328#questions/17322282")
+                .as_deref(),
+            Some("24036328")
+        );
     }
 
     #[test]

@@ -5,6 +5,7 @@
   import SettingsSelect from "./SettingsSelect.svelte";
   import SettingsColorPicker from "./SettingsColorPicker.svelte";
   import SubtitlePreview from "./SubtitlePreview.svelte";
+  import { t } from "$lib/i18n";
   import type { StudySettings } from "$lib/study-bridge";
 
   type Props = {
@@ -27,10 +28,10 @@
     { value: "pt", label: "Português" },
     { value: "en", label: "English" },
     { value: "es", label: "Español" },
-    { value: "default", label: "Padrão (auto)" },
+    { value: "default", label: $t("study.settings_subtitlesettingstab.lang_default_auto") as string },
   ];
   const fontOptions = [
-    { value: "system", label: "Sistema" },
+    { value: "system", label: $t("study.settings_subtitlesettingstab.font_system") as string },
     { value: "serif", label: "Serif" },
     { value: "sans", label: "Sans-serif" },
   ];
@@ -49,7 +50,7 @@
     />
   </div>
 
-  <SettingsField label="Idioma padrão" description="Track auto-selecionada quando há match no nome do arquivo">
+  <SettingsField label={$t("study.settings_subtitlesettingstab.default_lang_label") as string} description={$t("study.settings_subtitlesettingstab.default_lang_desc") as string}>
     <SettingsSelect
       value={player.subtitles_default_lang ?? "pt-BR"}
       options={langOptions}
@@ -57,7 +58,7 @@
     />
   </SettingsField>
 
-  <SettingsField label="Idioma secundário" description="Fallback quando o idioma padrão não está disponível na aula">
+  <SettingsField label={$t("study.settings_subtitlesettingstab.secondary_lang_label") as string} description={$t("study.settings_subtitlesettingstab.secondary_lang_desc") as string}>
     <SettingsSelect
       value={player.subtitles_secondary_lang ?? "en"}
       options={langOptions}
@@ -65,7 +66,7 @@
     />
   </SettingsField>
 
-  <SettingsField label="Tamanho" valueDisplay={`${player.subtitles_size ?? 100}%`}>
+  <SettingsField label={$t("study.settings_subtitlesettingstab.size") as string} valueDisplay={`${player.subtitles_size ?? 100}%`}>
     <SettingsSlider
       value={player.subtitles_size ?? 100}
       min={50}
@@ -75,7 +76,7 @@
     />
   </SettingsField>
 
-  <SettingsField label="Sincronia" description="Compensa atraso na legenda" valueDisplay={`${(player.subtitles_offset_ms ?? 0) / 1000}s`}>
+  <SettingsField label={$t("study.settings_subtitlesettingstab.sync") as string} description={$t("study.settings_subtitlesettingstab.sync_desc") as string} valueDisplay={`${(player.subtitles_offset_ms ?? 0) / 1000}s`}>
     <SettingsSlider
       value={player.subtitles_offset_ms ?? 0}
       min={-5000}
@@ -85,28 +86,28 @@
     />
   </SettingsField>
 
-  <SettingsField label="Cor do texto">
+  <SettingsField label={$t("study.settings_subtitlesettingstab.text_color") as string}>
     <SettingsColorPicker
       value={player.subtitles_text_color ?? "#ffffff"}
       onChange={(v) => setPlayer("subtitles_text_color", v)}
     />
   </SettingsField>
 
-  <SettingsField label="Cor de fundo">
+  <SettingsField label={$t("study.settings_subtitlesettingstab.bg_color") as string}>
     <SettingsColorPicker
       value={player.subtitles_background_color ?? "#000000"}
       onChange={(v) => setPlayer("subtitles_background_color", v)}
     />
   </SettingsField>
 
-  <SettingsField label="Cor da borda">
+  <SettingsField label={$t("study.settings_subtitlesettingstab.outline_color") as string}>
     <SettingsColorPicker
       value={player.subtitles_outline_color ?? "#000000"}
       onChange={(v) => setPlayer("subtitles_outline_color", v)}
     />
   </SettingsField>
 
-  <SettingsField label="Opacidade" valueDisplay={`${player.subtitles_opacity ?? 100}%`}>
+  <SettingsField label={$t("study.settings_subtitlesettingstab.opacity") as string} valueDisplay={`${player.subtitles_opacity ?? 100}%`}>
     <SettingsSlider
       value={player.subtitles_opacity ?? 100}
       min={0}
@@ -116,7 +117,7 @@
     />
   </SettingsField>
 
-  <SettingsField label="Fonte">
+  <SettingsField label={$t("study.settings_subtitlesettingstab.font") as string}>
     <SettingsSelect
       value={player.subtitles_font ?? "system"}
       options={fontOptions}
@@ -124,22 +125,22 @@
     />
   </SettingsField>
 
-  <SettingsField label="Negrito">
+  <SettingsField label={$t("study.settings_subtitlesettingstab.bold") as string}>
     <SettingsToggle
       value={player.subtitles_bold ?? false}
       onChange={(v) => setPlayer("subtitles_bold", v)}
-      ariaLabel="Negrito"
+      ariaLabel={$t("study.settings_subtitlesettingstab.bold") as string}
     />
   </SettingsField>
 
   <SettingsField
-    label="Respeitar estilo do .ass"
-    description="Quando ativo, arquivos .ass mantêm cores, posições e fontes próprios em vez de aplicar configurações globais"
+    label={$t("study.settings_subtitlesettingstab.respect_ass_label") as string}
+    description={$t("study.settings_subtitlesettingstab.respect_ass_desc") as string}
   >
     <SettingsToggle
       value={player.ass_subtitles_styling ?? true}
       onChange={(v) => setPlayer("ass_subtitles_styling", v)}
-      ariaLabel="Respeitar styling do .ass"
+      ariaLabel={$t("study.settings_subtitlesettingstab.respect_ass_aria") as string}
     />
   </SettingsField>
 </section>

@@ -623,7 +623,7 @@
                     {
                       path: currentSubtitle,
                       lang: "default",
-                      label: "Padrão",
+                      label: $t("study.watch.subtitle_default") as string,
                       format: "vtt",
                       default: true,
                     },
@@ -919,11 +919,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-  }
-  .player-shell video {
-    width: 100%;
-    height: 100%;
-    background: black;
   }
   .state {
     padding: 4rem 2rem;

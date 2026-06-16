@@ -136,6 +136,14 @@ pub struct DownloadSettings {
     #[serde(default)]
     pub extra_ytdlp_flags: Vec<String>,
     #[serde(default = "default_true")]
+    pub save_encrypted_hls: bool,
+    /// Path to the user-supplied Widevine L3 `.wvd` device file used to decrypt
+    /// DRM-protected Udemy courses. Empty = let the CDM helper search its
+    /// default locations (e.g. `~/.config/udemy-dl/device.wvd`). A Widevine CDM
+    /// is personal and cannot be distributed, so the user must provide it.
+    #[serde(default)]
+    pub widevine_device_path: String,
+    #[serde(default = "default_true")]
     pub copy_to_clipboard_on_hotkey: bool,
     #[serde(default)]
     pub cookie_file: String,
@@ -482,6 +490,8 @@ impl Default for AppSettings {
                 music_hotkey_binding: default_music_hotkey_binding(),
                 music_audio_format: default_music_audio_format(),
                 extra_ytdlp_flags: Vec::new(),
+                save_encrypted_hls: true,
+                widevine_device_path: String::new(),
                 copy_to_clipboard_on_hotkey: true,
                 cookie_file: String::new(),
                 always_use_managed_cookies: true,

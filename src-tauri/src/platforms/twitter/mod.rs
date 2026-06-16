@@ -868,6 +868,7 @@ impl PlatformDownloader for TwitterDownloader {
                     false,
                     &extra_flags,
                     opts.audio_format.as_deref(),
+                    opts.save_encrypted_hls,
                 )
                 .await;
             }
@@ -904,6 +905,8 @@ impl PlatformDownloader for TwitterDownloader {
                 file_size_bytes: bytes,
                 duration_seconds: 0.0,
                 torrent_id: None,
+                protected_media: None,
+                protection_sidecar_path: None,
             });
         }
 
@@ -941,6 +944,8 @@ impl PlatformDownloader for TwitterDownloader {
             file_size_bytes: total_bytes,
             duration_seconds: 0.0,
             torrent_id: None,
+            protected_media: None,
+            protection_sidecar_path: None,
         })
     }
 }

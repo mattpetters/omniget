@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from "$lib/i18n";
   import { tabsStore } from "$lib/study-notes/tabs-store.svelte";
   import {
     notesPagesList,
@@ -226,12 +227,12 @@
       </svg>
       <span class="label">{tabLabel(tab)}</span>
       {#if tab.pinned}
-        <span class="pin-dot" aria-label="Tab fixada">●</span>
+        <span class="pin-dot" aria-label={$t("study.notes_shell_nbtabstrip.tab_pinned") as string}>●</span>
       {:else}
         <button
           type="button"
           class="close"
-          aria-label="Fechar tab"
+          aria-label={$t("study.notes_shell_nbtabstrip.close_tab") as string}
           onclick={(e) => closeTab(e, tab.id)}
         >
           ×
@@ -244,8 +245,8 @@
     class="add"
     type="button"
     onclick={openPicker}
-    aria-label="Nova tab"
-    title="Nova tab (Ctrl+T)"
+    aria-label={$t("study.notes_shell_nbtabstrip.new_tab") as string}
+    title={$t("study.notes_shell_nbtabstrip.new_tab_shortcut") as string}
   >
     +
   </button>
@@ -263,13 +264,13 @@
     }}
     role="presentation"
   >
-    <div class="picker" role="dialog" aria-label="Abrir página em nova tab">
+    <div class="picker" role="dialog" aria-label={$t("study.notes_shell_nbtabstrip.open_in_new_tab") as string}>
       <input
         bind:this={pickerInputEl}
         bind:value={pickerQuery}
         onkeydown={onPickerKey}
         type="text"
-        placeholder="Buscar ou criar página…"
+        placeholder={$t("study.notes_shell_nbtabstrip.search_or_create") as string}
         class="picker-input"
       />
       <div class="picker-list">

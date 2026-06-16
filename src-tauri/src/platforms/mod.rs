@@ -24,6 +24,8 @@ pub mod p2p;
 #[cfg(not(target_os = "android"))]
 pub mod reddit;
 #[cfg(not(target_os = "android"))]
+pub mod udemy;
+#[cfg(not(target_os = "android"))]
 pub mod vimeo;
 #[cfg(not(target_os = "android"))]
 pub mod youtube;

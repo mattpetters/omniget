@@ -1,6 +1,7 @@
 <script lang="ts">
   import SettingsField from "./SettingsField.svelte";
   import SettingsSelect from "./SettingsSelect.svelte";
+  import { t } from "$lib/i18n";
   import type { StudySettings } from "$lib/study-bridge";
 
   type Props = {
@@ -20,8 +21,8 @@
 
 <section class="tab">
   <SettingsField
-    label="Idioma de áudio padrão"
-    description="Track auto-selecionada quando há áudios em vários idiomas (sidecars vídeo + .lang.m4a)"
+    label={$t("study.settings_audiosettingstab.default_lang_label") as string}
+    description={$t("study.settings_audiosettingstab.default_lang_desc") as string}
   >
     <SettingsSelect
       value={player.audio_default_lang ?? "pt-BR"}
@@ -31,8 +32,8 @@
   </SettingsField>
 
   <SettingsField
-    label="Idioma secundário"
-    description="Fallback quando o idioma padrão não está disponível na aula"
+    label={$t("study.settings_audiosettingstab.secondary_lang_label") as string}
+    description={$t("study.settings_audiosettingstab.secondary_lang_desc") as string}
   >
     <SettingsSelect
       value={player.audio_secondary_lang ?? "en"}

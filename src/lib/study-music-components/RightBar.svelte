@@ -86,9 +86,9 @@
 </script>
 
 {#if musicUI.rightbarTab !== null}
-  <aside class="right-bar" role="complementary">
+  <aside class="right-bar">
     <header class="head">
-      <nav class="tabs" role="tablist">
+      <div class="tabs" role="tablist">
         <button
           type="button"
           role="tab"
@@ -152,7 +152,7 @@
             <span class="badge">{musicPlayer.youtubeChapters.length}</span>
           </button>
         {/if}
-      </nav>
+      </div>
       <button type="button" class="close" onclick={close} aria-label={$t("study.common.close") as string}>×</button>
     </header>
 

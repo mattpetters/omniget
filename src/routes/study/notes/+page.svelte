@@ -145,7 +145,7 @@
       notifyDocksDirty();
       await openPage(r.id);
       void awardXp("page_created", 15, { page_id: r.id, name });
-      showToast("ok", "Página criada");
+      showToast("ok", $t("study.notes.page_created") as string);
     } catch (e) {
       showToast("err", e instanceof Error ? e.message : String(e));
     }
@@ -161,7 +161,7 @@
       notesShell.setCounts(0, 0);
       notesShell.setSaving(false);
       notifyDocksDirty();
-      showToast("ok", "Página removida");
+      showToast("ok", $t("study.notes.page_removed") as string);
     } catch (e) {
       showToast("err", e instanceof Error ? e.message : String(e));
     }
@@ -361,22 +361,22 @@
           <button
             class="btn ghost sm"
             onclick={() => (coverManagerOpen = true)}
-            title="Definir capa da página"
+            title={$t("study.notes.set_cover_title") as string}
           >
-            {coverUrl ? "Capa ✓" : "+ Capa"}
+            {coverUrl ? ($t("study.notes.cover_set") as string) : ($t("study.notes.add_cover") as string)}
           </button>
           <button
             class="btn ghost sm"
             onclick={() => (historyOpen = true)}
             disabled={firstBlockId === null}
-            title="Ver histórico do bloco principal desta página"
+            title={$t("study.notes.history_title") as string}
           >
-            🕐 Histórico
+            🕐 {$t("study.notes.history")}
           </button>
           <button
             class="btn ghost sm"
             onclick={undoLastOp}
-            title="Desfazer última operação estrutural (Cmd+Alt+Z)"
+            title={$t("study.notes.undo_structural_title") as string}
           >
             ↶
           </button>
@@ -469,7 +469,7 @@
   blockId={firstBlockId}
   onRestored={() => {
     void reloadTree();
-    showToast("ok", "Versão restaurada");
+    showToast("ok", $t("study.notes.version_restored") as string);
   }}
   onClose={() => (historyOpen = false)}
 />
@@ -489,11 +489,11 @@
 
 <ConfirmDialog
   bind:open={confirmDeletePageOpen}
-  title="Excluir página"
+  title={$t("study.notes.delete_page_title") as string}
   message={currentPage
-    ? `"${currentPage.title ?? currentPage.name}" e todos os seus blocos serão removidos. Esta ação não pode ser desfeita.`
+    ? ($t("study.notes.delete_page_message", { name: currentPage.title ?? currentPage.name }) as string)
     : ""}
-  confirmLabel="Excluir"
+  confirmLabel={$t("study.notes.delete") as string}
   variant="danger"
   onConfirm={deletePage}
 />

@@ -79,8 +79,8 @@
 
 {#if settings}
   <section class="section">
-    <h5 class="section-title">Extensão de navegador</h5>
-    <p class="muted">A extensão envia cookies e URLs do seu navegador para o OmniGet. Auto-update direto pelo app só funciona via lojas oficiais — enquanto não publicamos, use os botões abaixo para extrair a versão atual e (re)instalar manualmente.</p>
+    <h5 class="section-title">{$t('settings.browser_ext.section_title')}</h5>
+    <p class="muted">{$t('settings.browser_ext.intro')}</p>
     <div class="card">
       {#each extStatuses as ext, i (ext.browser)}
         {#if i > 0}<div class="divider"></div>{/if}

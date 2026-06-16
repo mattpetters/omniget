@@ -211,6 +211,7 @@ pub async fn download(
         opts.download_subtitles,
         &extra,
         opts.audio_format.as_deref(),
+        opts.save_encrypted_hls,
     )
     .await
 }
@@ -227,6 +228,8 @@ async fn download_playlist(
         file_size_bytes: 0,
         duration_seconds: 0.0,
         torrent_id: None,
+        protected_media: None,
+        protection_sidecar_path: None,
     };
 
     for (i, quality) in info.available_qualities.iter().enumerate() {
@@ -266,6 +269,7 @@ async fn download_playlist(
             opts.download_subtitles,
             &extra,
             opts.audio_format.as_deref(),
+            opts.save_encrypted_hls,
         )
         .await
         {

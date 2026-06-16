@@ -1,4 +1,11 @@
-export type DownloadStatus = "queued" | "downloading" | "paused" | "complete" | "error" | "seeding";
+export type DownloadStatus =
+  | "queued"
+  | "downloading"
+  | "paused"
+  | "complete"
+  | "error"
+  | "seeding"
+  | "needs_decryption";
 
 export type QueueKind =
   | "video"
@@ -17,6 +24,8 @@ type BaseItem = {
   percent: number;
   status: DownloadStatus;
   error?: string;
+  retryable?: boolean;
+  protectionSidecarPath?: string;
   startedAt: number;
   lastUpdateAt: number;
   queueKind?: QueueKind;
@@ -116,7 +125,8 @@ export function getCounts(): DownloadCounts {
       case "queued": queued++; break;
       case "paused": paused++; break;
       case "complete":
-      case "error": finished++; break;
+      case "error":
+      case "needs_decryption": finished++; break;
     }
   }
   return { active, queued, badge: active + queued, paused, finished };
@@ -136,6 +146,16 @@ export function getBadgeCount(): number {
 
 export function getPausedCount(): number {
   return getCounts().paused;
+}
+
+/**
+ * Coerce a percent value to a safe non-negative number. DRM/unknown-size
+ * streams (e.g. Udemy Widevine) can yield a non-finite percent upstream, which
+ * otherwise renders as "NaN%" in the UI. Finite values keep the existing
+ * `Math.max(0, …)` clamp; NaN/Infinity collapse to 0.
+ */
+function safePercent(p: number): number {
+  return Number.isFinite(p) ? Math.max(0, p) : 0;
 }
 
 export function upsertProgress(
@@ -170,7 +190,7 @@ export function upsertProgress(
     kind: "course",
     id: courseId,
     name: courseName,
-    percent: Math.max(0, percent),
+    percent: safePercent(percent),
     currentModule,
     currentPage,
     status: "downloading",
@@ -188,31 +208,42 @@ export function upsertProgress(
 }
 
 export function markComplete(courseName: string, success: boolean, error?: string) {
-  for (const [id, item] of downloads) {
-    if (item.name === courseName) {
-      const base = {
-        ...item,
-        percent: success ? 100 : item.percent,
-        status: (success ? "complete" : "error") as DownloadStatus,
-        error,
-        lastUpdateAt: Date.now(),
-      };
-      if (item.kind === "course") {
-        downloads.set(id, { ...base, kind: "course", speed: 0 } as CourseDownloadItem);
-      } else {
-        downloads.set(id, base as GenericDownloadItem);
-      }
-      clearSpeedHistory(id);
-      flushNow();
-      break;
-    }
+  console.warn("Ignoring course completion without course_id", { courseName, success, error });
+}
+
+export function markCompleteById(
+  courseId: number,
+  success: boolean,
+  error?: string,
+  statusOverride?: Extract<DownloadStatus, "error" | "needs_decryption">,
+  protectionSidecarPath?: string,
+) {
+  const item = downloads.get(courseId);
+  if (!item) return;
+
+  const status: DownloadStatus = success ? "complete" : (statusOverride ?? "error");
+  const base = {
+    ...item,
+    percent: success ? 100 : item.percent,
+    status,
+    error,
+    retryable: status === "error",
+    protectionSidecarPath,
+    lastUpdateAt: Date.now(),
+  };
+  if (item.kind === "course") {
+    downloads.set(courseId, { ...base, kind: "course", speed: 0 } as CourseDownloadItem);
+  } else {
+    downloads.set(courseId, { ...base, kind: "generic", speed: 0 } as GenericDownloadItem);
   }
+  clearSpeedHistory(courseId);
+  flushNow();
 }
 
 export function clearFinished() {
   let changed = false;
   for (const [id, item] of downloads) {
-    if (item.status === "complete" || item.status === "error") {
+    if (item.status === "complete" || item.status === "error" || item.status === "needs_decryption") {
       downloads.delete(id);
       clearSpeedHistory(id);
       changed = true;
@@ -239,6 +270,7 @@ type QueueItemInfo = {
   total_bytes: number | null;
   file_path: string | null;
   file_size_bytes: number | null;
+  protection_sidecar_path?: string | null;
   file_count: number | null;
   thumbnail_url: string | null;
   kind?: QueueKind;
@@ -255,17 +287,36 @@ function queueStatusToDownloadStatus(status: { type: string; data?: unknown }): 
     case "Paused": return "paused";
     case "Seeding": return "seeding";
     case "Complete": return "complete";
+    case "NeedsDecryption": return "needs_decryption";
     case "Error": return "error";
     default: return "queued";
   }
 }
 
 function extractError(status: { type: string; data?: unknown }): string | undefined {
-  if (status.type === "Error" && status.data && typeof status.data === "object" && "message" in (status.data as Record<string, unknown>)) {
+  if ((status.type === "Error" || status.type === "NeedsDecryption") && status.data && typeof status.data === "object" && "message" in (status.data as Record<string, unknown>)) {
     return (status.data as { message: string }).message;
   }
-  if (status.type === "Error" && typeof status.data === "string") {
+  if ((status.type === "Error" || status.type === "NeedsDecryption") && typeof status.data === "string") {
     return status.data;
+  }
+  return undefined;
+}
+
+function extractRetryable(status: { type: string; data?: unknown }): boolean | undefined {
+  if (status.type !== "Error" || !status.data || typeof status.data !== "object") {
+    return undefined;
+  }
+  const data = status.data as Record<string, unknown>;
+  return typeof data.retryable === "boolean" ? data.retryable : undefined;
+}
+
+function extractSidecarPath(item: QueueItemInfo): string | undefined {
+  if (item.protection_sidecar_path) return item.protection_sidecar_path;
+  const data = item.status.data;
+  if (item.status.type === "NeedsDecryption" && data && typeof data === "object" && "sidecar_path" in (data as Record<string, unknown>)) {
+    const sidecar = (data as { sidecar_path?: unknown }).sidecar_path;
+    return typeof sidecar === "string" ? sidecar : undefined;
   }
   return undefined;
 }
@@ -297,7 +348,7 @@ export function syncQueueState(items: QueueItemInfo[]) {
       id: qi.id,
       name: qi.title,
       platform: qi.platform,
-      percent: Math.max(0, qi.percent),
+      percent: safePercent(qi.percent),
       speed: effectiveSpeed,
       downloadedBytes: qi.downloaded_bytes,
       totalBytes: qi.total_bytes,
@@ -305,6 +356,8 @@ export function syncQueueState(items: QueueItemInfo[]) {
       etaSeconds: qi.eta_seconds ?? null,
       status: dlStatus,
       error: extractError(qi.status),
+      retryable: extractRetryable(qi.status),
+      protectionSidecarPath: extractSidecarPath(qi),
       startedAt: existing?.startedAt ?? now,
       lastUpdateAt: now,
       filePath: qi.file_path ?? undefined,
@@ -318,7 +371,7 @@ export function syncQueueState(items: QueueItemInfo[]) {
 
     if (dlStatus === "downloading" || dlStatus === "seeding") {
       pushSpeedPoint(qi.id, effectiveSpeed);
-    } else if (dlStatus === "complete" || dlStatus === "error") {
+    } else if (dlStatus === "complete" || dlStatus === "error" || dlStatus === "needs_decryption") {
       clearSpeedHistory(qi.id);
     }
   }
@@ -343,6 +396,7 @@ export function markGenericComplete(id: number, success: boolean, error?: string
     percent: success ? 100 : item.percent,
     status: (success ? "complete" : "error") as DownloadStatus,
     error,
+    retryable: success ? undefined : true,
     filePath,
     fileCount,
     totalBytes: totalBytes ?? item.totalBytes,
@@ -375,7 +429,7 @@ export function upsertGenericProgress(
   // Preserve non-downloading statuses (paused, seeding, complete, error)
   // to avoid race conditions with queue-state-update events
   const keepStatus = existing?.kind === "generic"
-    && (existing.status === "paused" || existing.status === "seeding" || existing.status === "complete" || existing.status === "error");
+    && (existing.status === "paused" || existing.status === "seeding" || existing.status === "complete" || existing.status === "error" || existing.status === "needs_decryption");
   const resolvedStatus: DownloadStatus = keepStatus ? existing!.status : "downloading";
 
   const effectiveSpeed = resolvedStatus === "downloading" ? speed : 0;
@@ -385,7 +439,7 @@ export function upsertGenericProgress(
     id,
     name: title,
     platform,
-    percent: Math.max(0, percent),
+    percent: safePercent(percent),
     speed: effectiveSpeed,
     downloadedBytes,
     totalBytes,
@@ -430,4 +484,3 @@ export function formatEta(seconds: number | null | undefined): string {
   const m = Math.round((seconds % 3600) / 60);
   return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
-

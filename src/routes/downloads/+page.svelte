@@ -13,7 +13,9 @@
     formatEta,
     getFinishedCount,
     getSpeedHistory,
+    clearFinished as clearFinishedInStore,
     type CourseDownloadItem,
+    type DownloadItem,
     type GenericDownloadItem,
     type QueueKind,
   } from "$lib/stores/download-store.svelte";
@@ -115,22 +117,42 @@
       else if (d.status === "queued") queued.push(d);
       else {
         finished.push(d);
-        if (d.status === "error") errored.push(d);
+        if (d.status === "error" || d.status === "needs_decryption") errored.push(d);
         else if (d.status === "complete") completed.push(d);
       }
     }
     return { active, paused, queued, finished, errored, completed };
   });
 
+  let courseGrouped = $derived.by(() => {
+    const active: CourseDownloadItem[] = [];
+    const finished: CourseDownloadItem[] = [];
+    const errored: CourseDownloadItem[] = [];
+    const completed: CourseDownloadItem[] = [];
+    for (const d of courseList) {
+      if (d.status === "downloading" || d.status === "paused") active.push(d);
+      else if (d.status === "complete" || d.status === "error" || d.status === "needs_decryption") {
+        finished.push(d);
+        if (d.status === "complete") completed.push(d);
+        else errored.push(d);
+      }
+    }
+    return { active, finished, errored, completed };
+  });
+
   type StatusFilter = "all" | "active" | "queued" | "completed" | "failed";
   let statusFilter = $state<StatusFilter>("all");
 
-  let filterCounts = $derived({
-    all: genericList.length,
-    active: grouped.active.length + grouped.paused.length,
-    queued: grouped.queued.length,
-    completed: grouped.completed.length,
-    failed: grouped.errored.length,
+  let filterCounts = $derived.by(() => {
+    let all = 0, active = 0, queued = 0, completed = 0, failed = 0;
+    for (const d of downloads.values()) {
+      all++;
+      if (d.status === "downloading" || d.status === "seeding" || d.status === "paused") active++;
+      else if (d.status === "queued") queued++;
+      else if (d.status === "complete") completed++;
+      else if (d.status === "error" || d.status === "needs_decryption") failed++;
+    }
+    return { all, active, queued, completed, failed };
   });
 
   let showSection = $derived({
@@ -140,10 +162,10 @@
     failed: statusFilter === "all" || statusFilter === "failed",
   });
 
-  let finishedFiltered = $derived.by(() => {
-    if (statusFilter === "completed") return grouped.completed;
-    if (statusFilter === "failed") return grouped.errored;
-    return grouped.finished;
+  let finishedFiltered = $derived.by<DownloadItem[]>(() => {
+    if (statusFilter === "completed") return [...grouped.completed, ...courseGrouped.completed];
+    if (statusFilter === "failed") return [...grouped.errored, ...courseGrouped.errored];
+    return [...grouped.finished, ...courseGrouped.finished];
   });
 
   const FINISHED_PAGE_SIZE = 20;
@@ -240,6 +262,7 @@
     if (!confirm($t("downloads.clear_confirm"))) return;
     try {
       await invoke("clear_finished_downloads");
+      clearFinishedInStore();
     } catch (e: any) {
       const msg = typeof e === "string" ? e : e.message ?? $t("common.error");
       showToast("error", msg);
@@ -294,6 +317,8 @@
     completed_at: number;
     thumbnail_url: string | null;
     kind: QueueKind | null;
+    status: string;
+    protection_sidecar_path: string | null;
   };
 
   let viewMode = $state<"active" | "history" | "tools">("active");
@@ -370,7 +395,7 @@
   function canPlayInStudyHistory(entry: HistoryEntry): boolean {
     return (
       studyAvailable &&
-      entry.success &&
+      entry.status === "complete" &&
       !!entry.file_path &&
       (entry.kind === "video" || entry.kind === "audio")
     );
@@ -553,7 +578,7 @@
           {@render genericItem(item)}
         {/each}
 
-        {#each courseList as item (item.id)}
+        {#each courseGrouped.active as item (item.id)}
           {@render courseItem(item)}
         {/each}
       {/if}
@@ -587,7 +612,11 @@
       {#if (showSection.completed || showSection.failed) && finishedFiltered.length > 0}
         <h5 class="section-label">{$t('downloads.section_finished')}</h5>
         {#each visibleFinished as item (item.id)}
-          {@render genericItem(item)}
+          {#if item.kind === "generic"}
+            {@render genericItem(item)}
+          {:else}
+            {@render courseItem(item)}
+          {/if}
         {/each}
         {#if finishedFiltered.length > finishedVisibleCount}
           <button
@@ -638,6 +667,9 @@
                   {/if}
                   {#if !entry.success && entry.error}
                     <span class="history-meta-chip history-meta-error">{entry.error}</span>
+                  {/if}
+                  {#if entry.status === "needs_decryption" && entry.protection_sidecar_path}
+                    <span class="history-meta-chip">{entry.protection_sidecar_path}</span>
                   {/if}
                 </div>
                 <div class="history-item-actions">
@@ -816,16 +848,36 @@
             </svg>
           </button>
         {:else if item.status === "error"}
+          {#if item.retryable === true}
+            <button
+              class="action-icon-btn"
+              onclick={() => retryDownload(item.id)}
+              aria-label={$t('downloads.retry')}
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10" />
+                <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
+              </svg>
+            </button>
+          {/if}
           <button
             class="action-icon-btn"
-            onclick={() => retryDownload(item.id)}
-            aria-label={$t('downloads.retry')}
+            class:confirm-remove={pendingRemove === item.id}
+            onclick={() => removeItem(item.id)}
+            aria-label={pendingRemove === item.id ? $t('downloads.confirm_remove') : $t('common.close')}
+            title={pendingRemove === item.id ? $t('downloads.confirm_remove') : undefined}
           >
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="23 4 23 10 17 10" />
-              <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
-            </svg>
+            {#if pendingRemove === item.id}
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12l5 5L20 7" />
+              </svg>
+            {:else}
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            {/if}
           </button>
+        {:else if item.status === "needs_decryption"}
           <button
             class="action-icon-btn"
             class:confirm-remove={pendingRemove === item.id}
@@ -1011,6 +1063,11 @@
       {/if}
     {:else if item.status === "queued"}
       <span class="item-detail">{item.platform.charAt(0).toUpperCase() + item.platform.slice(1)}</span>
+    {:else if item.status === "needs_decryption"}
+      <span class="item-detail">{item.platform.charAt(0).toUpperCase() + item.platform.slice(1)}</span>
+      {#if item.protectionSidecarPath}
+        <span class="item-detail">{item.protectionSidecarPath}</span>
+      {/if}
     {:else}
       <span class="item-detail">{item.platform.charAt(0).toUpperCase() + item.platform.slice(1)}</span>
     {/if}
@@ -1019,7 +1076,7 @@
       <span class="item-detail">{formatBytes(item.totalBytes)}</span>
     {/if}
 
-    {#if item.status === "error" && item.error}
+    {#if (item.status === "error" || item.status === "needs_decryption") && item.error}
       <span class="item-error">{translateBackendError(item.error, $t)}</span>
     {/if}
 
@@ -1093,7 +1150,7 @@
       <span class="item-detail">{formatBytes(item.bytesDownloaded)}</span>
     {/if}
 
-    {#if item.status === "error" && item.error}
+    {#if (item.status === "error" || item.status === "needs_decryption") && item.error}
       <span class="item-error">{translateBackendError(item.error, $t)}</span>
     {/if}
 
