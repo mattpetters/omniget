@@ -34,7 +34,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDYyOTlEMzE0MUJDMkREMTkKUldRWjNjSWJGTk9aWWtnazV5aTdTNTZ4dk93TVh3cUpxSWlpclRXNjlwYXA1ZXdrdlZsYUxQYzkK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDk4RDdEMzkyOThCMDI4RkMKUldUOEtMQ1lrdFBYbURtTW4vUnkrbjlQU0Y4WGxsY1gxYlpKb3hEK3NZNTJCQUF4SFRpN1NmY0gK",
       "endpoints": [
         "https://github.com/mattpetters/omniget/releases/latest/download/latest.json"
       ]
