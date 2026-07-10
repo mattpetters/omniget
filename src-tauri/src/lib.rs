@@ -1019,6 +1019,15 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|app_handle, event| {
+            #[cfg(target_os = "macos")]
+            if let tauri::RunEvent::Reopen { .. } = &event {
+                // `start_minimized` intentionally hides the main window during
+                // login startup. A later Dock/Finder activation must still
+                // restore it; macOS delivers that activation as Reopen rather
+                // than launching a second instance.
+                tray::show_window(app_handle);
+            }
+
             if let tauri::RunEvent::ExitRequested { .. } = &event {
                 let state = app_handle.state::<AppState>();
                 let session_mutex = state.torrent_session.clone();
