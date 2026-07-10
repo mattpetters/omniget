@@ -130,11 +130,11 @@
 
   function tabLabel(tab: TabSummary): string {
     if (tab.view_kind === "editor") {
-      return tab.page_title || tab.page_name || "Sem nome";
+      return tab.page_title || tab.page_name || "Untitled";
     }
     switch (tab.view_kind) {
       case "graph": return "Graph";
-      case "search": return "Buscar";
+      case "search": return "Search";
       case "journal": return "Journal";
       case "templates": return "Templates";
       case "settings": return "Settings";
@@ -275,7 +275,7 @@
       />
       <div class="picker-list">
         {#if pickerLoading}
-          <div class="picker-empty">Carregando…</div>
+          <div class="picker-empty">Loading…</div>
         {:else if filteredPages.length === 0}
           <button
             class="picker-item create"
@@ -283,8 +283,8 @@
             onclick={createNewPage}
             disabled={!pickerQuery.trim()}
           >
-            <span class="prefix">+ Criar:</span>
-            <span class="value">{pickerQuery || "(digite um nome)"}</span>
+            <span class="prefix">+ Create:</span>
+            <span class="value">{pickerQuery || "(type a name)"}</span>
           </button>
         {:else}
           {#each filteredPages as p (p.id)}
@@ -303,7 +303,7 @@
               type="button"
               onclick={createNewPage}
             >
-              <span class="prefix">+ Criar:</span>
+              <span class="prefix">+ Create:</span>
               <span class="value">{pickerQuery}</span>
             </button>
           {/if}

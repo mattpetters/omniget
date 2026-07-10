@@ -195,7 +195,7 @@
       title={(q.trim() ? $t("study.music.empty_search_no_results") : $t("study.music.empty_results")) as string}
     />
   {:else}
-    <p class="result-count">{tracks.length} de {total} faixa(s)</p>
+    <p class="result-count">{tracks.length} of {total} track{total === 1 ? "" : "s"}</p>
     <ul class="track-list">
       {#each tracks as track (track.id)}
         <TrackRow {track} queue={tracks} showCover showAlbum />

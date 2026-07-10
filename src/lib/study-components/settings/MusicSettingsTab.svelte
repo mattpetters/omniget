@@ -11,14 +11,14 @@
   let { settings, onPatch }: Props = $props();
 
   const ALL_CATEGORIES = [
-    { key: "sponsor", label: "Patrocinado" },
-    { key: "selfpromo", label: "Auto-promoção" },
+    { key: "sponsor", label: "Sponsored" },
+    { key: "selfpromo", label: "Self-promotion" },
     { key: "intro", label: "Intro" },
-    { key: "outro", label: "Encerramento" },
-    { key: "interaction", label: "Pedido de interação" },
-    { key: "preview", label: "Prévia" },
-    { key: "music_offtopic", label: "Trecho não-musical" },
-    { key: "filler", label: "Enrolação" },
+    { key: "outro", label: "Outro" },
+    { key: "interaction", label: "Interaction request" },
+    { key: "preview", label: "Preview" },
+    { key: "music_offtopic", label: "Non-music segment" },
+    { key: "filler", label: "Filler" },
   ];
 
   const music = $derived(((settings as unknown as { music?: Record<string, unknown> }).music ?? {}) as Record<string, unknown>);
@@ -46,7 +46,7 @@
 <section class="tab">
   <SettingsField
     label="SponsorBlock"
-    description="Pula trechos patrocinados detectados pela comunidade. A request usa hash-prefix do video ID, preservando privacidade."
+    description="Skips sponsored segments detected by the community. Requests use the video ID hash-prefix to preserve privacy."
   >
     <SettingsToggle
       value={enabled}
@@ -57,19 +57,19 @@
 
   {#if enabled}
     <SettingsField
-      label="Pular automaticamente"
-      description="Quando ativo, segmentos são pulados sem pedir confirmação. Recomendado: deixar desligado para respeitar criadores."
+      label="Skip automatically"
+      description="When enabled, segments are skipped without asking. Recommended: leave off to respect creators."
     >
       <SettingsToggle
         value={autoSkip}
         onChange={(v) => setMusic("sponsorblock_auto_skip", v)}
-        ariaLabel="Pular automaticamente"
+        ariaLabel="Skip automatically"
       />
     </SettingsField>
 
     <SettingsField
-      label="Categorias monitoradas"
-      description="Tipos de segmento que mostram o botão de pular"
+      label="Monitored categories"
+      description="Segment types that show the skip button"
     >
       <div class="categories">
         {#each ALL_CATEGORIES as cat (cat.key)}

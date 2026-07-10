@@ -41,14 +41,14 @@
 </script>
 
 {#if !loading && !error && showPanel && heatmap}
-  <section class="heat" aria-label="Análise de seeks na aula">
+  <section class="heat" aria-label="Lesson seek analysis">
     <header class="head">
-      <span class="eyebrow">Análise</span>
-      <h3>Distribuição de retornos</h3>
+      <span class="eyebrow">Analysis</span>
+      <h3>Replay distribution</h3>
       <span class="count">{heatmap.total_seeks} seeks</span>
     </header>
     <p class="hint">
-      Cada barra representa 10 segundos. Barras altas indicam onde você (ou outros) voltaram mais — provavelmente trecho mais difícil.
+      Each bar represents 10 seconds. Taller bars show where you or others rewound most, likely harder sections.
     </p>
     <div class="track" role="img" aria-label="Heatmap de seeks">
       <svg viewBox="0 0 {Math.max(heatmap.buckets.length, 1)} 40" preserveAspectRatio="none" width="100%" height="40">

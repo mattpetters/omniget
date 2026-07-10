@@ -327,22 +327,22 @@
 
 <div class="graph-shell" data-surface="notes">
   <header class="head">
-    <a href="/study/notes" class="back">← Notas</a>
-    <h1 class="page-title">Grafo</h1>
+    <a href="/study/notes" class="back">← Notes</a>
+    <h1 class="page-title">Graph</h1>
     <span class="meta">
-      {graphData.nodes.length} pages · {graphData.edges.length} arestas
+      {graphData.nodes.length} pages · {graphData.edges.length} edges
     </span>
     <button type="button" class="btn ghost sm" onclick={reset}>Reset (R)</button>
   </header>
 
   <aside class="filters">
-    <h3>Filtros</h3>
+    <h3>Filters</h3>
     <label class="field">
-      <span>Include tags (vírgula)</span>
+      <span>Include tags (comma-separated)</span>
       <input
         type="text"
         bind:value={includeTagInput}
-        placeholder="cardio, fisio"
+        placeholder="cardio, physio"
         onkeydown={(e) => {
           if (e.key === "Enter") applyFilter();
         }}
@@ -353,7 +353,7 @@
       <input
         type="text"
         bind:value={excludeTagInput}
-        placeholder="rascunho"
+        placeholder="draft"
         onkeydown={(e) => {
           if (e.key === "Enter") applyFilter();
         }}
@@ -364,7 +364,7 @@
       <input
         type="text"
         bind:value={prefixInput}
-        placeholder="medicina/, course/, journal/"
+        placeholder="medicine/, course/, journal/"
         onkeydown={(e) => {
           if (e.key === "Enter") applyFilter();
         }}
@@ -381,7 +381,7 @@
       />
     </label>
     <button type="button" class="btn primary sm full" onclick={applyFilter}>
-      Aplicar
+      Apply
     </button>
 
     <h3>Layout</h3>
@@ -391,41 +391,41 @@
         class="btn ghost sm"
         class:active={layoutKind === "force"}
         onclick={() => changeLayout("force")}
-      >Força</button>
+      >Force</button>
       <button
         type="button"
         class="btn ghost sm"
         class:active={layoutKind === "circle"}
         onclick={() => changeLayout("circle")}
-      >Círculo</button>
+      >Circle</button>
       <button
         type="button"
         class="btn ghost sm"
         class:active={layoutKind === "grid"}
         onclick={() => changeLayout("grid")}
-      >Grade</button>
+      >Grid</button>
       <button
         type="button"
         class="btn ghost sm"
         class:active={layoutKind === "concentric"}
         onclick={() => changeLayout("concentric")}
-      >Concêntrico</button>
+      >Concentric</button>
     </div>
 
     <p class="hint">
-      Click no nó: foca + dim vizinhos. Dblclick: abre página. R: reset.
+      Click a node to focus and dim neighbors. Double-click opens the page. R resets.
     </p>
   </aside>
 
   <main class="canvas-host">
     {#if loading}
-      <div class="state">Carregando grafo…</div>
+      <div class="state">Loading graph...</div>
     {:else if error}
       <div class="state err">{error}</div>
     {:else if graphData.nodes.length === 0}
       <div class="state">
-        <p>Sem páginas pra plotar.</p>
-        <a class="btn primary sm" href="/study/notes">Criar primeira página</a>
+        <p>No pages to plot.</p>
+        <a class="btn primary sm" href="/study/notes">Create first page</a>
       </div>
     {/if}
     <div bind:this={container} class="canvas"></div>
@@ -438,7 +438,7 @@
       >
         <strong>{hoverInfo.node.name}</strong>
         <span>
-          {hoverInfo.node.ref_count} refs · {hoverInfo.node.block_count} blocos
+          {hoverInfo.node.ref_count} refs · {hoverInfo.node.block_count} blocks
         </span>
         {#if hoverInfo.node.tags.length > 0}
           <span class="tag-line">

@@ -98,7 +98,7 @@
       showToast("info", $t("study.anki_sync.provider_saved") as string);
       await load();
     } catch (e: any) {
-      showToast("error", typeof e === "string" ? e : (e?.message ?? "Erro"));
+      showToast("error", typeof e === "string" ? e : (e?.message ?? "Error"));
     } finally {
       busy = false;
     }
@@ -127,7 +127,7 @@
       showToast(outcome.action === "no_provider" ? "error" : "info", outcome.message);
       await load();
     } catch (e: any) {
-      error = typeof e === "string" ? e : (e?.message ?? "Erro");
+      error = typeof e === "string" ? e : (e?.message ?? "Error");
     } finally {
       busy = false;
     }

@@ -44,14 +44,14 @@
     aria-haspopup="menu"
     aria-expanded={open}
     onclick={() => (open = !open)}
-    title="Notebook ativo (Ctrl+Alt+1..9 alterna)"
+    title="Active notebook (Ctrl+Alt+1..9 switches)"
   >
     {#if active?.color}
       <span class="dot" style:background={active.color}></span>
     {:else}
       <span class="dot dim"></span>
     {/if}
-    <span class="name">{active?.name ?? "Pessoal"}</span>
+    <span class="name">{active?.name ?? "Personal"}</span>
     <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <polyline points="6 9 12 15 18 9" />
     </svg>

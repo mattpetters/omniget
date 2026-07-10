@@ -8,7 +8,7 @@
   };
   let { error, trackUrl, onRetry }: Props = $props();
 
-  let humanized = $state<string>("Erro tecnico. Toca os detalhes pra ver o que aconteceu");
+  let humanized = $state<string>("Technical error. Open the details to see what happened.");
 
   async function resolve(err: string) {
     try {
@@ -44,19 +44,19 @@
   <div class="body">
     <p class="kicker">SoundCloud</p>
     <p class="msg">{humanized}</p>
-    <p class="hint">Tentamos outras qualidades antes de mostrar esse aviso.</p>
+    <p class="hint">We tried other quality options before showing this warning.</p>
     <div class="actions">
       {#if onRetry}
-        <button type="button" class="btn primary" onclick={onRetry}>Tentar de novo</button>
+        <button type="button" class="btn primary" onclick={onRetry}>Try again</button>
       {/if}
       {#if trackUrl}
         <button type="button" class="btn ghost" onclick={openInSoundcloud}>
-          Abrir no SoundCloud
+          Open in SoundCloud
         </button>
       {/if}
     </div>
     <details class="details">
-      <summary>Detalhes tecnicos</summary>
+      <summary>Technical details</summary>
       <pre class="raw">{error}</pre>
     </details>
   </div>

@@ -132,7 +132,7 @@
       lastSourcePath = picked;
       const kind = detectKind(picked);
       if (!kind) {
-        error = `Formato não reconhecido: ${picked}`;
+        error = `Unrecognized format: ${picked}`;
         return;
       }
       busy = true;
@@ -159,7 +159,7 @@
         result = { kind: "json", data };
       } else {
         if (csvNotetypeId === null || csvDeckId === null) {
-          error = "Selecione um modelo e um deck antes de importar CSV.";
+          error = "Select a model and deck before importing CSV.";
           return;
         }
         const delim = csvDelimiter === "" ? null : csvDelimiter;
@@ -211,7 +211,7 @@
         await pluginInvoke("study", "study:anki:export:json", { targetPath: target });
       } else {
         if (exportNotetypeId == null) {
-          showExportToast("err", "Selecione um modelo para exportar CSV");
+          showExportToast("err", "Select a model before exporting CSV");
           return;
         }
         const delim = exportDelimiter === "" ? null : exportDelimiter;
@@ -221,7 +221,7 @@
           delimiter: delim,
         });
       }
-      showExportToast("ok", `Exportado · ${target.split(/[\\/]/).pop()}`);
+      showExportToast("ok", `Exported · ${target.split(/[\\/]/).pop()}`);
     } catch (e) {
       showExportToast("err", e instanceof Error ? e.message : String(e));
     } finally {
@@ -430,13 +430,13 @@
               <li>{err}</li>
             {/each}
             {#if result.data.errors.length > 20}
-              <li class="muted">… e mais {result.data.errors.length - 20}</li>
+              <li class="muted">... and {result.data.errors.length - 20} more</li>
             {/if}
           </ul>
         </details>
       {/if}
       <footer class="card-foot">
-        <a class="back-link" href="/study/anki">Ver no painel →</a>
+        <a class="back-link" href="/study/anki">View in dashboard →</a>
       </footer>
     </section>
   {/if}

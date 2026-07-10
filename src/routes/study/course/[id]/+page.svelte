@@ -354,12 +354,12 @@
           loose_lessons: detail.loose_lessons.map(update),
         };
       }
-      const status = completed ? "completas" : "incompletas";
+      const status = completed ? "complete" : "incomplete";
       showToast(
         "ok",
         ids.length === 1
-          ? `1 aula marcada como ${completed ? "completa" : "incompleta"}`
-          : `${ids.length} aulas marcadas como ${status}`,
+          ? `1 lesson marked as ${completed ? "complete" : "incomplete"}`
+          : `${ids.length} lessons marked as ${status}`,
       );
       clearSelection();
     } catch (e) {
@@ -441,14 +441,14 @@
                 type="button"
                 class="chip-x"
                 onclick={() => removeTag(tag)}
-                aria-label={`Remover tag ${tag}`}
+                aria-label={`Remove tag ${tag}`}
               >×</button>
             </span>
           {/each}
           <input
             type="text"
             class="chip-input"
-            placeholder="adicionar tag…"
+            placeholder="add tag..."
             bind:this={tagInputRef}
             bind:value={newTag}
             onkeydown={onTagKey}
@@ -457,7 +457,7 @@
         </div>
         {#if tagSuggestions.length > 0 && newTag.length === 0}
           <div class="suggestions">
-            <span class="sug-label">populares:</span>
+            <span class="sug-label">popular:</span>
             {#each tagSuggestions as s (s.tag)}
               <button
                 type="button"
@@ -514,10 +514,10 @@
         </div>
         {#if probeReport}
           <p class="report">
-            ✓ {probeReport.probed} probadas
-            · {probeReport.skipped} já tinham
-            · {probeReport.failed} falharam
-            (de {probeReport.total_lessons} aulas)
+            ✓ {probeReport.probed} probed
+            · {probeReport.skipped} already had durations
+            · {probeReport.failed} failed
+            (of {probeReport.total_lessons} lessons)
           </p>
         {/if}
       </section>
@@ -535,7 +535,7 @@
           class="expand-toggle"
           onclick={() => (descriptionExpanded = !descriptionExpanded)}
         >
-          {descriptionExpanded ? "Mostrar menos" : "Mostrar mais"}
+          {descriptionExpanded ? "Show less" : "Show more"}
         </button>
       </section>
     {/if}
@@ -579,7 +579,7 @@
                     class="lesson-check"
                     checked={sel}
                     onclick={(e) => toggleSelection(l, e as MouseEvent)}
-                    aria-label="Selecionar aula"
+                    aria-label="Select lesson"
                   />
                   <button
                     type="button"
@@ -637,7 +637,7 @@
                     class="lesson-check"
                     checked={sel}
                     onclick={(e) => toggleSelection(l, e as MouseEvent)}
-                    aria-label="Selecionar aula"
+                    aria-label="Select lesson"
                   />
                   <button
                     type="button"
@@ -695,21 +695,21 @@
     <div class="selection-bar" role="toolbar" aria-label={$t("study.course_id.bulk_actions") as string}>
       <span class="sel-count">
         <strong>{selectedLessons.size}</strong>
-        {selectedLessons.size === 1 ? "selecionada" : "selecionadas"}
+        {selectedLessons.size === 1 ? "selected" : "selected"}
       </span>
       <button class="sel-btn" onclick={selectAllVisible}>
-        Selecionar todas
+        Select all
       </button>
       <span class="sel-divider"></span>
       <button class="sel-btn primary" onclick={() => bulkMark(true)}>
-        ✓ Marcar como completas
+        ✓ Mark complete
       </button>
       <button class="sel-btn" onclick={() => bulkMark(false)}>
-        ○ Marcar como incompletas
+        ○ Mark incomplete
       </button>
       <span class="sel-divider"></span>
       <button class="sel-btn ghost" onclick={clearSelection}>
-        Limpar
+        Clear
       </button>
     </div>
   {/if}

@@ -613,7 +613,7 @@
             <PlayerShell
               videoSrc={videoSrc}
               title={currentName}
-              courseTitle="Pasta local"
+              courseTitle="Local folder"
               backHref={returnUrl}
               durationMs={null}
               initialSeconds={0}

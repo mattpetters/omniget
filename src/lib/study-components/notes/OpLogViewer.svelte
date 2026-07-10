@@ -29,7 +29,7 @@
     busy = opId;
     try {
       const r = await notesUndoLastOp(opId);
-      onToast("ok", `Desfeito: ${r.kind} (${r.blocks_affected} blocos)`);
+      onToast("ok", `Undone: ${r.kind} (${r.blocks_affected} blocks)`);
       await refresh();
     } catch (e) {
       onToast("err", e instanceof Error ? e.message : String(e));

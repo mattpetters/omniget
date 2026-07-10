@@ -89,7 +89,7 @@
         );
       } else if (mode === "tag") {
         if (!tag.trim()) {
-          error = "Informe uma tag";
+          error = "Enter a tag";
           entries = [];
           return;
         }
@@ -124,7 +124,7 @@
     if (days === 0) return "—";
     if (days < 30) return `${days}d`;
     if (days < 365) return `${Math.round(days / 30)}m`;
-    return `${(days / 365).toFixed(1)}a`;
+    return `${(days / 365).toFixed(1)}y`;
   }
 
   function easeLabel(ease: number): string {

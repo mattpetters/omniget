@@ -27,19 +27,19 @@
       <div class="ph-title">{activeTab.page_title || activeTab.page_name || activeTab.view_kind}</div>
       <div class="ph-hint">
         {#if activeTab.view_kind === "editor"}
-          Conteúdo da page é renderizado no leaf ativo. Clique aqui para focar.
+          Page content is rendered in the active leaf. Click here to focus.
         {:else}
-          Esta visualização é renderizada no leaf ativo.
+          This view is rendered in the active leaf.
         {/if}
       </div>
       <button class="focus-btn" type="button" onclick={focusThisWnd}>
-        Focar este split
+        Focus this split
       </button>
     </div>
   {:else}
     <div class="placeholder">
-      <div class="ph-title">Sem tabs abertas</div>
-      <div class="ph-hint">Use o botão + acima ou Ctrl+T para abrir uma página.</div>
+      <div class="ph-title">No open tabs</div>
+      <div class="ph-hint">Use the + button above or Ctrl+T to open a page.</div>
     </div>
   {/if}
 </div>

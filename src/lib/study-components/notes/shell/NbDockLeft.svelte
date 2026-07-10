@@ -19,7 +19,7 @@
           {:else}
             <div class="placeholder">
               <p class="hint">{dock.dock_id}</p>
-              <p class="sub">Dock sem renderer dedicado.</p>
+              <p class="sub">Dock has no dedicated renderer.</p>
             </div>
           {/if}
         </section>

@@ -149,7 +149,7 @@
             <span class="badge">{spotifyStore.profile.product}</span>
           {/if}
         </span>
-        <button type="button" class="ghost-btn" onclick={doLogout}>Sair</button>
+        <button type="button" class="ghost-btn" onclick={doLogout}>Sign out</button>
       </div>
     {/if}
   </header>
@@ -167,16 +167,16 @@
           />
         </svg>
       </div>
-      <h2>Conectar sua conta Spotify</h2>
+      <h2>Connect your Spotify account</h2>
       <p class="login-body">
-        Veja sua biblioteca, playlists e histórico do Spotify dentro do OmniGet.
-        Você pode tocar em qualquer dispositivo Spotify ativo (celular, app
-        oficial). Em breve, tocar direto aqui também.
+        View your Spotify library, playlists, and history inside OmniGet.
+        You can play on any active Spotify device, including your phone or the
+        official app. Direct playback here is coming soon.
       </p>
       {#if !spotifyStore.status.has_client_id}
         <p class="warn">
-          ⚠️ Client ID do Spotify não configurado. Reinstale ou rebuilde o plugin
-          study.
+          Spotify Client ID is not configured. Reinstall or rebuild the study
+          plugin.
         </p>
       {/if}
       {#if spotifyStore.error}
@@ -185,8 +185,8 @@
       {#if spotifyStore.authInProgress}
         <div class="waiting">
           <span class="spinner"></span>
-          <span>Aguardando autorização no navegador…</span>
-          <button type="button" class="ghost-btn" onclick={doCancel}>Cancelar</button>
+          <span>Waiting for browser authorization...</span>
+          <button type="button" class="ghost-btn" onclick={doCancel}>Cancel</button>
         </div>
       {:else}
         <button
@@ -195,33 +195,33 @@
           onclick={doLogin}
           disabled={!spotifyStore.status.has_client_id}
         >
-          Conectar com Spotify
+          Connect with Spotify
         </button>
       {/if}
     </div>
   {:else if spotifyStore.loadingLibrary && spotifyStore.savedTracks.length === 0}
-    <p class="muted">Carregando biblioteca…</p>
+    <p class="muted">Loading library...</p>
   {:else}
     {#if spotifyStore.isPremium && spotifyStore.widevineSupported}
       <div class="status-banner sdk">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-        Tocando dentro do OmniGet (Web Playback SDK)
+        Playing inside OmniGet (Web Playback SDK)
       </div>
     {:else if !spotifyStore.isPremium}
       <div class="status-banner info">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        Modo Free: faixas tocam via YouTube em tempo real (match automático por título/artista).
+        Free mode: tracks play through YouTube in real time with automatic title and artist matching.
       </div>
     {:else if spotifyStore.widevineSupported === false}
       <div class="status-banner warn">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        Widevine DRM indisponível. Vai usar fallback YouTube.
+        Widevine DRM is unavailable. YouTube fallback will be used.
       </div>
     {/if}
     {#if spotifyStore.recentlyPlayed.length > 0}
       <section class="block">
         <header class="block-head">
-          <h2>Tocadas recentemente</h2>
+          <h2>Recently played</h2>
         </header>
         <div class="album-pills-grid">
           {#each spotifyStore.recentlyPlayed.slice(0, 8) as track (track.id + (track.played_at ?? ""))}
@@ -253,7 +253,7 @@
     {#if spotifyStore.playlists.length > 0}
       <section class="block">
         <header class="block-head">
-          <h2>Suas playlists</h2>
+          <h2>Your playlists</h2>
           <div class="scroll-arrows">
             <button type="button" class="arrow" onclick={() => scrollContainer("sp-playlists", -1)} aria-label={$t("study.music.spotify_prev_aria") as string}>
               <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
@@ -282,7 +282,7 @@
                 {/if}
               </div>
               <h3 class="album-card-title">{p.name}</h3>
-              <p class="album-card-sub">{p.tracks_total} faixa(s){p.owner_name ? ` · ${p.owner_name}` : ""}</p>
+              <p class="album-card-sub">{p.tracks_total} track{p.tracks_total === 1 ? "" : "s"}{p.owner_name ? ` · ${p.owner_name}` : ""}</p>
             </div>
           {/each}
         </div>
@@ -292,7 +292,7 @@
     {#if spotifyStore.topArtists.length > 0}
       <section class="block">
         <header class="block-head">
-          <h2>Seus artistas</h2>
+          <h2>Your artists</h2>
           <div class="scroll-arrows">
             <button type="button" class="arrow" onclick={() => scrollContainer("sp-artists", -1)} aria-label={$t("study.music.spotify_prev_aria") as string}>
               <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
@@ -330,7 +330,7 @@
     {#if spotifyStore.savedTracks.length > 0}
       <section class="block">
         <header class="block-head">
-          <h2>Curtidas</h2>
+          <h2>Liked tracks</h2>
         </header>
         <div class="track-list">
           {#each spotifyStore.savedTracks.slice(0, 30) as track, i (track.id)}
@@ -350,7 +350,7 @@
                 <span class="track-title-row">
                   <span class="track-title">{track.name}</span>
                   {#if spotifyStore.localMatches.has(track.id)}
-                    <span class="local-badge" title="Já está na sua biblioteca local">
+                    <span class="local-badge" title="Already in your local library">
                       ●
                     </span>
                   {/if}

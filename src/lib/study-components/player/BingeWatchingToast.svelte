@@ -56,12 +56,12 @@
 {#if nextLessonId != null && !cancelled}
   <aside class="toast" role="status" aria-live="polite">
     <div class="info">
-      <span class="eyebrow">Próxima aula em {remaining}s</span>
-      <span class="title">{nextLessonTitle ?? "Continuar"}</span>
+      <span class="eyebrow">Next lesson in {remaining}s</span>
+      <span class="title">{nextLessonTitle ?? "Continue"}</span>
     </div>
     <div class="actions">
-      <button type="button" class="btn ghost" onclick={cancel}>Cancelar</button>
-      <button type="button" class="btn primary" onclick={goNow}>Continuar agora</button>
+      <button type="button" class="btn ghost" onclick={cancel}>Cancel</button>
+      <button type="button" class="btn primary" onclick={goNow}>Continue now</button>
     </div>
   </aside>
 {/if}

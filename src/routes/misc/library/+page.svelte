@@ -104,7 +104,7 @@
         transcribeStates = { ...transcribeStates, [itemId]: "done" };
         transcribeMessages = {
           ...transcribeMessages,
-          [itemId]: `${p.segment_count} segmentos · ${p.elapsed_s.toFixed(1)}s · ${p.language} → ${p.srt_path}`,
+          [itemId]: `${p.segment_count} segments · ${p.elapsed_s.toFixed(1)}s · ${p.language} -> ${p.srt_path}`,
         };
         transcribeProgress = { ...transcribeProgress, [itemId]: 100 };
       }
@@ -198,7 +198,7 @@
         lastError = "No whisper model installed. Go to /misc/models and install at least 'Whisper Tiny' (~75 MB).";
       } else if (msg.includes("Error code: -6")) {
         lastError =
-          "Whisper falhou no encode (-6). Tenta clip mais longo (>2s) ou um modelo maior. Whisper-tiny pode falhar em audio muito curto.";
+          "Whisper failed during encode (-6). Try a longer clip (>2s) or a larger model. Whisper Tiny can fail on very short audio.";
       } else {
         lastError = msg;
       }

@@ -62,7 +62,7 @@
   </button>
 {:else if isInOutro}
   <button type="button" class="skip-btn" onclick={skipOutro}>
-    <span>Pular créditos</span>
+    <span>Skip credits</span>
     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <polyline points="13 17 18 12 13 7" />
       <polyline points="6 17 11 12 6 7" />

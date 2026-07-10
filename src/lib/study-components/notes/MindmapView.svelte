@@ -99,7 +99,7 @@
       await Promise.resolve();
       if (token !== renderToken) return;
       if (!svgHost) {
-        renderState = { kind: "error", message: "container ausente" };
+        renderState = { kind: "error", message: "container missing" };
         return;
       }
       svgHost.innerHTML = "";
@@ -165,7 +165,7 @@
       type="button"
       class="mindmap-toggle"
       onclick={toggleMode}
-      title={mode === "render" ? "Editar source" : "Voltar pro mapa"}
+      title={mode === "render" ? "Edit source" : "Back to map"}
     >
       {mode === "render" ? "‹/›" : "▶"}
     </button>
@@ -182,14 +182,14 @@
       aria-label={$t("study.notes_mindmapview.source_aria") as string}
     ></textarea>
   {:else if renderState.kind === "idle"}
-    <p class="mindmap-state">Sem source. Clique em ‹/› para editar.</p>
+    <p class="mindmap-state">No source. Click ‹/› to edit.</p>
   {:else if renderState.kind === "loading"}
-    <p class="mindmap-state">renderizando…</p>
+    <p class="mindmap-state">rendering…</p>
   {:else if renderState.kind === "error"}
     <div class="mindmap-error">
-      <p class="mindmap-error-msg">erro: {renderState.message}</p>
+      <p class="mindmap-error-msg">error: {renderState.message}</p>
       <button type="button" class="mindmap-edit-btn" onclick={toggleMode}
-        >Editar source</button>
+        >Edit source</button>
     </div>
   {/if}
 

@@ -71,7 +71,7 @@
         const msg = reason instanceof Error ? reason.message : String(reason);
         if (msg.includes("403") || msg.toLowerCase().includes("forbidden")) {
           error =
-            "O Spotify bloqueou o acesso a este artista para apps em Development mode. Pode tocar via clicar em uma faixa dele em outra tela.";
+            "Spotify blocked access to this artist for apps in Development mode. You can still play this artist by clicking one of their tracks on another screen.";
         }
       }
     } catch (e) {
@@ -87,7 +87,7 @@
     try {
       const mode = await spotifyStore.playTrack(reordered[0], reordered);
       if (mode === "youtube") {
-        showToast("info", "Tocando via YouTube (modo Free)");
+        showToast("info", "Playing via YouTube (Free mode)");
       }
     } catch (e) {
       showToast("error", e instanceof Error ? e.message : String(e));
@@ -99,7 +99,7 @@
     followToggle = true;
     try {
       isFollowing = await spotifyStore.toggleFollowArtist(artistId);
-      showToast("success", isFollowing ? "Seguindo" : "Deixou de seguir");
+      showToast("success", isFollowing ? "Following" : "Unfollowed");
     } catch (e) {
       showToast("error", e instanceof Error ? e.message : String(e));
     } finally {
@@ -120,7 +120,7 @@
     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <polyline points="15 18 9 12 15 6"/>
     </svg>
-    Voltar
+    Back
   </button>
 
   {#if artist}
@@ -135,10 +135,10 @@
         {/if}
       </div>
       <div class="hero-info">
-        <span class="eyebrow">Artista</span>
+        <span class="eyebrow">Artist</span>
         <h1>{artist.name}</h1>
         {#if artist.followers}
-          <p class="meta">{artist.followers.toLocaleString("pt-BR")} seguidores</p>
+          <p class="meta">{artist.followers.toLocaleString("en-US")} follower{artist.followers === 1 ? "" : "s"}</p>
         {/if}
         {#if artist.genres.length > 0}
           <p class="genres">{artist.genres.slice(0, 3).join(" · ")}</p>
@@ -146,7 +146,7 @@
         <div class="actions">
           <button type="button" class="play-btn" onclick={() => playFromIndex(0)} disabled={topTracks.length === 0}>
             <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
-            Tocar
+            Play
           </button>
           <button
             type="button"
@@ -155,7 +155,7 @@
             onclick={toggleFollow}
             disabled={followToggle}
           >
-            {isFollowing ? "Seguindo" : "Seguir"}
+            {isFollowing ? "Following" : "Follow"}
           </button>
         </div>
       </div>
@@ -163,13 +163,13 @@
   {/if}
 
   {#if loading}
-    <p class="muted">Carregando…</p>
+    <p class="muted">Loading...</p>
   {:else if error}
     <p class="error">{error}</p>
   {:else}
     {#if topTracks.length > 0}
       <section class="block">
-        <header class="block-head"><h2>Populares</h2></header>
+        <header class="block-head"><h2>Popular</h2></header>
         <div class="track-list">
           {#each topTracks.slice(0, 10) as track, i (track.id + i)}
             <button type="button" class="track-row" onclick={() => playFromIndex(i)}>
@@ -192,7 +192,7 @@
 
     {#if albums.length > 0}
       <section class="block">
-        <header class="block-head"><h2>Discografia</h2></header>
+        <header class="block-head"><h2>Discography</h2></header>
         <div class="album-grid">
           {#each albums as a (a.id)}
             <a class="album-card" href={`/study/music/spotify/album/${a.id}`}>
@@ -204,7 +204,7 @@
                 {/if}
               </div>
               <h3 class="album-title">{a.name}</h3>
-              <p class="album-sub">{a.release_date ? a.release_date.slice(0, 4) : ""}{a.total_tracks ? ` · ${a.total_tracks} faixas` : ""}</p>
+              <p class="album-sub">{a.release_date ? a.release_date.slice(0, 4) : ""}{a.total_tracks ? ` · ${a.total_tracks} track${a.total_tracks === 1 ? "" : "s"}` : ""}</p>
             </a>
           {/each}
         </div>

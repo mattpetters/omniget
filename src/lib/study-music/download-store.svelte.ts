@@ -147,12 +147,12 @@ class DownloadStore {
       id: key,
       kind: "single",
       trackId,
-      title: p.title ?? prev?.title ?? "Faixa",
+      title: p.title ?? prev?.title ?? "Track",
       artist: p.artist ?? prev?.artist,
       artwork: prev?.artwork ?? null,
       stage,
       progressPct,
-      error: stage === "error" ? p.error ?? "Erro desconhecido" : prev?.error,
+      error: stage === "error" ? p.error ?? "Unknown error" : prev?.error,
       path: p.path ?? prev?.path,
       permalinkUrl: p.permalink_url ?? prev?.permalinkUrl,
       startedAt: prev?.startedAt ?? Date.now(),
@@ -182,7 +182,7 @@ class DownloadStore {
     ) {
       failedTracks.push({
         id: p.failed_track_id,
-        title: p.failed_track_title ?? `Faixa ${p.failed_track_id}`,
+        title: p.failed_track_title ?? `Track ${p.failed_track_id}`,
         error: p.failed_track_error,
       });
     }

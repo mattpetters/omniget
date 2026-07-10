@@ -48,13 +48,13 @@
     onclick={(e) => { if (e.target === e.currentTarget) close(); }}
     onkeydown={(e) => { if (e.key === "Escape") close(); }}
   >
-    <div class="drawer" role="dialog" aria-modal="true" aria-label="Transferências" tabindex="-1">
+    <div class="drawer" role="dialog" aria-modal="true" aria-label="Transfers" tabindex="-1">
       <header class="drawer-header">
         <div>
-          <h2>Transferências</h2>
-          <p class="subtitle">{active.length} ativa{active.length === 1 ? "" : "s"} · {history.length} no histórico</p>
+          <h2>Transfers</h2>
+          <p class="subtitle">{active.length} active · {history.length} in history</p>
         </div>
-        <button type="button" class="icon-btn" onclick={close} aria-label="Fechar">
+        <button type="button" class="icon-btn" onclick={close} aria-label="Close">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 6L6 18" />
             <path d="M6 6l12 12" />
@@ -64,9 +64,9 @@
 
       <div class="drawer-body">
         <section>
-          <span class="section-label">Em andamento</span>
+          <span class="section-label">In progress</span>
           {#if active.length === 0}
-            <p class="empty-text">Nenhum download ativo.</p>
+            <p class="empty-text">No active downloads.</p>
           {:else}
             <ul class="transfer-list">
               {#each active as t (t.id)}
@@ -86,13 +86,13 @@
 
         <section>
           <div class="section-row">
-            <span class="section-label">Histórico</span>
+            <span class="section-label">History</span>
             {#if history.length > 0 && onClearHistory}
-              <button type="button" class="ghost-btn" onclick={onClearHistory}>Limpar</button>
+              <button type="button" class="ghost-btn" onclick={onClearHistory}>Clear</button>
             {/if}
           </div>
           {#if history.length === 0}
-            <p class="empty-text">Sem transferências recentes.</p>
+            <p class="empty-text">No recent transfers.</p>
           {:else}
             <ul class="transfer-list">
               {#each history as t (t.id)}
@@ -101,7 +101,7 @@
                   <div class="transfer-info">
                     <span class="transfer-name">{t.fileName}</span>
                     <span class="transfer-meta">
-                      {t.status === "done" ? "Concluído" : "Erro"}
+                      {t.status === "done" ? "Completed" : "Error"}
                       · {fmtSize(t.sizeBytes)}
                       {#if t.completedAt}· {fmtTime(t.completedAt)}{/if}
                     </span>

@@ -98,7 +98,7 @@
         "youtube:player_invalidate_cache",
         {},
       );
-      lastInfo = `Cache do player.js limpo (${r.player_js_rows_deleted} linha(s)).`;
+      lastInfo = `player.js cache cleared (${r.player_js_rows_deleted} row(s)).`;
       await refresh();
     } catch (e) {
       lastError = String(e);
@@ -113,7 +113,7 @@
     lastInfo = null;
     try {
       const r = await pluginInvoke<{ deleted: number }>("study", "youtube:potoken_clear", {});
-      lastInfo = `PoTokens removidos: ${r.deleted}.`;
+      lastInfo = `PoTokens removed: ${r.deleted}.`;
       await refresh();
     } catch (e) {
       lastError = String(e);
@@ -136,7 +136,7 @@
           video_id: manualContentVideoId.trim() || undefined,
         },
       );
-      lastInfo = `Tokens salvos. visitor=${r.visitor_saved} content=${r.content_saved}.`;
+      lastInfo = `Tokens saved. visitor=${r.visitor_saved} content=${r.content_saved}.`;
       manualVisitorToken = "";
       manualContentToken = "";
       manualContentVideoId = "";
@@ -151,7 +151,7 @@
 
   async function runTestVideo() {
     if (!testVideoId.trim()) {
-      lastError = "Cole um video ID ou URL de YouTube.";
+      lastError = "Paste a YouTube video ID or URL.";
       return;
     }
     testRunning = true;
@@ -169,12 +169,12 @@
   }
 
   function formatTokenStatus(v: PotokenVisitor | undefined): string {
-    if (!v || !v.has_token) return "ausente";
-    if (v.expired) return "expirado";
+    if (!v || !v.has_token) return "missing";
+    if (v.expired) return "expired";
     const s = v.expires_in_seconds ?? 0;
     const h = Math.floor(s / 3600);
     const m = Math.floor((s % 3600) / 60);
-    return `válido por ${h}h${m}min`;
+    return `valid for ${h}h${m}min`;
   }
 
   $effect(() => {
@@ -183,9 +183,9 @@
 </script>
 
 <section class="tab">
-  <SettingsField label="Cliente YouTube" description="Estado do plugin study para reprodução de áudio do YouTube/Music.">
+  <SettingsField label="YouTube client" description="Study plugin status for YouTube/Music audio playback.">
     {#if loading && !clientStatus}
-      <span class="muted">Carregando…</span>
+      <span class="muted">Loading…</span>
     {:else if clientStatus}
       <dl class="status-grid">
         <dt>Decipher engine</dt><dd><code>{clientStatus.decipher_engine}</code></dd>
@@ -197,89 +197,89 @@
           {#if clientStatus.player_cache_id}
             <code>{clientStatus.player_cache_id}</code>
             {#if clientStatus.player_cache_age_seconds !== null}
-              <span class="muted"> · {Math.floor(clientStatus.player_cache_age_seconds / 60)}min atrás</span>
+              <span class="muted"> · {Math.floor(clientStatus.player_cache_age_seconds / 60)}min ago</span>
             {/if}
           {:else}
-            <span class="muted">vazio</span>
+            <span class="muted">empty</span>
           {/if}
         </dd>
       </dl>
     {/if}
     <div class="row">
-      <button class="btn" disabled={loading} onclick={invalidatePlayerCache}>Limpar cache do player.js</button>
+      <button class="btn" disabled={loading} onclick={invalidatePlayerCache}>Clear player.js cache</button>
     </div>
   </SettingsField>
 
-  <SettingsField label="PoToken" description="Token de autenticação assinado pela YouTube. Gerado automaticamente via bgutils-js no boa_engine.">
+  <SettingsField label="PoToken" description="Authentication token signed by YouTube. Generated automatically through bgutils-js in boa_engine.">
     {#if potokenStatus}
       <dl class="status-grid">
-        <dt>Mint disponível</dt><dd><code>{potokenStatus.minting_available ? "sim" : "não"}</code></dd>
+        <dt>Mint available</dt><dd><code>{potokenStatus.minting_available ? "yes" : "no"}</code></dd>
         <dt>Visitor token</dt><dd>{formatTokenStatus(potokenStatus.visitor)}</dd>
-        <dt>Content tokens em cache</dt><dd><code>{potokenStatus.content_cached_count}</code></dd>
+        <dt>Cached content tokens</dt><dd><code>{potokenStatus.content_cached_count}</code></dd>
       </dl>
     {/if}
     <div class="row">
-      <button class="btn" disabled={loading} onclick={clearPotokens}>Limpar PoTokens</button>
+      <button class="btn" disabled={loading} onclick={clearPotokens}>Clear PoTokens</button>
       <button class="btn ghost" onclick={() => (manualPanelOpen = !manualPanelOpen)}>
-        {manualPanelOpen ? "Fechar token manual" : "Cole token manual…"}
+        {manualPanelOpen ? "Close manual token" : "Paste manual token…"}
       </button>
     </div>
     {#if manualPanelOpen}
       <div class="manual-panel">
         <p class="hint">
-          Capture do DevTools (F12) em <code>music.youtube.com</code>: aba Network, request POST <code>youtubei/v1/player</code>, body tem
-          <code>serviceIntegrityDimensions.poToken</code> (content) e <code>context.user.visitorData</code>.
+          Capture from DevTools (F12) on <code>music.youtube.com</code>: Network tab, POST request to <code>youtubei/v1/player</code>. The body has
+          <code>serviceIntegrityDimensions.poToken</code> (content) and <code>context.user.visitorData</code>.
         </p>
         <label class="field">
-          <span>Visitor token (opcional)</span>
+          <span>Visitor token (optional)</span>
           <input type="text" placeholder="CgsxxxxxYAk%3D…" bind:value={manualVisitorToken} />
         </label>
         <label class="field">
-          <span>Content token (opcional, requer video ID)</span>
+          <span>Content token (optional, requires video ID)</span>
           <input type="text" placeholder="MnQxxxxxxxxx…" bind:value={manualContentToken} />
         </label>
         <label class="field">
-          <span>Video ID (para content token)</span>
+          <span>Video ID (for content token)</span>
           <input type="text" placeholder="dQw4w9WgXcQ" bind:value={manualContentVideoId} />
         </label>
         <div class="row">
-          <button class="btn primary" disabled={loading} onclick={saveManualToken}>Salvar</button>
+          <button class="btn primary" disabled={loading} onclick={saveManualToken}>Save</button>
         </div>
       </div>
     {/if}
   </SettingsField>
 
-  <SettingsField label="Testar vídeo" description="Tenta cada cliente do cascade e mostra qual conseguiu cifra/stream. Útil pra debug.">
+  <SettingsField label="Test video" description="Tries each client in the cascade and shows which one got cipher/stream. Useful for debugging.">
     <div class="test-row">
       <input
         type="text"
-        placeholder="Cole video ID (dQw4w9WgXcQ) ou URL completa"
+        placeholder="Paste video ID (dQw4w9WgXcQ) or full URL"
         bind:value={testVideoId}
         disabled={testRunning}
       />
       <button class="btn primary" disabled={testRunning || !testVideoId.trim()} onclick={runTestVideo}>
-        {testRunning ? "Testando…" : "Testar"}
+        {testRunning ? "Testing…" : "Test"}
       </button>
     </div>
     {#if testResult}
       <div class="test-summary">
         <strong>{testResult.video_id}</strong> ·
         {#if testResult.first_working_client}
-          primeiro cliente OK: <code>{testResult.first_working_client}</code>
+          first OK client: <code>{testResult.first_working_client}</code>
         {:else}
-          <span class="error">nenhum cliente funcionou</span>
+          <span class="error">no client worked</span>
         {/if}
       </div>
       <table class="cascade-table">
         <thead>
           <tr>
-            <th>Cliente</th>
+            <th>Client</th>
             <th>Status</th>
             <th>Audio</th>
-            <th>Direto</th>
-            <th>Cifra</th>
+            <th>Direct</th>
+            <th>Cipher</th>
             <th>sts/pot</th>
-            <th>Detalhe</th>
+            <th>Detail</th>
           </tr>
         </thead>
         <tbody>

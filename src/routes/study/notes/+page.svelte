@@ -181,10 +181,10 @@
       showToast(
         "ok",
         r.blocks_updated === 0
-          ? "Renomeada"
+          ? "Renamed"
           : r.blocks_updated === 1
-            ? "Renomeada e 1 bloco atualizado"
-            : `Renomeada e ${r.blocks_updated} blocos atualizados`,
+            ? "Renamed and 1 block updated"
+            : `Renamed and ${r.blocks_updated} blocks updated`,
       );
     } catch (e) {
       showToast("err", e instanceof Error ? e.message : String(e));
@@ -200,7 +200,7 @@
     try {
       await notesPagesSetAliases({ id: currentPage.id, aliases: arr });
       aliasesDirty = false;
-      showToast("ok", "Aliases salvos");
+      showToast("ok", "Aliases saved");
     } catch (e) {
       showToast("err", e instanceof Error ? e.message : String(e));
     }
@@ -216,7 +216,7 @@
       await notesPagesSetTags({ id: currentPage.id, tags: arr });
       tagsDirty = false;
       currentPage = { ...currentPage, tags: arr };
-      showToast("ok", "Tags salvas");
+      showToast("ok", "Tags saved");
     } catch (e) {
       showToast("err", e instanceof Error ? e.message : String(e));
     }
@@ -252,7 +252,7 @@
     try {
       await notesUndoLastOp();
       await reloadTree();
-      showToast("ok", "Desfeito");
+      showToast("ok", "Undone");
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       if (!msg.includes("no op to undo")) {
@@ -265,7 +265,7 @@
     try {
       await notesUndoRedoLast();
       await reloadTree();
-      showToast("ok", "Refeito");
+      showToast("ok", "Redone");
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       if (!msg.includes("no op to redo")) {
@@ -314,7 +314,7 @@
     {/if}
 
     {#if loading}
-      <div class="state">Carregando…</div>
+      <div class="state">Loading…</div>
     {:else if notesTableMissing}
       <div class="state err">
         <p>{$t("study.library.error_loading_notes")}</p>
@@ -348,7 +348,7 @@
               renameValue = currentPage?.name ?? "";
               renameOpen = true;
             }}
-            title="Click para renomear"
+            title="Click to rename"
           >
             {currentPage.title ?? currentPage.name}
           </button>
@@ -383,29 +383,29 @@
           <button
             class="btn ghost sm"
             onclick={redoLastOp}
-            title="Refazer (Cmd+Shift+Z)"
+            title="Redo (Cmd+Shift+Z)"
           >
             ↷
           </button>
           <a
             class="btn ghost sm"
             href="/study/notes/shortcuts"
-            title="Atalhos do editor"
+            title="Editor shortcuts"
           >
             ?
           </a>
           <button
             class="btn ghost sm"
             onclick={() => window.print()}
-            title="Imprimir / Salvar PDF (Ctrl+P)"
+            title="Print / Save PDF (Ctrl+P)"
           >
-            Imprimir/PDF
+            Print/PDF
           </button>
           <button
             class="btn ghost sm danger"
             onclick={() => (confirmDeletePageOpen = true)}
           >
-            Excluir página
+            Delete page
           </button>
         </div>
       </header>
@@ -436,8 +436,8 @@
       {@const firstBlock = blockTree.length > 0 ? blockTree[0] : null}
       {#if blockTree.length > 1}
         <p class="editor-banner">
-          Esta página tem múltiplos blocos antigos. C1 edita só o primeiro;
-          os demais ficam preservados no DB e voltam visíveis em C1.5.
+          This page has multiple legacy blocks. C1 edits only the first one;
+          the rest stay preserved in the database and become visible again in C1.5.
         </p>
       {/if}
       <Editor

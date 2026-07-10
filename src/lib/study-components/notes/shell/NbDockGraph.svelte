@@ -67,17 +67,17 @@
 <aside class="nb-dock">
   <header class="dock-head">
     <span class="dock-title">Graph</span>
-    <button class="refresh" type="button" onclick={() => void reload()} title="Recarregar" aria-label="Recarregar">
+    <button class="refresh" type="button" onclick={() => void reload()} title="Reload" aria-label="Reload">
       ↻
     </button>
   </header>
   <div class="body">
     {#if loading && !graph}
-      <p class="empty">Construindo graph…</p>
+      <p class="empty">Building graph…</p>
     {:else if pageId == null}
-      <p class="empty">Sem página ativa.</p>
+      <p class="empty">No active page.</p>
     {:else if !center}
-      <p class="empty">Página não está no grafo.</p>
+      <p class="empty">Page is not in the graph.</p>
     {:else}
       <div class="center">
         <span class="dot" aria-hidden="true"></span>
@@ -85,7 +85,7 @@
         <span class="meta">{center.ref_count} refs</span>
       </div>
       {#if neighbors.length === 0}
-        <p class="empty">Sem links 1-hop.</p>
+        <p class="empty">No 1-hop links.</p>
       {:else}
         <ul class="neighbors">
           {#each neighbors as n (n.node.id)}

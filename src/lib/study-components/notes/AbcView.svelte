@@ -70,7 +70,7 @@
       await Promise.resolve();
       if (token !== renderToken) return;
       if (!host) {
-        renderState = { kind: "error", message: "container ausente" };
+        renderState = { kind: "error", message: "container missing" };
         return;
       }
       host.innerHTML = "";
@@ -133,7 +133,7 @@
       type="button"
       class="abc-toggle"
       onclick={toggleMode}
-      title={mode === "render" ? "Editar source" : "Voltar pra partitura"}
+      title={mode === "render" ? "Edit source" : "Back to score"}
     >
       {mode === "render" ? "‹/›" : "▶"}
     </button>
@@ -150,14 +150,14 @@
       aria-label={$t("study.notes_abcview.source_aria") as string}
     ></textarea>
   {:else if renderState.kind === "idle"}
-    <p class="abc-state">Sem source. Clique em ‹/› para editar.</p>
+    <p class="abc-state">No source. Click ‹/› to edit.</p>
   {:else if renderState.kind === "loading"}
-    <p class="abc-state">renderizando…</p>
+    <p class="abc-state">rendering…</p>
   {:else if renderState.kind === "error"}
     <div class="abc-error">
-      <p class="abc-error-msg">erro: {renderState.message}</p>
+      <p class="abc-error-msg">error: {renderState.message}</p>
       <button type="button" class="abc-edit-btn" onclick={toggleMode}
-        >Editar source</button>
+        >Edit source</button>
     </div>
   {/if}
 

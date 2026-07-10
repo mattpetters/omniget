@@ -129,7 +129,7 @@
 <a
   class="card"
   href={link}
-  aria-label="Abrir {title}"
+  aria-label="Open {title}"
   onpointerenter={onPointerEnter}
   onpointermove={onPointerMove}
   onpointerleave={onPointerLeave}
@@ -157,7 +157,7 @@
       </div>
     {/if}
     {#if watched}
-      <span class="watched" aria-label="Curso concluído">✓</span>
+      <span class="watched" aria-label="Course completed">✓</span>
     {/if}
     {#if showProgress}
       <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={Math.round((progressPct ?? 0) * 100)}>

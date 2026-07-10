@@ -131,7 +131,7 @@
       type="button"
       class="mermaid-toggle"
       onclick={toggleMode}
-      title={mode === "render" ? "Editar source" : "Voltar pro diagrama"}
+      title={mode === "render" ? "Edit source" : "Back to diagram"}
     >
       {mode === "render" ? "‹/›" : "▶"}
     </button>
@@ -148,18 +148,18 @@
       aria-label={$t("study.notes_mermaidview.source_aria") as string}
     ></textarea>
   {:else if renderState.kind === "idle"}
-    <p class="mermaid-state">Sem source. Clique em ‹/› para editar.</p>
+    <p class="mermaid-state">No source. Click ‹/› to edit.</p>
   {:else if renderState.kind === "loading"}
-    <p class="mermaid-state">renderizando…</p>
+    <p class="mermaid-state">rendering…</p>
   {:else if renderState.kind === "rendered"}
     <div class="mermaid-svg">
       {@html renderState.svg}
     </div>
   {:else if renderState.kind === "error"}
     <div class="mermaid-error">
-      <p class="mermaid-error-msg">erro: {renderState.message}</p>
+      <p class="mermaid-error-msg">error: {renderState.message}</p>
       <button type="button" class="mermaid-edit-btn" onclick={toggleMode}
-        >Editar source</button>
+        >Edit source</button>
     </div>
   {/if}
 </div>

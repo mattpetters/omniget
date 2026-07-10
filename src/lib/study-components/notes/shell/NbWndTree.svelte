@@ -52,7 +52,7 @@
     </div>
   </div>
 {:else}
-  <div class="nb-wnd-empty">Layout inválido</div>
+  <div class="nb-wnd-empty">Invalid layout</div>
 {/if}
 
 <style>

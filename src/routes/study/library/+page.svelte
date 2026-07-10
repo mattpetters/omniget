@@ -315,7 +315,7 @@
   let activeTabIndex = $state(0);
 
   function tabLabel(path: string): string {
-    if (!path) return "Raízes";
+    if (!path) return "Roots";
     const norm = path.replace(/\\/g, "/").replace(/\/+$/, "");
     const seg = norm.split("/").pop();
     return seg && seg.length > 0 ? seg : path;
@@ -1828,7 +1828,7 @@
             <section class="filter-section">
               <h3>Playlist</h3>
               <a href="/study/library/playlists" class="empty-cta">
-                + Criar primeira playlist
+                + Create first playlist
               </a>
             </section>
           {/if}
@@ -1905,7 +1905,7 @@
       {/if}
     {:else}
       <p class="result-count">
-        {visibleCourses.length} de {courses.length} cursos
+        {visibleCourses.length} of {courses.length} courses
       </p>
       <div class="grid">
         {#each visibleCourses.slice(0, gridPageSize) as c (c.id)}
@@ -2006,7 +2006,7 @@
               type="button"
               class="tab"
               onclick={() => switchTab(i)}
-              title={tab.path || "Raízes"}
+              title={tab.path || "Roots"}
             >
               <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden="true">
                 <path d="M3 7v13h18V9h-9l-2-2H3z" opacity="0.85"/>

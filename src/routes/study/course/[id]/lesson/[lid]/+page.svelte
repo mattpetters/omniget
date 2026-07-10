@@ -705,7 +705,7 @@
     const isPaused = videoRef ? videoRef.paused : true;
     void rpcSetSource({
       source: "video",
-      details: lesson.title ?? "Aula",
+      details: lesson.title ?? "Lesson",
       state: courseTitle || "—",
       duration: Math.floor(durationMs / 1000),
       position: positionSec,
@@ -775,7 +775,7 @@
           start_secs: start,
           duration_secs: actual,
           dest_dir: null,
-          label: `${safeForFilename(lesson.title || "aula")}-${ts}`,
+          label: `${safeForFilename(lesson.title || "lesson")}-${ts}`,
           reencode: null,
         },
       });
@@ -812,7 +812,7 @@
         return;
       }
       const ts = fmtTimestamp(videoRef?.currentTime ?? 0);
-      const filename = `replay-${safeForFilename(lesson?.title || "aula")}-${ts}.mp4`;
+      const filename = `replay-${safeForFilename(lesson?.title || "lesson")}-${ts}.mp4`;
       const res = await pluginInvoke<{
         ok: boolean;
         stats: {
@@ -878,7 +878,7 @@
         );
       });
       const ts = fmtTimestamp(videoRef.currentTime);
-      const filename = `${safeForFilename(lesson.title || "aula")}-${ts}.png`;
+      const filename = `${safeForFilename(lesson.title || "lesson")}-${ts}.png`;
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -887,14 +887,14 @@
       a.click();
       document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(url), 1000);
-      screenshotToast = `Screenshot salva (${ts})`;
+      screenshotToast = `Screenshot saved (${ts})`;
       setTimeout(() => (screenshotToast = ""), 2800);
       void awardXp("screenshot", 1, {
         lesson_id: lesson.id,
         timestamp: Math.floor(videoRef.currentTime),
       });
     } catch (e) {
-      screenshotToast = `Falhou: ${e instanceof Error ? e.message : String(e)}`;
+      screenshotToast = `Failed: ${e instanceof Error ? e.message : String(e)}`;
       setTimeout(() => (screenshotToast = ""), 4000);
     }
   }
@@ -1211,8 +1211,8 @@
             type="button"
             class="btn icon-btn"
             onclick={captureScreenshot}
-            title="Capturar frame atual como PNG"
-            aria-label="Screenshot do frame atual"
+            title="Capture current frame as PNG"
+            aria-label="Current frame screenshot"
           >
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
@@ -1258,8 +1258,8 @@
             type="button"
             class="btn icon-btn"
             onclick={() => (annotateOpen = !annotateOpen)}
-            title="Anotar este momento da aula"
-            aria-label="Anotar momento"
+            title="Annotate this lesson moment"
+            aria-label="Annotate moment"
           >
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />

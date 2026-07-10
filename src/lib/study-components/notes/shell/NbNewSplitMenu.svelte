@@ -44,7 +44,7 @@
     bind:this={buttonEl}
     aria-haspopup="menu"
     aria-expanded={open}
-    title="Novo split"
+    title="New split"
   >
     <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
       <rect x="1" y="1" width="14" height="14" rx="1" />
@@ -55,12 +55,12 @@
     <div class="menu" role="menu">
       <button class="item" role="menuitem" onclick={() => doSplit("vertical")}>
         <span class="icon">⇨</span>
-        Split à direita
+        Split right
         <span class="shortcut">Ctrl+\</span>
       </button>
       <button class="item" role="menuitem" onclick={() => doSplit("horizontal")}>
         <span class="icon">⇩</span>
-        Split abaixo
+        Split down
         <span class="shortcut">Ctrl+Shift+\</span>
       </button>
     </div>

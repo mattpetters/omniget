@@ -26,8 +26,8 @@
     initialName = "",
     initialColor = null,
     initialIcon = "book",
-    title = "Novo notebook",
-    confirmLabel = "Criar",
+    title = "New notebook",
+    confirmLabel = "Create",
     onConfirm,
     onClose,
   }: Props = $props();

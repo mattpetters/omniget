@@ -91,7 +91,7 @@
         const msg = ($t("study.music.refresh_covers_done", {
           updated: p.updated,
           skipped: p.skipped + p.errors,
-        }) as string) ?? `${p.updated} capa(s) atualizada(s)`;
+        }) as string) ?? `${p.updated} cover${p.updated === 1 ? "" : "s"} updated`;
         showToast("success", msg);
         void load();
       });
@@ -280,7 +280,7 @@
           </button>
         {/if}
         <div class="info">
-          <span>{detail.track_count} faixa(s)</span>
+          <span>{detail.track_count} track{detail.track_count === 1 ? "" : "s"}</span>
           {#if detail.total_duration_ms}
             <span class="dot" aria-hidden="true">·</span>
             <span>{fmtDurationLong(detail.total_duration_ms)}</span>

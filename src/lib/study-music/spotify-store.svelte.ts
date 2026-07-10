@@ -125,7 +125,7 @@ export function spotifyTrackToMusicTrack(track: SpotifyTrack): MusicTrack {
 
 async function resolveSpotifyToYoutube(track: MusicTrack): Promise<string> {
   if (!track.title || !track.artist) {
-    throw new Error("Track sem metadata pra resolver no YouTube");
+    throw new Error("Track is missing metadata required for YouTube resolution");
   }
   console.log("[spotify-yt] resolving:", {
     title: track.title,
@@ -152,7 +152,7 @@ async function resolveSpotifyToYoutube(track: MusicTrack): Promise<string> {
     score: res.score,
     url_preview: res.youtube_url?.slice(0, 100),
   });
-  if (!res.youtube_url) throw new Error("YouTube não retornou URL");
+  if (!res.youtube_url) throw new Error("YouTube did not return a URL");
   return res.youtube_url;
 }
 

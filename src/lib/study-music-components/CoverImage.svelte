@@ -31,7 +31,7 @@
       assetSrc = null;
       return;
     }
-    // URLs HTTP/HTTPS/data passam direto. convertFileSrc é só pra paths locais.
+    // HTTP/HTTPS/data URLs pass through; convertFileSrc is only for local paths.
     if (
       src.startsWith("http://") ||
       src.startsWith("https://") ||

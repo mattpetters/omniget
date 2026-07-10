@@ -104,7 +104,7 @@
         multiple: false,
         filters: [
           {
-            name: "Mídia",
+            name: "Media",
             extensions: [
               "png", "jpg", "jpeg", "gif", "webp", "svg", "bmp",
               "mp3", "wav", "ogg", "m4a", "flac",
@@ -119,7 +119,7 @@
         "study:anki:media:add",
         { sourcePath: picked },
       );
-      showToast("ok", `Adicionado: ${r.fname}`);
+      showToast("ok", `Added: ${r.fname}`);
       await load();
     } catch (e) {
       showToast("err", e instanceof Error ? e.message : String(e));
@@ -157,7 +157,7 @@
       );
       showToast(
         "ok",
-        r.moved === 1 ? "1 arquivo movido pro lixo" : `${r.moved} arquivos movidos pro lixo`,
+        r.moved === 1 ? "1 file moved to trash" : `${r.moved} files moved to trash`,
       );
       if (r.moved > 0) {
         recentTrash = [
@@ -215,7 +215,7 @@
       );
       showToast(
         "ok",
-        r.restored === 1 ? "1 arquivo restaurado" : `${r.restored} arquivos restaurados`,
+        r.restored === 1 ? "1 file restored" : `${r.restored} files restored`,
       );
       recentTrash = recentTrash.filter((g) => g.id !== group.id);
       await load();
@@ -269,10 +269,10 @@
   function fmtRelative(ms: number): string {
     const diff = Date.now() - ms;
     const min = Math.floor(diff / 60000);
-    if (min < 1) return "agora";
-    if (min < 60) return `${min}m atrás`;
+    if (min < 1) return "now";
+    if (min < 60) return `${min}m ago`;
     const h = Math.floor(min / 60);
-    if (h < 24) return `${h}h atrás`;
+    if (h < 24) return `${h}h ago`;
     return new Date(ms).toLocaleDateString();
   }
 

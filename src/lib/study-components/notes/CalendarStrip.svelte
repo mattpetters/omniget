@@ -46,7 +46,7 @@
       out.push({
         day: code,
         date: d,
-        weekday: d.toLocaleDateString("pt-BR", { weekday: "narrow" }).toUpperCase(),
+        weekday: d.toLocaleDateString("en-US", { weekday: "narrow" }).toUpperCase(),
         isToday: code === today0,
         has: !!j,
         blockCount: j?.block_count ?? 0,
@@ -61,11 +61,11 @@
   }
 </script>
 
-<div class="calendar-strip" role="group" aria-label="Calendário 14 dias">
+<div class="calendar-strip" role="group" aria-label="14-day calendar">
   <button
     type="button"
     class="nav-btn"
-    aria-label="Semanas anteriores"
+    aria-label="Previous weeks"
     onclick={() => (weekOffset -= 1)}
   >‹</button>
 
@@ -78,7 +78,7 @@
         class:has={cell.has}
         class:current={currentDay === cell.day}
         onclick={() => onPick(cell.day)}
-        title={cell.date.toLocaleDateString("pt-BR")}
+        title={cell.date.toLocaleDateString("en-US")}
       >
         <span class="weekday">{cell.weekday}</span>
         <span class="day-num">{fmtDayShort(cell.day)}</span>
@@ -92,7 +92,7 @@
   <button
     type="button"
     class="nav-btn"
-    aria-label="Semanas seguintes"
+    aria-label="Next weeks"
     onclick={() => (weekOffset += 1)}
   >›</button>
 
@@ -101,8 +101,8 @@
       type="button"
       class="month-btn"
       onclick={onShowMonth}
-      title="Ver mês completo"
-    >Mês</button>
+      title="View full month"
+    >Month</button>
   {/if}
 </div>
 

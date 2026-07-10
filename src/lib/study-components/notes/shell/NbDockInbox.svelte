@@ -37,16 +37,16 @@
   </header>
   <div class="body">
     {#if loading && pages.length === 0}
-      <p class="empty">Carregando…</p>
+      <p class="empty">Loading...</p>
     {:else if pages.length === 0}
-      <p class="empty">Nada para triar — caixa vazia.</p>
+      <p class="empty">Nothing to triage. Inbox empty.</p>
     {:else}
       <ul class="entries">
         {#each pages as p (p.id)}
           <li>
             <button type="button" class="entry-btn" onclick={() => open(p.id)} title={p.name}>
               <span class="title">{p.title || p.name}</span>
-              <span class="sub">{p.block_count} {p.block_count === 1 ? "bloco" : "blocos"}</span>
+              <span class="sub">{p.block_count} {p.block_count === 1 ? "block" : "blocks"}</span>
             </button>
           </li>
         {/each}

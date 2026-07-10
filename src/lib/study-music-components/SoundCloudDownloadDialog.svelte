@@ -82,7 +82,7 @@
 
   async function startDownload() {
     if (!outputDir) {
-      showToast("error", "Escolhe uma pasta primeiro");
+      showToast("error", "Choose a folder first");
       return;
     }
     downloading = true;
@@ -109,7 +109,7 @@
         outputDir,
         quality,
       });
-      showToast("success", `Pronto — salvo na pasta ${folderName(outputDir)}`);
+      showToast("success", `Done - saved to the ${folderName(outputDir)} folder`);
     } catch (e) {
       downloadStore.markJobError(
         optimisticId,
@@ -143,11 +143,11 @@
           <span class="artist">{track.user.username}</span>
         </div>
       </div>
-      <button type="button" class="close" onclick={onClose} aria-label="Fechar">×</button>
+      <button type="button" class="close" onclick={onClose} aria-label="Close">×</button>
     </header>
 
     <section class="section">
-      <h3>Como salvar?</h3>
+      <h3>How to save?</h3>
       <div class="mode-pills">
         <button
           type="button"
@@ -156,7 +156,7 @@
           onclick={() => setMode("mp3")}
         >
           <span class="pill-title">MP3</span>
-          <span class="pill-sub">Recomendado · funciona em tudo</span>
+          <span class="pill-sub">Recommended · works everywhere</span>
         </button>
         <button
           type="button"
@@ -165,7 +165,7 @@
           onclick={() => setMode("flac")}
         >
           <span class="pill-title">FLAC</span>
-          <span class="pill-sub">Sem perda · arquivo grande</span>
+          <span class="pill-sub">Lossless · large file</span>
         </button>
         <button
           type="button"
@@ -173,8 +173,8 @@
           class:on={mode === "advanced"}
           onclick={() => setMode("advanced")}
         >
-          <span class="pill-title">⚙ Avançado…</span>
-          <span class="pill-sub">Outros codecs</span>
+          <span class="pill-title">Advanced...</span>
+          <span class="pill-sub">Other codecs</span>
         </button>
       </div>
 
@@ -196,11 +196,11 @@
             </div>
           </div>
           <div class="adv-row">
-            <label class="adv-label" for="quality-select">Fonte</label>
+            <label class="adv-label" for="quality-select">Source</label>
             <select id="quality-select" class="quality-select" bind:value={quality}>
-              <option value="progressive">Progressivo MP3 128 (padrão)</option>
+              <option value="progressive">Progressive MP3 128 (default)</option>
               <option value="hq">HQ AAC ~256 (Go+)</option>
-              <option value="original">Original do uploader (se permitido)</option>
+              <option value="original">Original upload (if allowed)</option>
             </select>
           </div>
         </div>
@@ -208,25 +208,25 @@
     </section>
 
     <section class="section">
-      <h3>Onde salvar?</h3>
+      <h3>Save where?</h3>
       <div class="folder-row">
         <input
           type="text"
           bind:value={outputDir}
-          placeholder="Escolhe uma pasta…"
+          placeholder="Choose a folder..."
           readonly
         />
-        <button type="button" class="ghost" onclick={pickFolder}>Procurar…</button>
+        <button type="button" class="ghost" onclick={pickFolder}>Browse...</button>
       </div>
       <label class="remember">
         <input type="checkbox" bind:checked={remember} />
-        <span>Lembrar pasta e formato pra próxima</span>
+        <span>Remember folder and format for next time</span>
       </label>
     </section>
 
     <footer class="actions">
       <button type="button" class="ghost" onclick={onClose} disabled={downloading}>
-        Cancelar
+        Cancel
       </button>
       <button
         type="button"
@@ -234,7 +234,7 @@
         onclick={startDownload}
         disabled={downloading || !outputDir}
       >
-        {downloading ? "Iniciando…" : "Baixar"}
+        {downloading ? "Starting..." : "Download"}
       </button>
     </footer>
   </div>

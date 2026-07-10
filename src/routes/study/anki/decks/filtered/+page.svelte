@@ -101,7 +101,7 @@
           reschedule: newReschedule,
         },
       );
-      showToast("ok", `Deck "${name}" criado`);
+      showToast("ok", `Deck "${name}" created`);
       createOpen = false;
       newName = "";
       newSearch = "is:due";
@@ -125,8 +125,8 @@
       showToast(
         "ok",
         r.cards === 1
-          ? "1 card no deck filtrado"
-          : `${r.cards} cards no deck filtrado`,
+          ? "1 card in the filtered deck"
+          : `${r.cards} cards in the filtered deck`,
       );
       await load();
     } catch (e) {
@@ -172,7 +172,7 @@
       await pluginInvoke("study", "study:anki:decks:delete_filtered", {
         id: deleteTarget.id,
       });
-      showToast("ok", "Deck filtrado removido");
+      showToast("ok", "Filtered deck removed");
       confirmDeleteOpen = false;
       deleteTarget = null;
       await load();

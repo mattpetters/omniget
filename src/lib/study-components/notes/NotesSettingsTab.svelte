@@ -138,28 +138,28 @@
 <section class="tab">
   <header class="tab-head">
     <div>
-      <h2>Notas</h2>
-      <p class="hint">Aparência, sidebar, editor, journal, refs, manutenção.</p>
+      <h2>Notes</h2>
+      <p class="hint">Appearance, sidebar, editor, journal, refs, and maintenance.</p>
     </div>
     <div class="status">
       {#if loading}
-        <span class="muted">Carregando…</span>
+        <span class="muted">Loading...</span>
       {:else if savingState === "saving"}
         <span class="dot saving" aria-hidden="true"></span>
-        <span>Salvando…</span>
+        <span>Saving...</span>
       {:else if savingState === "saved"}
         <span class="dot saved" aria-hidden="true"></span>
-        <span>Salvo</span>
+        <span>Saved</span>
       {/if}
     </div>
   </header>
 
   {#if !loading}
     <article class="card">
-      <h3>Aparência</h3>
+      <h3>Appearance</h3>
       <div class="rows">
         <label class="row">
-          <span>Escala de fonte</span>
+          <span>Font scale</span>
           <select
             value={String(settings.appearance_font_scale)}
             onchange={(e) =>
@@ -169,13 +169,13 @@
               )}
           >
             <option value="0.95">95%</option>
-            <option value="1">100% (padrão)</option>
+            <option value="1">100% (default)</option>
             <option value="1.05">105%</option>
             <option value="1.1">110%</option>
           </select>
         </label>
         <label class="row">
-          <span>Largura de leitura</span>
+          <span>Reading width</span>
           <select
             value={settings.appearance_reading_width}
             onchange={(e) =>
@@ -196,7 +196,7 @@
       <h3>Sidebar</h3>
       <div class="rows">
         <label class="row">
-          <span>Largura padrão (px)</span>
+          <span>Default width (px)</span>
           <select
             value={String(settings.sidebar_width)}
             onchange={(e) =>
@@ -218,7 +218,7 @@
             onchange={(e) =>
               patch("sidebar_show_recents", (e.currentTarget as HTMLInputElement).checked)}
           />
-          <span>Mostrar seção "Recentes"</span>
+          <span>Show "Recent" section</span>
         </label>
         <label class="row check">
           <input
@@ -227,7 +227,7 @@
             onchange={(e) =>
               patch("sidebar_show_favorites", (e.currentTarget as HTMLInputElement).checked)}
           />
-          <span>Mostrar seção "Favoritas"</span>
+          <span>Show "Favorites" section</span>
         </label>
         <label class="row check">
           <input
@@ -236,7 +236,7 @@
             onchange={(e) =>
               patch("sidebar_show_today", (e.currentTarget as HTMLInputElement).checked)}
           />
-          <span>Mostrar seção "Hoje"</span>
+          <span>Show "Today" section</span>
         </label>
       </div>
     </article>
@@ -251,7 +251,7 @@
             onchange={(e) =>
               patch("editor_slash_menu", (e.currentTarget as HTMLInputElement).checked)}
           />
-          <span>Slash menu (digite "/" pra abrir comandos)</span>
+          <span>Slash menu (type "/" to open commands)</span>
         </label>
         <label class="row check">
           <input
@@ -260,10 +260,10 @@
             onchange={(e) =>
               patch("editor_drag_handle", (e.currentTarget as HTMLInputElement).checked)}
           />
-          <span>Drag handle visível ao passar o mouse</span>
+          <span>Show drag handle on hover</span>
         </label>
         <label class="row">
-          <span>Atraso de auto-save</span>
+          <span>Auto-save delay</span>
           <select
             value={String(settings.editor_autosave_delay_ms)}
             onchange={(e) =>
@@ -272,9 +272,9 @@
                 parseInt((e.currentTarget as HTMLSelectElement).value, 10),
               )}
           >
-            <option value="250">250ms (rápido)</option>
-            <option value="500">500ms (padrão)</option>
-            <option value="1000">1000ms (econômico)</option>
+            <option value="250">250ms (fast)</option>
+            <option value="500">500ms (default)</option>
+            <option value="1000">1000ms (economy)</option>
           </select>
         </label>
       </div>
@@ -284,7 +284,7 @@
       <h3>Daily journal</h3>
       <div class="rows">
         <label class="row">
-          <span>Template padrão ao criar journal</span>
+          <span>Default template when creating a journal</span>
           <select
             value={settings.journal_default_template}
             onchange={(e) =>
@@ -293,7 +293,7 @@
                 (e.currentTarget as HTMLSelectElement).value as Settings["journal_default_template"],
               )}
           >
-            <option value="none">Nenhum (página vazia)</option>
+            <option value="none">None (empty page)</option>
             <option value="daily-journal">Daily Journal</option>
             <option value="weekly-review">Weekly Review</option>
             <option value="concept-page">Concept Page</option>
@@ -306,7 +306,7 @@
             onchange={(e) =>
               patch("journal_global_shortcut", (e.currentTarget as HTMLInputElement).checked)}
           />
-          <span>Atalho global Ctrl+J abre o journal de hoje</span>
+          <span>Global Ctrl+J shortcut opens today's journal</span>
         </label>
       </div>
     </article>
@@ -315,7 +315,7 @@
       <h3>Refs &amp; backlinks</h3>
       <div class="rows">
         <label class="row">
-          <span>Atraso ao passar o mouse em [[link]]</span>
+          <span>Hover delay for [[link]]</span>
           <select
             value={String(settings.refs_hover_delay_ms)}
             onchange={(e) =>
@@ -324,13 +324,13 @@
                 parseInt((e.currentTarget as HTMLSelectElement).value, 10),
               )}
           >
-            <option value="200">200ms (rápido)</option>
-            <option value="400">400ms (padrão)</option>
-            <option value="600">600ms (paciente)</option>
+            <option value="200">200ms (fast)</option>
+            <option value="400">400ms (default)</option>
+            <option value="600">600ms (patient)</option>
           </select>
         </label>
         <label class="row">
-          <span>Blocos preview no popover</span>
+          <span>Preview blocks in popover</span>
           <select
             value={String(settings.refs_preview_count)}
             onchange={(e) =>
@@ -340,7 +340,7 @@
               )}
           >
             <option value="3">3</option>
-            <option value="5">5 (padrão)</option>
+            <option value="5">5 (default)</option>
             <option value="10">10</option>
           </select>
         </label>
@@ -348,7 +348,7 @@
     </article>
 
     <article class="card">
-      <h3>Avançado</h3>
+      <h3>Advanced</h3>
       <div class="rows">
         <label class="row check">
           <input
@@ -357,7 +357,7 @@
             onchange={(e) =>
               patch("advanced_op_log_enabled", (e.currentTarget as HTMLInputElement).checked)}
           />
-          <span>Gravar op-log (necessário pra Ctrl+Z global e auditoria)</span>
+          <span>Record op-log (required for global Ctrl+Z and auditing)</span>
         </label>
         <label class="row check">
           <input
@@ -366,7 +366,7 @@
             onchange={(e) =>
               patch("advanced_debug_mode", (e.currentTarget as HTMLInputElement).checked)}
           />
-          <span>Modo debug (logs detalhados em devtools)</span>
+          <span>Debug mode (detailed logs in DevTools)</span>
         </label>
       </div>
     </article>

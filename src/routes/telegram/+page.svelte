@@ -169,7 +169,7 @@
       const item = mediaItems.find((m) => m.message_id === mid);
       return {
         id: mid,
-        fileName: item?.file_name ?? `Mensagem ${mid}`,
+        fileName: item?.file_name ?? `Message ${mid}`,
         sizeBytes: item?.file_size,
         percent: downloadProgress.get(mid) ?? 0,
         status: "downloading" as const,
@@ -236,7 +236,7 @@
       createFolderOpen = false;
       createFolderName = "";
     } catch (e: any) {
-      createFolderError = typeof e === "string" ? e : (e?.message ?? "Erro ao criar pasta");
+      createFolderError = typeof e === "string" ? e : (e?.message ?? "Could not create folder");
     } finally {
       createFolderBusy = false;
     }
@@ -1159,8 +1159,8 @@
         <button
           class="button account-btn"
           onclick={() => (accountPanelOpen = true)}
-          aria-label="Gerenciar contas"
-          title="Gerenciar contas"
+          aria-label="Manage accounts"
+          title="Manage accounts"
         >
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
@@ -1170,8 +1170,8 @@
         <button
           class="button"
           onclick={() => (cloneWizardOpen = true)}
-          aria-label="Clonar canais"
-          title="Clonar canais"
+          aria-label="Clone channels"
+          title="Clone channels"
         >
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="9" y="9" width="13" height="13" rx="2" />
@@ -1181,8 +1181,8 @@
         <button
           class="button transfers-btn"
           onclick={() => (transferPanelOpen = true)}
-          aria-label="Transferências"
-          title="Transferências"
+          aria-label="Transfers"
+          title="Transfers"
         >
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 5v14M19 12l-7 7-7-7" />
@@ -1194,8 +1194,8 @@
         <button
           class="button"
           onclick={() => (globalSearchOpen = true)}
-          aria-label="Busca global"
-          title="Busca global (Ctrl+K)"
+          aria-label="Global search"
+          title="Global search (Ctrl+K)"
         >
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="11" cy="11" r="8" />
@@ -1262,7 +1262,7 @@
             aria-selected={chatViewMode === "all"}
             onclick={() => (chatViewMode = "all")}
           >
-            Todos
+            All
           </button>
           <button
             type="button"
@@ -1281,7 +1281,7 @@
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 5v14M5 12h14" />
             </svg>
-            Nova pasta
+            New folder
           </button>
         {/if}
       </div>
@@ -1289,7 +1289,7 @@
       <input
         type="text"
         class="input search-input"
-        placeholder={chatViewMode === "drive" ? "Buscar pasta..." : "Search..."}
+        placeholder={chatViewMode === "drive" ? "Search folders..." : "Search..."}
         bind:value={chatSearch}
       />
 
@@ -1320,8 +1320,8 @@
               type="button"
               class="chat-info-btn"
               onclick={(e) => openDrawer(chat, e)}
-              aria-label="Gerenciar {chat.title}"
-              title="Gerenciar"
+              aria-label="Manage {chat.title}"
+              title="Manage"
             >
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="5" r="1.5" />
@@ -1348,14 +1348,14 @@
         type="button"
         class="button manage-btn"
         onclick={(e) => openDrawer(selectedChat!, e)}
-        aria-label="Gerenciar canal"
+        aria-label="Manage channel"
       >
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="5" r="1.5" />
           <circle cx="12" cy="12" r="1.5" />
           <circle cx="12" cy="19" r="1.5" />
         </svg>
-        Gerenciar
+        Manage
       </button>
     </div>
 
@@ -1584,14 +1584,14 @@
     onkeydown={(e) => { if (e.key === "Escape" && !createFolderBusy) createFolderOpen = false; }}
   >
     <div class="create-folder-dialog" role="dialog" aria-modal="true">
-      <h3>Nova pasta Drive</h3>
-      <p class="dialog-hint">Cria um canal Telegram com sufixo <code>[og]</code> para você usar como pasta privada de mídias.</p>
+      <h3>New Drive folder</h3>
+      <p class="dialog-hint">Creates a Telegram channel with an <code>[og]</code> suffix so you can use it as a private media folder.</p>
       <form onsubmit={(e) => { e.preventDefault(); commitCreateFolder(); }}>
         <input
           bind:this={createFolderInput}
           type="text"
           class="input"
-          placeholder="Nome da pasta"
+          placeholder="Folder name"
           bind:value={createFolderName}
           disabled={createFolderBusy}
           required
@@ -1600,9 +1600,9 @@
           <p class="dialog-error">{createFolderError}</p>
         {/if}
         <div class="dialog-actions">
-          <button type="button" class="button" onclick={() => (createFolderOpen = false)} disabled={createFolderBusy}>Cancelar</button>
+          <button type="button" class="button" onclick={() => (createFolderOpen = false)} disabled={createFolderBusy}>Cancel</button>
           <button type="submit" class="button primary" disabled={createFolderBusy || !createFolderName.trim()}>
-            {createFolderBusy ? "Criando..." : "Criar"}
+            {createFolderBusy ? "Creating..." : "Create"}
           </button>
         </div>
       </form>

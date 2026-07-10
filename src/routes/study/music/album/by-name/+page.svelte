@@ -26,7 +26,7 @@
 
   async function load() {
     if (!albumName) {
-      error = "Álbum não especificado.";
+      error = "Album not specified.";
       loading = false;
       return;
     }
@@ -64,7 +64,7 @@
   {#if loading}
     <p class="muted">{$t("study.common.loading")}</p>
   {:else if error || !album}
-    <p class="error">{error ?? "Álbum não encontrado."}</p>
+    <p class="error">{error ?? "Album not found."}</p>
   {:else}
     <AlbumHero {album} {tracks} />
     {#if tracks.length === 0}

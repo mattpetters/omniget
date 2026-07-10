@@ -1412,7 +1412,7 @@
           });
         }
       } catch {
-        /* sem foto disponível */
+        /* no photo available */
       }
     });
   }
@@ -1443,14 +1443,14 @@
     await loadMedia(true);
     if (mediaItems.length === 0 && !mediaError && mediaFilter !== "all") {
       console.warn(
-        `[TG] selectChat: 0 items com filter=${mediaFilter}, tentando filter=all`,
+        `[TG] selectChat: 0 items with filter=${mediaFilter}; trying filter=all`,
       );
       mediaFilter = "all";
       await loadMedia(true);
     }
     if (mediaItems.length === 0 && !mediaError) {
       console.warn(
-        `[TG] selectChat: chat="${chat.title}" tipo=${chat.chat_type} retornou 0 medias mesmo com filter=all — rodando diag`,
+        `[TG] selectChat: chat="${chat.title}" type=${chat.chat_type} returned 0 media items with filter=all; running diag`,
       );
       try {
         const diag = await telegramDiagListMedia({
@@ -1459,13 +1459,13 @@
         });
         console.warn("[TG] diag_list_media:", diag);
         if (diag.get_history_error) {
-          mediaError = `Telegram negou acesso: ${diag.get_history_error}`;
+          mediaError = `Telegram denied access: ${diag.get_history_error}`;
         } else if (diag.search_errors.length > 0) {
-          mediaError = `Telegram retornou erros nos filtros: ${diag.search_errors.join("; ")}. Possivelmente este channel é protegido (saving disabled) ou access_hash expirou. Tente sair e entrar novamente no chat pelo Telegram oficial.`;
+          mediaError = `Telegram returned filter errors: ${diag.search_errors.join("; ")}. This channel may be protected (saving disabled), or its access hash may have expired. Try leaving and rejoining the chat in the official Telegram app.`;
         } else if (diag.get_history_count === 0 && diag.search_photo_count === 0 && diag.search_video_count === 0 && diag.search_document_count === 0) {
-          mediaError = "Channel parece não ter mídia acessível via API (broadcast protegido ou content sem media). Verifique no Telegram oficial se vê os videos.";
+          mediaError = "This channel does not appear to have media accessible through the API. It may be protected or contain no media. Check the official Telegram app to see whether videos are visible there.";
         } else if (diag.get_history_with_media === 0) {
-          mediaError = `Channel tem ${diag.get_history_count} mensagens mas nenhuma com mídia detectável. Verifique se as mensagens têm videos anexados (não apenas links).`;
+          mediaError = `This channel has ${diag.get_history_count} messages, but none include detectable media. Check whether the messages have attached videos rather than links only.`;
         }
       } catch (e) {
         console.warn("[TG] diag_list_media failed:", e);
@@ -1547,7 +1547,7 @@
       const timeoutMs = 25_000;
       const timeoutPromise = new Promise<TelegramMediaItem[]>((_, reject) =>
         setTimeout(
-          () => reject(new Error(`telegram_list_media timeout (${timeoutMs}ms) — provavelmente FLOOD_WAIT, tente novamente em alguns segundos`)),
+          () => reject(new Error(`telegram_list_media timeout (${timeoutMs}ms) — likely FLOOD_WAIT; try again in a few seconds`)),
           timeoutMs,
         ),
       );
@@ -1608,7 +1608,7 @@
           });
         }
       } catch {
-        /* fallback pra ícone genérico */
+        /* fallback to generic icon */
       }
     });
   }
@@ -1977,7 +1977,7 @@
         });
         newlyBookmarked.push(it);
       }
-      // L11: auto-tag in background — não bloqueia o flow
+      // L11: auto-tag in the background without blocking the flow.
       for (const it of newlyBookmarked) {
         const tags = inferTagsFromItem(it);
         for (const tag of tags) {
@@ -2114,8 +2114,8 @@
     // If already in an INPUT, let browser default Find behavior take over.
     if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === "f" && !inEditableField) {
       const sel = selectedChat
-        ? '.tg-browser input.search-input[placeholder*="mídia" i], .tg-browser input.search-input[placeholder*="media" i]'
-        : '.tg-browser input.search-input[placeholder*="chat" i]';
+        ? '.tg-browser input.search-input[data-search-scope="media"]'
+        : '.tg-browser input.search-input[data-search-scope="chats"]';
       const input = document.querySelector(sel) as HTMLInputElement | null
         ?? document.querySelector(".tg-browser input.search-input") as HTMLInputElement | null;
       if (input) {
@@ -2553,9 +2553,10 @@
       </div>
       <div class="filter-row">
         <input
-          type="search"
-          class="search-input"
-          placeholder={$t("study.library.telegram.search_chats")}
+        type="search"
+        class="search-input"
+        data-search-scope="chats"
+        placeholder={$t("study.library.telegram.search_chats")}
           bind:value={chatSearch}
         />
       </div>
@@ -2879,6 +2880,7 @@
       <input
         type="search"
         class="search-input"
+        data-search-scope="media"
         placeholder={$t("study.library.telegram.search_media")}
         bind:value={mediaSearch}
         onkeydown={(e) => {

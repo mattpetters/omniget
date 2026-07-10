@@ -242,7 +242,7 @@ class SoundCloudStore {
     }>("open_auth_webview", {
       request: {
         url: "https://soundcloud.com/signin",
-        title: "Entrar com SoundCloud",
+        title: "Sign in with SoundCloud",
         cookieDomains: [".soundcloud.com", "soundcloud.com"],
         successUrlContains: null,
         waitForCookie: "oauth_token",
@@ -250,7 +250,7 @@ class SoundCloudStore {
       },
     });
     if (!result?.cookies || result.cookies.length === 0) {
-      throw new Error("Não capturei seu login. Tenta de novo.");
+      throw new Error("I could not capture your login. Try again.");
     }
     const cookiesJson = JSON.stringify(result.cookies);
     await pluginInvoke("study", "study:soundcloud:auth:set_cookies", {
@@ -439,13 +439,13 @@ async function resolveSoundcloudStream(
   track: MusicTrack,
 ): Promise<{ url: string; is_hls: boolean }> {
   const scId = (track as any).soundcloud_id as number | undefined;
-  if (!scId) throw new Error("Track sem soundcloud_id");
+  if (!scId) throw new Error("Track is missing soundcloud_id");
   const res = await pluginInvoke<{ url: string; is_hls: boolean }>(
     "study",
     "study:soundcloud:stream:resolve",
     { trackId: scId, quality: "progressive" },
   );
-  if (!res.url) throw new Error("SoundCloud nao retornou URL");
+  if (!res.url) throw new Error("SoundCloud did not return a URL");
   return res;
 }
 

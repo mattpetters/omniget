@@ -126,7 +126,7 @@
   function fmtDate(ms: number | null): string {
     if (!ms) return "—";
     const d = new Date(ms);
-    return d.toLocaleDateString("pt-BR", {
+    return d.toLocaleDateString("en-US", {
       day: "2-digit",
       month: "short",
       year: "2-digit",
@@ -136,7 +136,7 @@
   function fmtRelativeSecs(secs: number): string {
     const now = Math.floor(Date.now() / 1000);
     const diff = now - secs;
-    if (diff < 60) return "agora";
+    if (diff < 60) return "now";
     if (diff < 3600) return `${Math.floor(diff / 60)}min`;
     if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
     if (diff < 86400 * 7) return `${Math.floor(diff / 86400)}d`;
@@ -729,10 +729,10 @@
         onclick={prevPage}
         disabled={offset === 0 || loading}
       >
-        ← Anterior
+        ← Previous
       </button>
       <span class="page-info">
-        {offset + 1}–{Math.min(offset + limit, total)} de {total}
+        {offset + 1}–{Math.min(offset + limit, total)} of {total}
       </span>
       <button
         type="button"
@@ -740,7 +740,7 @@
         onclick={nextPage}
         disabled={offset + limit >= total || loading}
       >
-        Próxima →
+        Next →
       </button>
     </div>
   {/if}

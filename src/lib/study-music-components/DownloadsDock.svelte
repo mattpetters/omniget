@@ -14,23 +14,23 @@
   const drawerOpen = $derived(downloadStore.drawerOpen);
 
   function stageLabel(job: DownloadJobState): string {
-    if (job.error) return "Falhou";
-    if (job.stage === "pending") return "Aguardando…";
-    if (job.stage === "starting") return "Preparando…";
+    if (job.error) return "Failed";
+    if (job.stage === "pending") return "Waiting...";
+    if (job.stage === "starting") return "Preparing...";
     if (job.stage === "downloading") {
       if (job.kind === "bulk") {
-        return `Baixando ${job.currentCount ?? 0}/${job.totalCount ?? 0}`;
+        return `Downloading ${job.currentCount ?? 0}/${job.totalCount ?? 0}`;
       }
-      return "Salvando faixa…";
+      return "Saving track...";
     }
-    if (job.stage === "skipped") return "Já tinha";
+    if (job.stage === "skipped") return "Already exists";
     if (job.stage === "done") {
       if (job.kind === "bulk") {
         const ok = job.successCount ?? 0;
         const fail = job.failedCount ?? 0;
-        return `Pronto · ${ok} ok${fail > 0 ? ` · ${fail} falhou` : ""}`;
+        return `Done · ${ok} ok${fail > 0 ? ` · ${fail} failed` : ""}`;
       }
-      return "Pronto";
+      return "Done";
     }
     return job.stage;
   }
@@ -44,7 +44,7 @@
     const codec = getLastCodec() ?? "mp3";
     const dir = getLastDownloadDir();
     if (!dir) {
-      showToast("error", "Escolhe a pasta de novo no botão de baixar.");
+      showToast("error", "Choose the folder again from the download button.");
       downloadStore.removeJob(job.id);
       return;
     }
@@ -77,7 +77,7 @@
     const codec = job.codec ?? getLastCodec() ?? "mp3";
     const dir = job.outputDir ?? getLastDownloadDir();
     if (!dir) {
-      showToast("error", "Escolhe a pasta de novo no botão de baixar.");
+      showToast("error", "Choose the folder again from the download button.");
       return;
     }
     downloadStore.removeFailedTrackFromBulk(job.id, failed.id);
@@ -101,7 +101,7 @@
     const codec = job.codec ?? getLastCodec() ?? "mp3";
     const dir = job.outputDir ?? getLastDownloadDir();
     if (!dir) {
-      showToast("error", "Escolhe a pasta de novo no botão de baixar.");
+      showToast("error", "Choose the folder again from the download button.");
       return;
     }
     const failed = downloadStore.consumeFailedTracks(job.id);
@@ -163,8 +163,8 @@
     class="fab"
     class:active={activeCount > 0}
     onclick={toggleDrawer}
-    aria-label={drawerOpen ? "Fechar downloads" : "Abrir downloads"}
-    title={drawerOpen ? "Fechar downloads" : "Downloads"}
+    aria-label={drawerOpen ? "Close downloads" : "Open downloads"}
+    title={drawerOpen ? "Close downloads" : "Downloads"}
   >
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -184,8 +184,8 @@
         Downloads <span class="muted">({jobs.length})</span>
       </span>
       <div class="head-actions">
-        <button type="button" class="link" onclick={clearDone}>Limpar concluídos</button>
-        <button type="button" class="close" onclick={toggleDrawer} aria-label="Fechar">×</button>
+        <button type="button" class="link" onclick={clearDone}>Clear completed</button>
+        <button type="button" class="close" onclick={toggleDrawer} aria-label="Close">×</button>
       </div>
     </header>
 
@@ -227,15 +227,15 @@
                   aria-expanded={!!job.expanded}
                 >
                   <span class="chev" class:open={job.expanded}>▸</span>
-                  {failedList.length} {failedList.length === 1 ? "falhou" : "falharam"}
+                  {failedList.length} failed
                 </button>
                 <button
                   type="button"
                   class="retry-all"
                   onclick={() => retryAllFailed(job)}
-                  title="Tentar todas falhadas"
+                  title="Retry all failed downloads"
                 >
-                  Tentar todas
+                  Retry all
                 </button>
               </div>
               {#if job.expanded}
@@ -251,7 +251,7 @@
                         class="failed-retry"
                         onclick={() => retryFailedFromBulk(job, ft)}
                       >
-                        Tentar
+                        Retry
                       </button>
                     </li>
                   {/each}
@@ -262,7 +262,7 @@
           <div class="row-actions">
             {#if job.error && job.kind === "single"}
               <button type="button" class="action-btn" onclick={() => retrySingle(job)}>
-                Tentar de novo
+                Retry
               </button>
             {/if}
             {#if job.stage === "done" && job.permalinkUrl}
@@ -270,8 +270,8 @@
                 type="button"
                 class="ghost-btn"
                 onclick={() => openExternal(job.permalinkUrl)}
-                title="Abrir no SoundCloud"
-                aria-label="Abrir no SoundCloud"
+                title="Open in SoundCloud"
+                aria-label="Open in SoundCloud"
               >
                 ↗
               </button>
@@ -281,8 +281,8 @@
                 type="button"
                 class="ghost-btn"
                 onclick={() => dismiss(job)}
-                aria-label="Remover"
-                title="Remover"
+                aria-label="Remove"
+                title="Remove"
               >
                 ×
               </button>

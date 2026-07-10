@@ -239,8 +239,8 @@
           render: () => {
             const handle = document.createElement("div");
             handle.className = "drag-handle";
-            handle.setAttribute("aria-label", "Arraste o bloco");
-            handle.title = "Arraste pra reordenar";
+            handle.setAttribute("aria-label", "Drag block");
+            handle.title = "Drag to reorder";
             handle.innerHTML = "<span aria-hidden=\"true\">⋮⋮</span>";
             return handle;
           },
@@ -381,9 +381,9 @@
 
 <div class="editor-host">
   {#if isSaving}
-    <span class="save-indicator">salvando…</span>
+    <span class="save-indicator">saving…</span>
   {:else if lastSavedAt}
-    <span class="save-indicator subtle">salvo</span>
+    <span class="save-indicator subtle">saved</span>
   {/if}
   <div bind:this={element} class="editor-mount"></div>
 </div>

@@ -100,7 +100,7 @@
     try {
       const mode = await spotifyStore.playTrack(reordered[0], reordered);
       if (mode === "youtube") {
-        showToast("info", "Tocando via YouTube (modo Free)");
+        showToast("info", "Playing via YouTube (Free mode)");
       }
     } catch (e) {
       showToast("error", e instanceof Error ? e.message : String(e));
@@ -112,7 +112,7 @@
     savingToggle = true;
     try {
       isSaved = await spotifyStore.toggleSaveAlbum(albumId);
-      showToast("success", isSaved ? "Álbum salvo" : "Álbum removido");
+      showToast("success", isSaved ? "Album saved" : "Album removed");
     } catch (e) {
       showToast("error", e instanceof Error ? e.message : String(e));
     } finally {
@@ -133,7 +133,7 @@
     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <polyline points="15 18 9 12 15 6"/>
     </svg>
-    Voltar
+    Back
   </button>
 
   {#if album}
@@ -146,11 +146,11 @@
         {/if}
       </div>
       <div class="hero-info">
-        <span class="eyebrow">Álbum</span>
+        <span class="eyebrow">Album</span>
         <h1>{album.name}</h1>
         <p class="meta">
           {album.artists.map((a) => a.name).join(", ")}{album.release_date ? ` · ${album.release_date.slice(0, 4)}` : ""}
-          · {album.total_tracks} faixas
+          · {album.total_tracks} track{album.total_tracks === 1 ? "" : "s"}
         </p>
         {#if album.genres && album.genres.length > 0}
           <p class="genres">{album.genres.slice(0, 3).join(" · ")}</p>
@@ -158,7 +158,7 @@
         <div class="actions">
           <button type="button" class="play-btn" onclick={() => playFromIndex(0)}>
             <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
-            Tocar
+            Play
           </button>
           <button
             type="button"
@@ -166,7 +166,7 @@
             class:on={isSaved}
             onclick={toggleSave}
             disabled={savingToggle}
-            aria-label={isSaved ? "Remover dos seus álbuns" : "Salvar álbum"}
+            aria-label={isSaved ? "Remove from your albums" : "Save album"}
           >
             <svg viewBox="0 0 24 24" width="18" height="18" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
@@ -178,7 +178,7 @@
   {/if}
 
   {#if loading}
-    <p class="muted">Carregando…</p>
+    <p class="muted">Loading...</p>
   {:else if error}
     <p class="error">{error}</p>
   {:else}

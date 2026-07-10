@@ -260,30 +260,30 @@
     initialTotal === 0 ? 0 : Math.round((answered / initialTotal) * 100),
   );
 
-  const eyebrow = $derived(deckName ? `Deck · ${deckName}` : "Todos os decks");
+  const eyebrow = $derived(deckName ? `Deck · ${deckName}` : "All decks");
 </script>
 
 <section class="study-page">
-  <PageHero title="Estudar" subtitle={eyebrow} />
+  <PageHero title="Study" subtitle={eyebrow} />
 
   {#if loading}
-    <p class="muted">Carregando sessão…</p>
+    <p class="muted">Loading session...</p>
   {:else if error}
     <p class="error">{error}</p>
   {:else if !card}
     <section class="card complete-card">
       <div class="complete-icon" aria-hidden="true">✓</div>
-      <h2>Sessão concluída</h2>
+      <h2>Session complete</h2>
       {#if initialTotal === 0}
-        <p>Nenhum card pendente para esta sessão.</p>
+        <p>No pending cards for this session.</p>
       {:else}
-        <p>Você respondeu {answered} cards. Bom trabalho!</p>
+        <p>You answered {answered} cards. Nice work!</p>
       {/if}
       <div class="complete-actions">
-        <a class="btn-primary" href="/study/anki">Voltar ao painel</a>
+        <a class="btn-primary" href="/study/anki">Back to dashboard</a>
         {#if initialTotal > 0}
           <button type="button" class="btn-secondary" onclick={loadQueue}>
-            Tentar mais cards
+            Try more cards
           </button>
         {/if}
       </div>
@@ -298,7 +298,7 @@
 
     <article class="card-stage">
       <iframe
-        title={showAnswer ? "Resposta" : "Pergunta"}
+        title={showAnswer ? "Answer" : "Question"}
         srcdoc={showAnswer ? backDoc : frontDoc}
         sandbox="allow-same-origin"
         class="card-frame"
@@ -308,9 +308,9 @@
     {#if !showAnswer}
       <div class="cta-row">
         <button type="button" class="btn-primary big" onclick={reveal}>
-          Mostrar resposta
+          Show answer
         </button>
-        <span class="kbd-hint">Espaço</span>
+        <span class="kbd-hint">Space</span>
       </div>
     {:else}
       <div class="rating-row">
@@ -320,7 +320,7 @@
           onclick={() => answer(1)}
           disabled={busyAnswer}
         >
-          <span class="rate-label">De novo</span>
+          <span class="rate-label">Again</span>
           <span class="rate-ivl">{preview ? fmtIvl(preview.again_ivl_days) : "—"}</span>
           <span class="rate-key">1</span>
         </button>
@@ -330,7 +330,7 @@
           onclick={() => answer(2)}
           disabled={busyAnswer}
         >
-          <span class="rate-label">Difícil</span>
+          <span class="rate-label">Hard</span>
           <span class="rate-ivl">{preview ? fmtIvl(preview.hard_ivl_days) : "—"}</span>
           <span class="rate-key">2</span>
         </button>
@@ -340,7 +340,7 @@
           onclick={() => answer(3)}
           disabled={busyAnswer}
         >
-          <span class="rate-label">Bom</span>
+          <span class="rate-label">Good</span>
           <span class="rate-ivl">{preview ? fmtIvl(preview.good_ivl_days) : "—"}</span>
           <span class="rate-key">3</span>
         </button>
@@ -350,7 +350,7 @@
           onclick={() => answer(4)}
           disabled={busyAnswer}
         >
-          <span class="rate-label">Fácil</span>
+          <span class="rate-label">Easy</span>
           <span class="rate-ivl">{preview ? fmtIvl(preview.easy_ivl_days) : "—"}</span>
           <span class="rate-key">4</span>
         </button>

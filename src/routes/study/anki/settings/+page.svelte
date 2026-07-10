@@ -294,7 +294,7 @@
         "study",
         "study:anki:backup:create",
       );
-      showToast("ok", `Backup criado · ${formatBytes(r.bytes)}`);
+      showToast("ok", `Backup created · ${formatBytes(r.bytes)}`);
       await loadBackups();
     } catch (e) {
       showToast("err", e instanceof Error ? e.message : String(e));
@@ -353,11 +353,11 @@
         { keep },
       );
       if (r.removed === 0) {
-        showToast("ok", "Nenhum backup antigo pra remover");
+        showToast("ok", "No old backups to remove");
       } else {
         showToast(
           "ok",
-          r.removed === 1 ? "1 backup removido" : `${r.removed} backups removidos`,
+          r.removed === 1 ? "1 backup removed" : `${r.removed} backups removed`,
         );
         await loadBackups();
       }
@@ -411,7 +411,7 @@
     rawBusy = true;
     try {
       await pluginInvoke("study", "study:anki:config:delete_global", { key });
-      showToast("ok", `Chave "${key}" removida`);
+      showToast("ok", `Key "${key}" removed`);
       rawValue = null;
       await load();
     } catch (e) {

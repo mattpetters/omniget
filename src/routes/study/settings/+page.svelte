@@ -33,15 +33,15 @@
 
   const TABS = $derived<{ key: TabKey; label: string }[]>([
     { key: "player", label: "Player" },
-    { key: "subtitles", label: "Legendas" },
-    { key: "audio", label: "Áudio" },
-    { key: "behavior", label: "Comportamento" },
-    { key: "library", label: "Biblioteca" },
-    { key: "music", label: "Música" },
+    { key: "subtitles", label: "Subtitles" },
+    { key: "audio", label: "Audio" },
+    { key: "behavior", label: "Behavior" },
+    { key: "library", label: "Library" },
+    { key: "music", label: "Music" },
     { key: "youtube", label: "YouTube" },
     { key: "diagnostic", label: $t("study.settings.tab_diagnostic") as string },
-    { key: "notes", label: "Notas" },
-    { key: "maintenance", label: "Manutenção" },
+    { key: "notes", label: "Notes" },
+    { key: "maintenance", label: "Maintenance" },
   ]);
 
   let activeTab = $state<TabKey>("player");
@@ -159,7 +159,7 @@
   <header class="head">
     <div class="head-text">
       <h1>{$t("study.hub.settings")}</h1>
-      <p class="hint">Ajustes do player, legendas, biblioteca e manutenção.</p>
+      <p class="hint">Player, subtitles, library, and maintenance settings.</p>
     </div>
     <div class="status">
       {#if savingState === "saving"}
@@ -189,7 +189,7 @@
 
   <div class="tab-body">
     {#if loading}
-      <p class="muted">Carregando…</p>
+      <p class="muted">Loading…</p>
     {:else if error}
       <p class="error">{error}</p>
     {:else if activeTab === "player"}

@@ -102,7 +102,7 @@
 
   function preview(text: string): string {
     const first = text.split("\n").find((l) => l.trim().length > 0) ?? "";
-    return first.length > 80 ? first.slice(0, 80) + "…" : first || "(vazio)";
+    return first.length > 80 ? first.slice(0, 80) + "…" : first || "(empty)";
   }
 </script>
 

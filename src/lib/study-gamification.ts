@@ -58,12 +58,12 @@ export async function awardXp(
     );
     if (!res) return;
     if (res.leveled_up) {
-      fireToast({ kind: "level_up", text: `Subiu para nível ${res.new_level}!` });
+      fireToast({ kind: "level_up", text: `Leveled up to level ${res.new_level}!` });
     }
     for (const code of res.achievements_unlocked ?? []) {
       fireToast({
         kind: "achievement",
-        text: `Conquista desbloqueada: ${code}`,
+        text: `Achievement unlocked: ${code}`,
       });
     }
   } catch {}

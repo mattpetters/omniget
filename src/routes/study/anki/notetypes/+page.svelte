@@ -259,7 +259,7 @@
   function removeField(ord: number) {
     if (!draft) return;
     if (draft.fields.length <= 1) {
-      showToast("err", "Modelo precisa ter ao menos 1 field");
+      showToast("err", "Model needs at least 1 field");
       return;
     }
     draft.fields = draft.fields.filter((f) => f.ord !== ord);
@@ -306,7 +306,7 @@
   function removeTemplate(ord: number) {
     if (!draft) return;
     if (draft.templates.length <= 1) {
-      showToast("err", "Modelo precisa ter ao menos 1 template");
+      showToast("err", "Model needs at least 1 template");
       return;
     }
     draft.templates = draft.templates.filter((t) => t.ord !== ord);
@@ -326,7 +326,7 @@
         { notetype: draft },
       );
       saveSummary = summary;
-      showToast("ok", "Modelo atualizado");
+      showToast("ok", "Model updated");
       const id = draft.id;
       editMode = false;
       draft = null;
@@ -358,7 +358,7 @@
         args,
       );
       cloneOpen = false;
-      showToast("ok", "Modelo clonado");
+      showToast("ok", "Model cloned");
       await loadList();
       await selectNotetype(r.id);
     } catch (e) {
@@ -386,7 +386,7 @@
         args,
       );
       createOpen = false;
-      showToast("ok", "Modelo criado");
+      showToast("ok", "Model created");
       await loadList();
       await selectNotetype(r.id);
     } catch (e) {
@@ -410,7 +410,7 @@
         id: target.id,
       });
       if (selected?.id === target.id) deselect();
-      showToast("ok", `"${target.name}" removido`);
+      showToast("ok", `"${target.name}" removed`);
       await loadList();
     } catch (e) {
       showToast("err", e instanceof Error ? e.message : String(e));

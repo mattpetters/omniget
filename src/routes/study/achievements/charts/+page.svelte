@@ -35,8 +35,8 @@
     { value: "7", label: "7d" },
     { value: "30", label: "30d" },
     { value: "90", label: "90d" },
-    { value: "365", label: "1a" },
-    { value: "all", label: "Todos" },
+    { value: "365", label: "1y" },
+    { value: "all", label: "All" },
   ];
 
   function periodCutoff(p: string): number | null {
@@ -256,38 +256,38 @@
 
 <section class="charts-page">
   <PageHero
-    title="Charts de progressão"
-    subtitle="XP, levels, streak, unlocks ao longo do tempo"
+    title="Progress charts"
+    subtitle="XP, levels, streak, and unlocks over time"
   />
 
   <div class="period-bar">
     <SegmentedControl
       options={periodOptions}
       bind:value={period}
-      ariaLabel="Período"
+      ariaLabel="Period"
     />
     <button class="back-btn" onclick={() => history.back()}>
-      ← Voltar
+      ← Back
     </button>
   </div>
 
   {#if loading}
-    <div class="state">Carregando…</div>
+    <div class="state">Loading...</div>
   {:else if error}
     <div class="state err">{error}</div>
   {:else if entries.length === 0}
     <div class="empty">
-      <p>Sem histórico de XP no período selecionado.</p>
-      <p class="muted">Estude um pouco e volte aqui pra ver charts.</p>
+      <p>No XP history in the selected period.</p>
+      <p class="muted">Study a bit and come back to see charts.</p>
     </div>
   {:else}
     <div class="grid">
       <article class="card">
         <header class="card-head">
-          <h3>XP por dia</h3>
+          <h3>XP per day</h3>
           <span class="meta">
-            {xpPlot.count} dia{xpPlot.count === 1 ? "" : "s"} ·
-            pico {xpPlot.maxVal} XP
+            {xpPlot.count} day{xpPlot.count === 1 ? "" : "s"} ·
+            peak {xpPlot.maxVal} XP
           </span>
         </header>
         {#if xpPlot.points.length > 0}
@@ -295,7 +295,7 @@
             viewBox="0 0 {CHART_W} {CHART_H}"
             class="chart"
             role="img"
-            aria-label="XP por dia"
+            aria-label="XP per day"
             onmousemove={(e) => {
               const rect = (e.currentTarget as SVGElement).getBoundingClientRect();
               const x = ((e.clientX - rect.left) / rect.width) * CHART_W;
@@ -340,7 +340,7 @@
         <header class="card-head">
           <h3>Level ao longo do tempo</h3>
           <span class="meta">
-            {levelPlot.count} level-up{levelPlot.count === 1 ? "" : "s"} no período
+            {levelPlot.count} level-up{levelPlot.count === 1 ? "" : "s"} in period
           </span>
         </header>
         {#if levelPlot.points.length > 0}
@@ -348,7 +348,7 @@
             viewBox="0 0 {CHART_W} {CHART_H}"
             class="chart"
             role="img"
-            aria-label="Level ao longo do tempo"
+            aria-label="Level over time"
             onmousemove={(e) => {
               const rect = (e.currentTarget as SVGElement).getBoundingClientRect();
               const x = ((e.clientX - rect.left) / rect.width) * CHART_W;
@@ -383,15 +383,15 @@
             </p>
           {/if}
         {:else}
-          <p class="muted small">Nenhum level-up no período</p>
+          <p class="muted small">No level-ups in this period</p>
         {/if}
       </article>
 
       <article class="card">
         <header class="card-head">
-          <h3>Streak (dias consecutivos)</h3>
+          <h3>Streak (consecutive days)</h3>
           <span class="meta">
-            pico {streakPlot.maxVal} dia{streakPlot.maxVal === 1 ? "" : "s"}
+            peak {streakPlot.maxVal} day{streakPlot.maxVal === 1 ? "" : "s"}
           </span>
         </header>
         {#if streakPlot.points.length > 0}
@@ -399,7 +399,7 @@
             viewBox="0 0 {CHART_W} {CHART_H}"
             class="chart"
             role="img"
-            aria-label="Streak ao longo do tempo"
+            aria-label="Streak over time"
             onmousemove={(e) => {
               const rect = (e.currentTarget as SVGElement).getBoundingClientRect();
               const x = ((e.clientX - rect.left) / rect.width) * CHART_W;
@@ -422,7 +422,7 @@
           {#if hoveredChart === "streak" && hoveredIdx !== null}
             <p class="tooltip mono">
               {fmtDate(streakPlot.points[hoveredIdx].day)} ·
-              {streakPlot.points[hoveredIdx].value} dia{streakPlot.points[hoveredIdx].value === 1 ? "" : "s"}
+              {streakPlot.points[hoveredIdx].value} day{streakPlot.points[hoveredIdx].value === 1 ? "" : "s"}
             </p>
           {/if}
         {/if}
@@ -430,9 +430,9 @@
 
       <article class="card">
         <header class="card-head">
-          <h3>Unlocks por dia</h3>
+          <h3>Unlocks per day</h3>
           <span class="meta">
-            {filteredAchievements.length} unlock{filteredAchievements.length === 1 ? "" : "s"} no período
+            {filteredAchievements.length} unlock{filteredAchievements.length === 1 ? "" : "s"} in period
           </span>
         </header>
         {#if unlocksPlot.points.length > 0}
@@ -440,7 +440,7 @@
             viewBox="0 0 {CHART_W} {CHART_H}"
             class="chart"
             role="img"
-            aria-label="Unlocks por dia"
+            aria-label="Unlocks by day"
             onmousemove={(e) => {
               const rect = (e.currentTarget as SVGElement).getBoundingClientRect();
               const x = ((e.clientX - rect.left) / rect.width) * CHART_W;
@@ -479,7 +479,7 @@
             </p>
           {/if}
         {:else}
-          <p class="muted small">Nenhum unlock no período</p>
+          <p class="muted small">No unlocks in this period</p>
         {/if}
       </article>
     </div>

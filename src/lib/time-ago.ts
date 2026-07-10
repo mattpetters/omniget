@@ -34,13 +34,13 @@ const LOCALES: Record<string, LocaleStrings> = {
 
 export default function timeAgo(
   input: Date | string | number | null | undefined,
-  locale: string = "pt",
+  locale: string = "en",
 ): string {
   if (input === null || input === undefined) return "";
   const d = input instanceof Date ? input : new Date(input);
   if (isNaN(d.getTime())) return "";
 
-  const L = LOCALES[locale] ?? LOCALES.pt;
+  const L = LOCALES[locale] ?? LOCALES.en;
   const now = Date.now();
   const diffSec = Math.floor((now - d.getTime()) / 1000);
 

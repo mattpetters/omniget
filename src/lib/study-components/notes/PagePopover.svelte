@@ -87,7 +87,7 @@
   aria-label={$t("study.notes_pagepopover.preview_aria", { name: pageName }) as string}
 >
   {#if loading}
-    <div class="state">carregando…</div>
+    <div class="state">Loading...</div>
   {:else if error}
     <div class="state err">{error}</div>
   {:else if page}
@@ -105,7 +105,7 @@
       </button>
     </header>
     {#if snippets.length === 0}
-      <p class="empty">Página vazia</p>
+      <p class="empty">Empty page</p>
     {:else}
       <ul class="blocks">
         {#each snippets as s, i (i)}

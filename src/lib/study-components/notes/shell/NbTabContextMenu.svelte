@@ -57,18 +57,18 @@
   role="menu"
 >
   <button class="item" role="menuitem" onclick={close}>
-    Fechar
+    Close
     <span class="shortcut">Ctrl+W</span>
   </button>
-  <button class="item" role="menuitem" onclick={closeOthers}>Fechar outras</button>
-  <button class="item" role="menuitem" onclick={closeRight}>Fechar à direita</button>
+  <button class="item" role="menuitem" onclick={closeOthers}>Close others</button>
+  <button class="item" role="menuitem" onclick={closeRight}>Close to the right</button>
   <div class="sep"></div>
   <button class="item" role="menuitem" onclick={togglePin}>
-    {tab.pinned ? "Desafixar" : "Fixar"}
+    {tab.pinned ? "Unpin" : "Pin"}
   </button>
   <div class="sep"></div>
-  <button class="item" role="menuitem" onclick={moveNewSplitRight}>Mover pra novo split à direita</button>
-  <button class="item" role="menuitem" onclick={moveNewSplitDown}>Mover pra novo split abaixo</button>
+  <button class="item" role="menuitem" onclick={moveNewSplitRight}>Move to a new split on the right</button>
+  <button class="item" role="menuitem" onclick={moveNewSplitDown}>Move to a new split below</button>
 </div>
 
 <style>

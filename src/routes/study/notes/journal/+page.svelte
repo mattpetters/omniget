@@ -67,7 +67,7 @@
   function fmtDay(d: number): string {
     const { y, m, d: day } = decodeDay(d);
     const date = new Date(y, m - 1, day);
-    return date.toLocaleDateString("pt-BR", {
+    return date.toLocaleDateString("en-US", {
       weekday: "long",
       day: "2-digit",
       month: "long",
@@ -147,7 +147,7 @@
       } else {
         showToast(
           "ok",
-          direction === "prev" ? "Sem journal anterior" : "Sem journal posterior",
+          direction === "prev" ? "No previous journal" : "No next journal",
         );
       }
     } catch (e) {
@@ -189,7 +189,7 @@
       });
       applyTemplateOpen = false;
       await reloadTree();
-      showToast("ok", `${r.blocks_created} blocos do template criados`);
+      showToast("ok", `${r.blocks_created} template blocks created`);
     } catch (e) {
       showToast("err", e instanceof Error ? e.message : String(e));
     }
@@ -205,7 +205,7 @@
       });
       applyTemplateOpen = false;
       await reloadTree();
-      showToast("ok", `${r.blocks_created} blocos do template criados`);
+      showToast("ok", `${r.blocks_created} template blocks created`);
     } catch (e) {
       showToast("err", e instanceof Error ? e.message : String(e));
     }
@@ -228,7 +228,7 @@
 <div class="journal-shell" data-surface="notes">
   <aside class="left">
     <header class="left-head">
-      <a href="/study/notes" class="back">← Notas</a>
+      <a href="/study/notes" class="back">← Notes</a>
       <h2 class="page-title">Journal</h2>
     </header>
 
@@ -238,12 +238,12 @@
       onclick={openToday}
       class:active={currentDay !== null && isToday(currentDay)}
     >
-      Hoje
+      Today
     </button>
 
     <div class="nav-row">
-      <button type="button" class="btn ghost sm" onclick={() => nav("prev")}>← Ant.</button>
-      <button type="button" class="btn ghost sm" onclick={() => nav("next")}>Próx. →</button>
+      <button type="button" class="btn ghost sm" onclick={() => nav("prev")}>← Prev.</button>
+      <button type="button" class="btn ghost sm" onclick={() => nav("next")}>Next →</button>
     </div>
 
     <button
@@ -251,13 +251,13 @@
       class="btn ghost sm jump"
       onclick={() => (showJumpDialog = true)}
     >
-      Ir para data…
+      Go to date…
     </button>
 
     <ActivityHeatmap journals={heatmap} onPick={openDay} />
 
     <section class="recent-list">
-      <h3>Histórico</h3>
+      <h3>History</h3>
       <ul>
         {#each recent.slice(0, 30) as r (r.page_id)}
           <li>
@@ -277,7 +277,7 @@
             </button>
           </li>
         {:else}
-          <li class="empty">Sem journals ainda.</li>
+          <li class="empty">No journals yet.</li>
         {/each}
       </ul>
     </section>
@@ -297,9 +297,9 @@
     />
 
     {#if loading}
-      <div class="state">Carregando journal…</div>
+      <div class="state">Loading journal…</div>
     {:else if !currentPage || currentDay === null}
-      <div class="state">Nenhum journal aberto.</div>
+      <div class="state">No journal open.</div>
     {:else}
       <header class="ed-head">
         <div class="title-block">
@@ -312,10 +312,10 @@
             class="btn ghost sm"
             onclick={() => (applyTemplateOpen = true)}
           >
-            + Aplicar template
+            + Apply template
           </button>
           {#if currentDay !== null && isToday(currentDay)}
-            <span class="badge today">hoje</span>
+            <span class="badge today">today</span>
           {/if}
         </div>
       </header>
@@ -341,7 +341,7 @@
     }}
   >
     <div class="modal">
-      <h3>Ir para data</h3>
+      <h3>Go to date</h3>
       <input
         type="date"
         bind:value={jumpDate}
@@ -352,9 +352,9 @@
       />
       <footer>
         <button type="button" class="btn ghost" onclick={() => (showJumpDialog = false)}>
-          Cancelar
+          Cancel
         </button>
-        <button type="button" class="btn primary" onclick={jumpToDate}>Abrir</button>
+        <button type="button" class="btn primary" onclick={jumpToDate}>Open</button>
       </footer>
     </div>
   </div>
@@ -369,9 +369,9 @@
     }}
   >
     <div class="modal wide">
-      <h3>Aplicar template</h3>
+      <h3>Apply template</h3>
       <p class="hint">
-        Os blocos do template serão adicionados ao final deste journal.
+        Template blocks will be added to the end of this journal.
       </p>
 
       <section>
@@ -392,7 +392,7 @@
 
       {#if userTemplates.length > 0}
         <section>
-          <h4>Suas páginas marcadas como template</h4>
+          <h4>Your pages marked as templates</h4>
           <div class="tpl-grid">
             {#each userTemplates as t (t.page_id)}
               <button
@@ -410,7 +410,7 @@
 
       <footer>
         <button type="button" class="btn ghost" onclick={() => (applyTemplateOpen = false)}>
-          Cancelar
+          Cancel
         </button>
       </footer>
     </div>

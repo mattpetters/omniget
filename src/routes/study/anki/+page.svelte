@@ -35,7 +35,7 @@
       await ankiOpen();
       dashState = await ankiDashboard();
     } catch (e: any) {
-      error = typeof e === "string" ? e : (e?.message ?? "Erro");
+      error = typeof e === "string" ? e : (e?.message ?? "Error");
     } finally {
       loading = false;
     }
@@ -58,8 +58,8 @@
   const streakDashoffset = $derived(RING_C * (1 - streakRatio));
   const streakLabel = $derived(
     dashState
-      ? dashState.streak.current >= 7 ? "STREAK" : dashState.streak.current > 0 ? "DIAS" : "COMECE"
-      : "COMECE",
+      ? dashState.streak.current >= 7 ? "STREAK" : dashState.streak.current > 0 ? "DAYS" : "START"
+      : "START",
   );
 </script>
 
@@ -70,13 +70,13 @@
 {:else if error}
   <div class="surface-card">
     <p class="error-text">{error}</p>
-    <button type="button" class="btn-cta" onclick={load}>Tentar novamente</button>
+    <button type="button" class="btn-cta" onclick={load}>Try again</button>
   </div>
 {:else if dashState}
   <div class="grid">
     <section class="hero surface-card">
       <header class="hero-head">
-        <span class="eyebrow">Hoje</span>
+        <span class="eyebrow">Today</span>
         {#if dashState.pending.total > 0}
           <a class="pill pill-cta" href="/study/anki/sync">
             <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -85,7 +85,7 @@
               <path d="M21 4v4h-4" />
               <path d="M3 20v-4h4" />
             </svg>
-            {dashState.pending.total} pendentes
+            {dashState.pending.total} pending
           </a>
         {/if}
       </header>
@@ -98,20 +98,20 @@
             <span class="dim">due</span>
             <span class="sep">·</span>
             <strong>{dashState.new_today_total}</strong>
-            <span class="dim">novos</span>
+            <span class="dim">new</span>
             <span class="sep">·</span>
             <strong>{dashState.learning_total}</strong>
-            <span class="dim">aprendendo</span>
+            <span class="dim">learning</span>
           </p>
 
           <div class="hero-actions">
             {#if totalToReview > 0}
               <button type="button" class="btn-cta lg" onclick={() => startStudy()}>
-                Estudar agora · {totalToReview} cards
+                Study now · {totalToReview} cards
               </button>
             {:else}
               <button type="button" class="btn-outline lg" onclick={() => goto("/study/anki/decks")}>
-                Abrir decks
+                Open decks
               </button>
             {/if}
           </div>
@@ -148,9 +148,9 @@
         </div>
 
         <div class="streak-meta">
-          <span><strong>{dashState.streak.reviewed_today}</strong> hoje</span>
+          <span><strong>{dashState.streak.reviewed_today}</strong> today</span>
           <span class="sep">·</span>
-          <span><strong>{dashState.streak.longest}</strong> recorde</span>
+          <span><strong>{dashState.streak.longest}</strong> record</span>
         </div>
 
         <ul class="milestones">
@@ -167,8 +167,8 @@
     {#if decksWithDue.length > 0}
       <section class="surface-card decks-block">
         <header class="block-head">
-          <h2 class="section-title">Decks pendentes</h2>
-          <a class="link" href="/study/anki/decks">Ver todos →</a>
+          <h2 class="section-title">Pending decks</h2>
+          <a class="link" href="/study/anki/decks">View all →</a>
         </header>
 
         <ul class="deck-list">
@@ -180,7 +180,7 @@
                 </span>
                 <span class="deck-pills">
                   {#if d.due > 0}<span class="pill pill-info">{d.due} due</span>{/if}
-                  {#if d.new_count > 0}<span class="pill pill-success">{d.new_count} novos</span>{/if}
+                  {#if d.new_count > 0}<span class="pill pill-success">{d.new_count} new</span>{/if}
                   <span class="deck-total">{d.total}</span>
                 </span>
               </button>
@@ -190,10 +190,10 @@
       </section>
     {:else}
       <section class="surface-card empty-pane">
-        <h2 class="empty-title">Tudo zerado</h2>
-        <p class="empty-desc">Você revisou todos os cards de hoje. Volte amanhã ou crie novos.</p>
+        <h2 class="empty-title">All clear</h2>
+        <p class="empty-desc">You reviewed all of today's cards. Come back tomorrow or create new ones.</p>
         <button type="button" class="btn-cta" onclick={() => goto("/study/anki/decks")}>
-          Abrir decks
+          Open decks
         </button>
       </section>
     {/if}

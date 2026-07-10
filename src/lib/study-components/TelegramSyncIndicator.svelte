@@ -45,33 +45,33 @@
     busy = true;
     try {
       const r = await telegramSyncNow();
-      showToast("info", `${r.updated} canais atualizados`);
+      showToast("info", `${r.updated} channel${r.updated === 1 ? "" : "s"} updated`);
       await refresh();
     } catch (e: any) {
-      showToast("error", typeof e === "string" ? e : (e?.message ?? "Erro ao sincronizar"));
+      showToast("error", typeof e === "string" ? e : (e?.message ?? "Sync error"));
     } finally {
       busy = false;
     }
   }
 
   function ago(ts: number, current: number): string {
-    if (!ts) return "nunca";
+    if (!ts) return "never";
     const delta = Math.max(0, current - ts);
-    if (delta < 60) return "agora";
+    if (delta < 60) return "now";
     const min = Math.floor(delta / 60);
-    if (min < 60) return `há ${min} min`;
+    if (min < 60) return `${min} min ago`;
     const hr = Math.floor(min / 60);
-    if (hr < 24) return `há ${hr}h`;
-    return `há ${Math.floor(hr / 24)}d`;
+    if (hr < 24) return `${hr}h ago`;
+    return `${Math.floor(hr / 24)}d ago`;
   }
 
   let label = $derived(
     syncSnap?.is_syncing
-      ? "Sincronizando…"
+      ? "Syncing..."
       : syncSnap?.last_success_at
       ? `Sync ${ago(syncSnap.last_success_at, now)}`
       : syncSnap?.enabled
-      ? "Sync pendente"
+      ? "Sync pending"
       : "Sync off",
   );
 
@@ -95,9 +95,9 @@
   onclick={syncNow}
   disabled={busy}
   title={syncSnap?.enabled
-    ? `Sincronização automática a cada ${syncSnap.interval_min ?? 30} min — clique para forçar agora`
-    : "Sincronização desativada — clique para forçar agora"}
-  aria-label="Status de sincronização"
+    ? `Automatic sync every ${syncSnap.interval_min ?? 30} min - click to force sync now`
+    : "Sync disabled - click to force sync now"}
+  aria-label="Sync status"
 >
   <span class="status-dot {dotClass}"></span>
   <span class="sync-label">{label}</span>

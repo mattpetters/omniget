@@ -48,7 +48,7 @@
 
   function fmtDate(secs: number): string {
     if (!secs) return "—";
-    return new Date(secs * 1000).toLocaleDateString("pt-BR");
+    return new Date(secs * 1000).toLocaleDateString("en-US");
   }
 
   function statusOf(props: Record<string, unknown>): string {
@@ -178,7 +178,7 @@
             exprDraft = expr;
           }}
           disabled={!onEdit}
-        >{expr || "(vazio)"}</button>
+        >{expr || "(empty)"}</button>
       {/if}
       <span class="expr-label">{`}}`}</span>
     </div>
@@ -190,17 +190,17 @@
   </header>
 
   {#if qState.kind === "loading"}
-    <div class="db-qState">executando query…</div>
+    <div class="db-qState">running query…</div>
   {:else if qState.kind === "error"}
-    <div class="db-qState err">erro: {qState.message}</div>
+    <div class="db-qState err">error: {qState.message}</div>
   {:else if qState.kind === "ok"}
     {#if qState.rows.length === 0}
-      <div class="db-qState">sem resultados</div>
+      <div class="db-qState">no results</div>
     {:else}
       <table class="db-table">
         <thead>
           <tr>
-            <th>conteúdo</th>
+            <th>content</th>
             <th class="th-narrow">
               <button
                 type="button"
@@ -218,7 +218,7 @@
                 onclick={() =>
                   changeSort(sort === "updated-desc" ? "updated-asc" : "updated-desc")}
               >
-                atualizado
+                updated
                 {sort === "updated-desc" ? "↓" : sort === "updated-asc" ? "↑" : ""}
               </button>
             </th>
@@ -255,13 +255,13 @@
           class="page-btn"
           onclick={prevPage}
           disabled={qState.offset === 0}
-        >‹ anterior</button>
+        >‹ previous</button>
         <button
           type="button"
           class="page-btn"
           onclick={nextPage}
           disabled={!qState.has_more}
-        >próximo ›</button>
+        >next ›</button>
       </footer>
     {/if}
   {/if}

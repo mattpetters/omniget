@@ -148,7 +148,7 @@
     const labels: Record<string, string> = {
       "pomodoro-25": "Pomodoro 25",
       "deep-50": "Deep Work 50",
-      "stopwatch": "Cronômetro",
+      "stopwatch": "Stopwatch",
     };
     return labels[presetId] ?? presetId;
   }
@@ -308,7 +308,7 @@
   }
 
   async function actionCreatePage() {
-    const name = window.prompt("Nome da nova página:");
+    const name = window.prompt("New page name:");
     if (!name || !name.trim()) return;
     try {
       const r = await (
@@ -1084,7 +1084,7 @@
             ></div>
           </div>
           <span class="palette-hint"
-            >{xpState.level_progress_pct}% até L{xpState.level + 1} ·
+            >{xpState.level_progress_pct}% to L{xpState.level + 1} ·
             {xpState.xp_to_next} XP</span
           >
         </footer>

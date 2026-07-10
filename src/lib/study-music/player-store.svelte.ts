@@ -401,15 +401,15 @@ class MusicPlayerStore {
     });
     audio.addEventListener("error", () => {
       const err = audio.error;
-      let msg = "Erro ao carregar áudio";
+      let msg = "Error loading audio";
       let code: number | undefined;
       if (err) {
         code = err.code;
         const codeMap: Record<number, string> = {
-          1: "abortado",
-          2: "rede falhou",
-          3: "decodificação falhou",
-          4: "formato não suportado",
+          1: "aborted",
+          2: "network failed",
+          3: "decoding failed",
+          4: "format not supported",
         };
         const reason = codeMap[err.code] ?? `code ${err.code}`;
         msg = `${reason}${err.message ? ` (${err.message})` : ""}`;
@@ -889,7 +889,7 @@ class MusicPlayerStore {
     const track = this.currentTrack;
     if (!track) return null;
     const source: TrackSource = track.source ?? "local";
-    const title = (track.title ?? "").trim() || "Música";
+    const title = (track.title ?? "").trim() || "Music";
     const artist = (track.artist ?? "").trim();
     const album = (track.album ?? "").trim();
     const duration = Math.max(
@@ -937,7 +937,7 @@ class MusicPlayerStore {
           : source === "soundcloud"
             ? "SoundCloud"
             : source === "local"
-              ? "Biblioteca local"
+              ? "Local library"
               : null;
 
     return {
@@ -1469,7 +1469,7 @@ class MusicPlayerStore {
       .then((mod) =>
         mod.studyMusicHistoryAdd({
           source: source as "local" | "spotify" | "youtube" | "soundcloud",
-          title: track.title ?? "Música",
+          title: track.title ?? "Music",
           externalId: externalId ?? undefined,
           trackId: track.id,
           artist: track.artist ?? undefined,
@@ -1517,7 +1517,7 @@ class MusicPlayerStore {
     if (!this.soundcloudResolver) {
       this.setError(
         classifyPlayerError(
-          "soundcloud resolver não configurado",
+          "SoundCloud resolver is not configured",
           "soundcloud",
           track.id,
         ),
@@ -1548,7 +1548,7 @@ class MusicPlayerStore {
     const videoId = track.youtube_video_id;
     if (!videoId) {
       this.setError(
-        classifyPlayerError("video id ausente — track removed", "youtube", track.id),
+        classifyPlayerError("video ID missing — track removed", "youtube", track.id),
       );
       return;
     }
@@ -1715,7 +1715,7 @@ class MusicPlayerStore {
 
   private async playSpotify(track: MusicTrack) {
     if (!track.spotify_uri) {
-      this.setError(classifyPlayerError("track removed: spotify uri ausente", "spotify", track.id));
+      this.setError(classifyPlayerError("track removed: Spotify URI missing", "spotify", track.id));
       return;
     }
     const t0 = performance.now();

@@ -108,10 +108,10 @@
       showToast(
         "ok",
         r.updated === 0
-          ? "Tag renomeada"
+          ? "Tag renamed"
           : r.updated === 1
-            ? "Tag renomeada · 1 nota atualizada"
-            : `Tag renomeada · ${r.updated} notas atualizadas`,
+            ? "Tag renamed · 1 note updated"
+            : `Tag renamed · ${r.updated} notes updated`,
       );
       renameTarget = null;
       await load();
@@ -144,10 +144,10 @@
       showToast(
         "ok",
         r.updated === 0
-          ? "Tag movida"
+          ? "Tag moved"
           : r.updated === 1
-            ? "Tag movida · 1 nota atualizada"
-            : `Tag movida · ${r.updated} notas atualizadas`,
+            ? "Tag moved · 1 note updated"
+            : `Tag moved · ${r.updated} notes updated`,
       );
       reparentTarget = null;
       await load();
@@ -247,7 +247,7 @@
     </div>
   {:else if visibleTree.length === 0}
     <div class="empty">
-      <p>Nenhuma tag combina com "{filter}".</p>
+      <p>No tags match "{filter}".</p>
     </div>
   {:else}
     <ul class="tree">
@@ -266,7 +266,7 @@
           type="button"
           class="caret"
           aria-expanded={!node.collapsed}
-          aria-label={node.collapsed ? "Expandir" : "Recolher"}
+          aria-label={node.collapsed ? "Expand" : "Collapse"}
           onclick={() => toggleCollapse(node)}
         >
           <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -291,14 +291,14 @@
           class="btn ghost xs"
           onclick={() => askRename(node)}
         >
-          Renomear
+          Rename
         </button>
         <button
           type="button"
           class="btn ghost xs"
           onclick={() => askReparent(node)}
         >
-          Mover
+          Move
         </button>
       </div>
     </div>
@@ -329,9 +329,9 @@
       onclick={(e) => e.stopPropagation()}
       onkeydown={(e) => { if (e.key === "Escape") { e.stopPropagation(); renameTarget = null; } }}
     >
-      <h3 id="rename-title">Renomear tag</h3>
+      <h3 id="rename-title">Rename tag</h3>
       <p class="modal-hint">
-        Use <code>::</code> para hierarquia (ex: <code>livro::cap1</code>).
+        Use <code>::</code> for hierarchy (for example: <code>book::ch1</code>).
       </p>
       <input
         class="modal-input"
@@ -347,7 +347,7 @@
           onclick={() => (renameTarget = null)}
           disabled={renameBusy}
         >
-          Cancelar
+          Cancel
         </button>
         <button
           type="button"
@@ -355,7 +355,7 @@
           onclick={confirmRename}
           disabled={renameBusy || !renameNewValue.trim() || renameNewValue.trim() === renameTarget.full_name}
         >
-          {renameBusy ? "Renomeando…" : "Renomear"}
+          {renameBusy ? "Renaming..." : "Rename"}
         </button>
       </footer>
     </div>

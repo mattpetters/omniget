@@ -17,86 +17,86 @@
 
   const SECTIONS = $derived<Section[]>([
     {
-      title: "Edição estrutural",
+      title: "Structural editing",
       rows: [
-        { keys: ["Tab"], desc: "Indent (vira filho do bloco anterior)" },
-        { keys: ["Shift+Tab"], desc: "Outdent (sobe um nível)" },
-        { keys: ["Alt+↑"], desc: "Mover bloco pra cima" },
-        { keys: ["Alt+↓"], desc: "Mover bloco pra baixo" },
-        { keys: [`${meta}+Shift+K`], desc: "Excluir bloco (com confirmação)" },
-        { keys: [`${meta}+/`], desc: "Colapsar/expandir bloco" },
-        { keys: [`${meta}+D`], desc: "Duplicar bloco (com toda a subtree)" },
+        { keys: ["Tab"], desc: "Indent (becomes a child of the previous block)" },
+        { keys: ["Shift+Tab"], desc: "Outdent (move up one level)" },
+        { keys: ["Alt+↑"], desc: "Move block up" },
+        { keys: ["Alt+↓"], desc: "Move block down" },
+        { keys: [`${meta}+Shift+K`], desc: "Delete block (with confirmation)" },
+        { keys: [`${meta}+/`], desc: "Collapse/expand block" },
+        { keys: [`${meta}+D`], desc: "Duplicate block (with the whole subtree)" },
       ],
     },
     {
       title: "Status TODO",
       rows: [
-        { keys: [`${meta}+Enter`], desc: "Cicla status (TODO → DOING → DONE → vazio)" },
+        { keys: [`${meta}+Enter`], desc: "Cycle status (TODO → DOING → DONE → empty)" },
       ],
     },
     {
-      title: "Formatação inline",
+      title: "Inline formatting",
       rows: [
-        { keys: [`${meta}+B`], desc: "Negrito (`**texto**`)" },
-        { keys: [`${meta}+I`], desc: "Itálico (`_texto_`)" },
-        { keys: [`${meta}+Shift+S`], desc: "Tachado (`~~texto~~`)" },
-        { keys: [`${meta}+Shift+C`], desc: "Code inline (`` `texto` ``)" },
-        { keys: [`${meta}+Shift+.`], desc: "Blockquote (`> ` na linha)" },
+        { keys: [`${meta}+B`], desc: "Bold (`**text**`)" },
+        { keys: [`${meta}+I`], desc: "Italic (`_text_`)" },
+        { keys: [`${meta}+Shift+S`], desc: "Strikethrough (`~~text~~`)" },
+        { keys: [`${meta}+Shift+C`], desc: "Inline code (`` `text` ``)" },
+        { keys: [`${meta}+Shift+.`], desc: "Blockquote (`> ` on the line)" },
       ],
     },
     {
-      title: "Inserção via slash menu",
+      title: "Insert via slash menu",
       rows: [
-        { keys: ["/"], desc: "Abre slash menu (15 comandos)" },
-        { keys: ["/todo /doing /done /later /now /waiting /canceled"], desc: "Define status do bloco" },
-        { keys: ["/today"], desc: "Insere data ISO de hoje" },
-        { keys: ["/date"], desc: "Insere link [[YYYY-MM-DD]] do journal de hoje" },
-        { keys: ["/page /tag /block"], desc: "Inicia [[, # ou ((" },
-        { keys: ["/code"], desc: "Insere bloco de código ``` ```" },
-        { keys: ["/query"], desc: "Insere {{query (and (todo TODO))}} skeleton" },
-        { keys: ["/embed page", "/embed block"], desc: "Insere {{embed [[…]]}} ou {{embed ((…))}}" },
+        { keys: ["/"], desc: "Open slash menu (15 commands)" },
+        { keys: ["/todo /doing /done /later /now /waiting /canceled"], desc: "Set block status" },
+        { keys: ["/today"], desc: "Insert today's ISO date" },
+        { keys: ["/date"], desc: "Insert today's journal link [[YYYY-MM-DD]]" },
+        { keys: ["/page /tag /block"], desc: "Start [[, #, or ((" },
+        { keys: ["/code"], desc: "Insert code block ``` ```" },
+        { keys: ["/query"], desc: "Insert {{query (and (todo TODO))}} skeleton" },
+        { keys: ["/embed page", "/embed block"], desc: "Insert {{embed [[…]]}} or {{embed ((…))}}" },
       ],
     },
     {
       title: "Autocomplete inline",
       rows: [
-        { keys: ["[["], desc: "Autocomplete de páginas existentes" },
-        { keys: ["#"], desc: "Autocomplete de tags" },
-        { keys: ["(("], desc: "Autocomplete de blocos recentes (uuid)" },
+        { keys: ["[["], desc: "Autocomplete existing pages" },
+        { keys: ["#"], desc: "Autocomplete tags" },
+        { keys: ["(("], desc: "Autocomplete recent blocks (uuid)" },
       ],
     },
     {
-      title: "Histórico",
+      title: "History",
       rows: [
-        { keys: [`${meta}+Z`], desc: "Desfaz última edição de conteúdo do bloco" },
-        { keys: [`${meta}+Alt+Z`], desc: "Desfaz última operação estrutural (move/delete/insert)" },
-        { keys: [`${meta}+Shift+Z`, `${meta}+Y`], desc: "Refaz última operação estrutural" },
+        { keys: [`${meta}+Z`], desc: "Undo the last block content edit" },
+        { keys: [`${meta}+Alt+Z`], desc: "Undo the last structural operation (move/delete/insert)" },
+        { keys: [`${meta}+Shift+Z`, `${meta}+Y`], desc: "Redo the last structural operation" },
       ],
     },
     {
-      title: "Saída",
+      title: "Exit",
       rows: [
-        { keys: ["Esc"], desc: "Fecha autocomplete / cancela seleção" },
+        { keys: ["Esc"], desc: "Close autocomplete / cancel selection" },
       ],
     },
     {
-      title: "Sintaxe Markdown reconhecida no preview",
+      title: "Markdown syntax recognized in preview",
       rows: [
-        { keys: ["`> [!note]` `[!warn]` `[!info]` `[!success]` `[!tip]`"], desc: "Callout colorido abaixo do bloco" },
-        { keys: ["` ```lang `\\n`código`\\n` ``` `"], desc: "Code block syntax-highlighted (preview)" },
-        { keys: ["`$math$` ou `$$display$$`"], desc: "LaTeX renderizado via KaTeX (preview)" },
-        { keys: ["`| col1 | col2 |`\\n`|---|---|`\\n`|...|...|`"], desc: "Tabela markdown renderizada abaixo" },
-        { keys: ["`{{query (...)}}` `:sort X :limit N :offset M`"], desc: "Query inline com tabela ao vivo + paginação" },
+        { keys: ["`> [!note]` `[!warn]` `[!info]` `[!success]` `[!tip]`"], desc: "Colored callout below the block" },
+        { keys: ["` ```lang `\\n`code`\\n` ``` `"], desc: "Syntax-highlighted code block (preview)" },
+        { keys: ["`$math$` or `$$display$$`"], desc: "LaTeX rendered via KaTeX (preview)" },
+        { keys: ["`| col1 | col2 |`\\n`|---|---|`\\n`|...|...|`"], desc: "Markdown table rendered below" },
+        { keys: ["`{{query (...)}}` `:sort X :limit N :offset M`"], desc: "Inline query with live table and pagination" },
       ],
     },
     {
-      title: "Sintaxe de busca",
+      title: "Search syntax",
       rows: [
-        { keys: ["`tag:project`"], desc: "Filtra blocos com link [[project]] ou #project" },
-        { keys: ["`page:Daily`"], desc: "Filtra blocos da página Daily" },
-        { keys: ["`status:DOING`"], desc: "Filtra por status property" },
-        { keys: ["`before:2026-05-01`", "`after:2026-04-01`"], desc: "Janela de updated_at" },
-        { keys: ["`tag:\"two words\"`"], desc: "Aspas pra valor com espaço" },
+        { keys: ["`tag:project`"], desc: "Filter blocks with link [[project]] or #project" },
+        { keys: ["`page:Daily`"], desc: "Filter blocks from the Daily page" },
+        { keys: ["`status:DOING`"], desc: "Filter by status property" },
+        { keys: ["`before:2026-05-01`", "`after:2026-04-01`"], desc: "updated_at window" },
+        { keys: ["`tag:\"two words\"`"], desc: "Use quotes for values with spaces" },
       ],
     },
   ]);
@@ -104,13 +104,13 @@
 
 <section class="shortcuts-page">
   <PageHero
-    title="Atalhos do editor de notas"
-    subtitle="Detectado: {isMac ? 'Mac' : 'Windows/Linux'} ({meta} = {meta})"
+    title="Notes editor shortcuts"
+    subtitle="Detected: {isMac ? 'Mac' : 'Windows/Linux'} ({meta} = {meta})"
   />
 
   <p class="muted small">
-    Esta página é estática — todos os atalhos listados estão wired no editor
-    em <code>/study/notes</code>. Se algo não funcionar, é bug.
+    This page is static. Every shortcut listed here is wired in the editor at
+    <code>/study/notes</code>. If something does not work, it is a bug.
   </p>
 
   {#each SECTIONS as section (section.title)}
@@ -122,7 +122,7 @@
             <tr>
               <td class="keys-cell">
                 {#each row.keys as k, i (i)}
-                  {#if i > 0} ou {/if}
+                  {#if i > 0} or {/if}
                   {#each k.split("+") as part, j (j)}
                     {#if j > 0}<span class="plus">+</span>{/if}
                     <kbd>{part}</kbd>

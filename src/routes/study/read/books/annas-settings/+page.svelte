@@ -136,10 +136,10 @@
       );
       okMsg =
         r.removed === 0
-          ? "Cache já estava vazio"
+          ? "Cache was already empty"
           : r.removed === 1
-            ? "1 entrada de cache removida"
-            : `${r.removed} entradas de cache removidas`;
+            ? "1 cache entry removed"
+            : `${r.removed} cache entries removed`;
       setTimeout(() => (okMsg = ""), 3000);
     } catch (e) {
       errorMsg = e instanceof Error ? e.message : String(e);
@@ -173,8 +173,8 @@
       });
       await loadBrowserStatus();
       okMsg = next
-        ? "Browser auxiliar habilitado"
-        : "Browser auxiliar desabilitado";
+        ? "Helper browser enabled"
+        : "Helper browser disabled";
       setTimeout(() => (okMsg = ""), 3000);
     } catch (e) {
       errorMsg = e instanceof Error ? e.message : String(e);
@@ -293,10 +293,10 @@
     </section>
 
     <section class="block">
-      <h3>Cache de busca</h3>
+      <h3>Search cache</h3>
       <p class="muted small">
-        Resultados são guardados em memória pra não bombardear os mirrors.
-        Limpe se você está vendo dados desatualizados.
+        Results are kept in memory to avoid hammering mirrors.
+        Clear this if you are seeing stale data.
       </p>
       <button
         type="button"
@@ -304,15 +304,15 @@
         onclick={clearCache}
         disabled={clearingCache}
       >
-        {clearingCache ? "Limpando…" : "Limpar cache"}
+        {clearingCache ? "Clearing..." : "Clear cache"}
       </button>
     </section>
 
     <section class="block">
-      <h3>Browser auxiliar</h3>
+      <h3>Helper browser</h3>
       <p class="muted small">
-        Alguns mirrors exigem JavaScript pra retornar HTML. Habilite o browser
-        embutido pra esses casos. Pode ficar mais lento.
+        Some mirrors require JavaScript to return HTML. Enable the embedded
+        browser for those cases. It may be slower.
       </p>
       {#if browserStatus}
         <div class="browser-status">
@@ -323,9 +323,9 @@
             aria-hidden="true"
           ></span>
           <span>
-            {browserStatus.enabled ? "Habilitado" : "Desabilitado"}
+            {browserStatus.enabled ? "Enabled" : "Disabled"}
             {#if browserStatus.available === false}
-              · não detectado no sistema
+              · not detected on this system
             {/if}
           </span>
         </div>
@@ -337,10 +337,10 @@
         disabled={browserBusy}
       >
         {browserBusy
-          ? "Aplicando…"
+          ? "Applying..."
           : browserStatus?.enabled
-            ? "Desabilitar"
-            : "Habilitar"}
+            ? "Disable"
+            : "Enable"}
       </button>
     </section>
 

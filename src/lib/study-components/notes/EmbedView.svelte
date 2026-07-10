@@ -108,7 +108,7 @@
       <div class="embed-block">
         <p class="embed-content">{snippetOf(data.node.content, 240)}</p>
         {#if data.truncated}
-          <p class="embed-note">… (subtree maior, truncado)</p>
+          <p class="embed-note">… (larger subtree, truncated)</p>
         {/if}
       </div>
     {:else if data.kind === "page"}
@@ -129,7 +129,7 @@
           {/each}
         </ul>
         {#if data.truncated}
-          <p class="embed-note">… (mais blocos truncados)</p>
+          <p class="embed-note">… (more blocks truncated)</p>
         {/if}
       </div>
     {/if}

@@ -91,7 +91,7 @@
       await Promise.resolve();
       if (token !== renderToken) return;
       if (!svgHost) {
-        renderState = { kind: "error", message: "container ausente" };
+        renderState = { kind: "error", message: "container missing" };
         return;
       }
       instance.drawSVG(svgHost, readThemeOptions());
@@ -155,7 +155,7 @@
       type="button"
       class="flowchart-toggle"
       onclick={toggleMode}
-      title={mode === "render" ? "Editar source" : "Voltar pro diagrama"}
+      title={mode === "render" ? "Edit source" : "Back to diagram"}
     >
       {mode === "render" ? "‹/›" : "▶"}
     </button>
@@ -172,14 +172,14 @@
       aria-label={$t("study.notes_flowchartview.source_aria") as string}
     ></textarea>
   {:else if renderState.kind === "idle"}
-    <p class="flowchart-state">Sem source. Clique em ‹/› para editar.</p>
+    <p class="flowchart-state">No source. Click ‹/› to edit.</p>
   {:else if renderState.kind === "loading"}
-    <p class="flowchart-state">renderizando…</p>
+    <p class="flowchart-state">rendering…</p>
   {:else if renderState.kind === "error"}
     <div class="flowchart-error">
-      <p class="flowchart-error-msg">erro: {renderState.message}</p>
+      <p class="flowchart-error-msg">error: {renderState.message}</p>
       <button type="button" class="flowchart-edit-btn" onclick={toggleMode}
-        >Editar source</button>
+        >Edit source</button>
     </div>
   {/if}
 

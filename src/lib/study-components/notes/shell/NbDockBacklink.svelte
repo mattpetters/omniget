@@ -104,12 +104,12 @@
   </div>
   <div class="body">
     {#if pageId == null}
-      <p class="empty">Sem página ativa.</p>
+      <p class="empty">No active page.</p>
     {:else if loading}
-      <p class="empty">Carregando…</p>
+      <p class="empty">Loading…</p>
     {:else if tab === "linked"}
       {#if linked.length === 0}
-        <p class="empty">Nenhuma referência direta.</p>
+        <p class="empty">No direct references.</p>
       {:else}
         <ul class="refs">
           {#each linked as r (r.block_id)}
@@ -129,7 +129,7 @@
       {/if}
     {:else if tab === "unlinked"}
       {#if unlinked.length === 0}
-        <p class="empty">Nenhuma menção sem link.</p>
+        <p class="empty">No unlinked mentions.</p>
       {:else}
         <ul class="refs">
           {#each unlinked as r (r.block_id)}
@@ -149,13 +149,13 @@
       {/if}
     {:else if tab === "props"}
       {#if props.length === 0}
-        <p class="empty">Nenhuma propriedade nesta página.</p>
+        <p class="empty">No properties on this page.</p>
       {:else}
         <ul class="props">
           {#each props as p (p.key)}
             <li class="prop">
               <span class="key">{p.key}</span>
-              <span class="meta">{p.block_count} blocos · {p.distinct_values} valores</span>
+              <span class="meta">{p.block_count} blocks · {p.distinct_values} values</span>
             </li>
           {/each}
         </ul>

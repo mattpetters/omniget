@@ -18,7 +18,7 @@
     eyebrow,
     isLoading = false,
     seeMoreHref,
-    seeMoreLabel = "Ver mais",
+    seeMoreLabel = "View more",
     children,
     skeleton,
     empty,
@@ -48,7 +48,7 @@
       <button
         type="button"
         class="nav-btn"
-        aria-label="Rolar para esquerda"
+        aria-label="Scroll left"
         onclick={() => scrollBy(-1)}
         disabled={isLoading || isEmpty}
       >
@@ -57,7 +57,7 @@
       <button
         type="button"
         class="nav-btn"
-        aria-label="Rolar para direita"
+        aria-label="Scroll right"
         onclick={() => scrollBy(1)}
         disabled={isLoading || isEmpty}
       >
@@ -84,7 +84,7 @@
       {#if empty}
         {@render empty()}
       {:else}
-        <div class="empty">Nenhum item</div>
+        <div class="empty">No items</div>
       {/if}
     {:else}
       {@render children?.()}

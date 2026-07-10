@@ -106,7 +106,7 @@
         "study:anki:deckconfig:create",
         { name },
       );
-      showToast("ok", `Preset "${name}" criado`);
+      showToast("ok", `Preset "${name}" created`);
       createName = "";
       await load();
     } catch (e) {
@@ -155,7 +155,7 @@
       await pluginInvoke("study", "study:anki:deckconfig:update", {
         config: updated,
       });
-      showToast("ok", "Preset atualizado");
+      showToast("ok", "Preset updated");
       editing = null;
       editForm = null;
       await load();
@@ -179,7 +179,7 @@
       await pluginInvoke("study", "study:anki:deckconfig:delete", {
         id: deleteTarget.id,
       });
-      showToast("ok", `Preset "${deleteTarget.name}" removido`);
+      showToast("ok", `Preset "${deleteTarget.name}" removed`);
       confirmDeleteOpen = false;
       deleteTarget = null;
       await load();

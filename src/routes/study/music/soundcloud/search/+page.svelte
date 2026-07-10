@@ -138,7 +138,7 @@
         outputDir: dir,
         quality: "progressive",
       });
-      showToast("success", `Pronto — salvo na pasta ${folderName(dir)}`);
+      showToast("success", `Done - saved to the ${folderName(dir)} folder`);
     } catch (e) {
       downloadStore.markJobError(optId, e instanceof Error ? e.message : String(e));
     }
@@ -171,7 +171,7 @@
       bind:value={query}
       oninput={onInput}
       type="search"
-      placeholder="Buscar no SoundCloud…"
+      placeholder="Search SoundCloud..."
       autocomplete="off"
     />
     {#if loading}<span class="spinner"></span>{/if}
@@ -190,9 +190,9 @@
 
   {#if tracks.length || playlists.length || users.length}
     <div class="tabs" role="tablist">
-      <button type="button" class="tab" class:on={tab === "tracks"} onclick={() => (tab = "tracks")} role="tab" aria-selected={tab === "tracks"}>Faixas {tracks.length > 0 ? `(${tracks.length})` : ""}</button>
+      <button type="button" class="tab" class:on={tab === "tracks"} onclick={() => (tab = "tracks")} role="tab" aria-selected={tab === "tracks"}>Tracks {tracks.length > 0 ? `(${tracks.length})` : ""}</button>
       <button type="button" class="tab" class:on={tab === "playlists"} onclick={() => (tab = "playlists")} role="tab" aria-selected={tab === "playlists"}>Playlists {playlists.length > 0 ? `(${playlists.length})` : ""}</button>
-      <button type="button" class="tab" class:on={tab === "users"} onclick={() => (tab = "users")} role="tab" aria-selected={tab === "users"}>Artistas {users.length > 0 ? `(${users.length})` : ""}</button>
+      <button type="button" class="tab" class:on={tab === "users"} onclick={() => (tab = "users")} role="tab" aria-selected={tab === "users"}>Artists {users.length > 0 ? `(${users.length})` : ""}</button>
     </div>
   {/if}
 
@@ -220,7 +220,7 @@
             {#if p.artwork_url}<img src={soundcloudStore.pickArtwork(p.artwork_url)} alt="" loading="lazy" />{:else}<div class="cover-fb" style:background={colorFromString(p.title)}></div>{/if}
           </div>
           <h3 class="ct">{p.title}</h3>
-          <p class="cs">{p.track_count} faixas · {p.user.username}</p>
+          <p class="cs">{p.track_count} track{p.track_count === 1 ? "" : "s"} · {p.user.username}</p>
         </a>
       {/each}
     </div>
@@ -232,12 +232,12 @@
             {#if u.avatar_url}<img src={soundcloudStore.pickArtwork(u.avatar_url)} alt="" loading="lazy" />{:else}<div class="cover-fb round" style:background={colorFromString(u.username)}>{u.username.slice(0,1).toUpperCase()}</div>{/if}
           </div>
           <h3 class="ct center">{u.username}</h3>
-          {#if u.followers_count}<p class="cs center">{u.followers_count.toLocaleString("pt-BR")} seguidores</p>{/if}
+          {#if u.followers_count}<p class="cs center">{u.followers_count.toLocaleString("en-US")} follower{u.followers_count === 1 ? "" : "s"}</p>{/if}
         </a>
       {/each}
     </div>
   {:else if query.trim() && !loading}
-    <p class="muted">Nada encontrado para "{query}"</p>
+    <p class="muted">No results found for "{query}"</p>
   {/if}
 </section>
 

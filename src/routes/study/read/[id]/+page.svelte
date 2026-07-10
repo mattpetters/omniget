@@ -325,9 +325,9 @@
   ];
 
   const DRAWERS = [
-    { key: "lighten", label: "marca-texto" },
-    { key: "underscore", label: "sublinhar" },
-    { key: "strikeout", label: "tachar" },
+    { key: "lighten", label: "highlight" },
+    { key: "underscore", label: "underline" },
+    { key: "strikeout", label: "strikethrough" },
     { key: "invert", label: "invert" },
   ];
 
@@ -335,7 +335,7 @@
     { value: "outline", label: $t("study.read.panel_outline") },
     { value: "bookmarks", label: $t("study.read.panel_bookmarks") },
     { value: "highlights", label: $t("study.read.panel_highlights") },
-    { value: "notes", label: "Notas" },
+    { value: "notes", label: "Notes" },
     { value: "search", label: $t("study.read.panel_search") },
   ]);
 
@@ -698,7 +698,7 @@
 
   async function createOrphanNote() {
     if (!textRects) return;
-    const note = window.prompt("Nota da página:", "");
+    const note = window.prompt("Page note:", "");
     if (note === null) return;
     const trimmed = note.trim();
     if (trimmed === "") return;
@@ -990,7 +990,7 @@
     if (!editingHighlight || !book) return;
     const text = (editingHighlight.text ?? "").trim();
     if (!text) {
-      flashcardToast = "Highlight sem texto";
+      flashcardToast = "Highlight has no text";
       setTimeout(() => (flashcardToast = ""), 2400);
       return;
     }
@@ -1020,8 +1020,8 @@
       const front = text.length > 500 ? text.slice(0, 497) + "…" : text;
       const back =
         note.length > 0
-          ? `${note}\n\nDe: ${book.title ?? "livro"}`
-          : `De: ${book.title ?? "livro"}`;
+          ? `${note}\n\nFrom: ${book.title ?? "book"}`
+          : `From: ${book.title ?? "book"}`;
       await pluginInvoke("study", "study:anki:notes:create", {
         notetypeId: basic.id,
         deckId: 1,
@@ -1038,11 +1038,11 @@
         book_id: book.id,
         annot_id: editingHighlight.id,
       });
-      flashcardToast = "Flashcard criado no Anki";
+      flashcardToast = "Flashcard created in Anki";
       setTimeout(() => (flashcardToast = ""), 2800);
       closeHighlightEditor();
     } catch (e) {
-      flashcardToast = `Falhou: ${e instanceof Error ? e.message : String(e)}`;
+      flashcardToast = `Failed: ${e instanceof Error ? e.message : String(e)}`;
       setTimeout(() => (flashcardToast = ""), 4000);
     } finally {
       creatingFlashcard = false;
@@ -1425,10 +1425,10 @@
       format === "json" ? "json" : format === "pdf_burn_in" ? "pdf" : "md";
     const suffix =
       format === "md_v2"
-        ? " — anotações.v2"
+        ? " - annotations.v2"
         : format === "pdf_burn_in"
-          ? " — anotado"
-          : " — anotações";
+          ? " - annotated"
+          : " - annotations";
     const filterName =
       format === "json"
         ? "JSON"
@@ -1592,11 +1592,11 @@
     const total = meta.page_count;
     const author = book.author?.trim();
     const stateText = author
-      ? `${author} · pág. ${currentPage}/${total}`
-      : `pág. ${currentPage}/${total}`;
+      ? `${author} · p. ${currentPage}/${total}`
+      : `p. ${currentPage}/${total}`;
     void rpcSetSource({
       source: "reading",
-      details: book.title ?? "Lendo",
+      details: book.title ?? "Reading",
       state: stateText,
       duration: 0,
       position: 0,
@@ -1755,7 +1755,7 @@
       <button
         type="button"
         class="title-btn"
-        title="Editar metadados"
+        title="Edit metadata"
         onclick={openMetadataEditor}
       >
         <h1 class="title">{book.title ?? book.file_path.split(/[\\/]/).pop()}</h1>
@@ -2056,8 +2056,8 @@
           {:else if sidebarTab === "notes"}
             {#if annotationsWithNotes.length === 0}
               <p class="muted small">
-                Nenhuma nota ainda. Selecione um trecho e tecle N pra anexar
-                uma nota, ou tecle N sem seleção pra criar uma nota solta.
+                No notes yet. Select a passage and press N to attach a note,
+                or press N without a selection to create a standalone note.
               </p>
             {:else}
               <ul class="outline-tree">
@@ -2123,7 +2123,7 @@
                         class="hit-btn"
                         onclick={() => jumpTo(hit.chapter_index + 1)}
                       >
-                        <span class="hit-page mono">cap {hit.chapter_index + 1}</span>
+                      <span class="hit-page mono">ch {hit.chapter_index + 1}</span>
                         <span class="hit-snippet">{hit.snippet}</span>
                       </button>
                     </li>
@@ -2213,7 +2213,7 @@
                       data-drawer={h.drawer ?? "lighten"}
                       style:left="{s.left}px" style:top="{s.top}px" style:width="{s.width}px" style:height="{s.height}px" style:--hl-color="{colorCss(h.color)}"
                       onclick={(e) => openHighlightEditor(h, e)}
-                      title={h.note ? `nota: ${h.note}` : "editar"}
+                      title={h.note ? `note: ${h.note}` : "edit"}
                     >
                       {#if h.note}
                         <span class="hl-note-pin" aria-hidden="true">●</span>
@@ -2306,7 +2306,7 @@
                 class="hl-edit-popup"
                 role="dialog"
                 tabindex="-1"
-                aria-label="Editar highlight"
+                aria-label="Edit highlight"
                 style:left="{editPopupPos.x}px" style:top="{editPopupPos.y}px"
                 onmousedown={(e) => e.stopPropagation()}
                 onkeydown={onEditorKey}
@@ -2317,7 +2317,7 @@
                     type="button"
                     class="ep-close"
                     onclick={closeHighlightEditor}
-                    aria-label="Fechar"
+                    aria-label="Close"
                   >×</button>
                 </header>
 
@@ -2326,7 +2326,7 @@
                 {/if}
 
                 <div class="ep-section">
-                  <span class="ep-label">Cor</span>
+                  <span class="ep-label">Color</span>
                   <div class="ep-colors">
                     {#each COLOR_PALETTE as c (c.key)}
                       <button
@@ -2342,7 +2342,7 @@
                 </div>
 
                 <div class="ep-section">
-                  <span class="ep-label">Estilo</span>
+                  <span class="ep-label">Style</span>
                   <div class="ep-drawers">
                     {#each DRAWERS as d (d.key)}
                       <button
@@ -2358,11 +2358,11 @@
                 </div>
 
                 <div class="ep-section">
-                  <label class="ep-label" for="ep-note">Nota</label>
+                  <label class="ep-label" for="ep-note">Note</label>
                   <textarea
                     id="ep-note"
                     class="ep-note"
-                    placeholder="adicionar nota…"
+                    placeholder="add note..."
                     bind:value={editingNote}
                     onblur={saveNote}
                   ></textarea>
@@ -2378,7 +2378,7 @@
                     onclick={sendHighlightToNotes}
                     disabled={sendingToNotes}
                   >
-                    {sendingToNotes ? "Enviando…" : "→ Notas"}
+                    {sendingToNotes ? "Sending..." : "→ Notes"}
                   </button>
                   <button
                     type="button"
@@ -2386,14 +2386,14 @@
                     onclick={createFlashcardFromHighlight}
                     disabled={creatingFlashcard}
                   >
-                    {creatingFlashcard ? "Criando…" : "→ Flashcard"}
+                    {creatingFlashcard ? "Creating..." : "→ Flashcard"}
                   </button>
                   <button
                     type="button"
                     class="ep-btn danger"
                     onclick={deleteFromEditor}
                   >
-                    Excluir
+                    Delete
                   </button>
                 </footer>
               </div>
@@ -2426,34 +2426,33 @@
     }}
   >
     <div class="meta-modal" role="dialog" aria-modal="true" aria-labelledby="meta-title">
-      <h3 id="meta-title">Editar metadados</h3>
+      <h3 id="meta-title">Edit metadata</h3>
       <p class="meta-hint">
-        Atualiza apenas o registro local da biblioteca. O arquivo no disco
-        não é modificado.
+        Updates only the local library record. The file on disk is not modified.
       </p>
 
       <label class="meta-field">
-        <span>Título</span>
+        <span>Title</span>
         <input
           type="text"
           bind:value={metadataDraft.title}
           disabled={savingMetadata}
-          placeholder="(sem título)"
+          placeholder="(untitled)"
         />
       </label>
 
       <label class="meta-field">
-        <span>Autor</span>
+        <span>Author</span>
         <input
           type="text"
           bind:value={metadataDraft.author}
           disabled={savingMetadata}
-          placeholder="(desconhecido)"
+          placeholder="(unknown)"
         />
       </label>
 
       <label class="meta-field">
-        <span>Editora</span>
+        <span>Publisher</span>
         <input
           type="text"
           bind:value={metadataDraft.publisher}
@@ -2463,12 +2462,12 @@
       </label>
 
       <label class="meta-field">
-        <span>Idioma</span>
+        <span>Language</span>
         <input
           type="text"
           bind:value={metadataDraft.language}
           disabled={savingMetadata}
-          placeholder="ex.: pt, en, fr"
+          placeholder="ex: pt, en, fr"
         />
       </label>
 
@@ -2483,7 +2482,7 @@
           onclick={() => (metadataOpen = false)}
           disabled={savingMetadata}
         >
-          Cancelar
+          Cancel
         </button>
         <button
           type="button"
@@ -2491,7 +2490,7 @@
           onclick={saveMetadata}
           disabled={savingMetadata}
         >
-          {savingMetadata ? "Salvando…" : "Salvar"}
+          {savingMetadata ? "Saving..." : "Save"}
         </button>
       </footer>
     </div>

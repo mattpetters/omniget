@@ -114,7 +114,7 @@
       translateSource = { ...translateSource, [p.queue_id]: p.language };
       transcribeMessages = {
         ...transcribeMessages,
-        [p.queue_id]: `${p.segment_count} segmentos · ${p.elapsed_s.toFixed(1)}s · idioma: ${p.language} → ${p.srt_path}`,
+        [p.queue_id]: `${p.segment_count} segments · ${p.elapsed_s.toFixed(1)}s · language: ${p.language} -> ${p.srt_path}`,
       };
     });
   }
@@ -148,7 +148,7 @@
       translateStates = { ...translateStates, [clip.queue_id]: "done" };
       translateMessages = {
         ...translateMessages,
-        [clip.queue_id]: `${res.block_count} blocos em ${res.elapsed_s.toFixed(1)}s → ${res.output_path}`,
+        [clip.queue_id]: `${res.block_count} blocks in ${res.elapsed_s.toFixed(1)}s → ${res.output_path}`,
       };
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);

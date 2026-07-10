@@ -77,7 +77,7 @@
       const svg = lib.convert(trimmed);
       if (token !== renderToken) return;
       if (!host) {
-        renderState = { kind: "error", message: "container ausente" };
+        renderState = { kind: "error", message: "container missing" };
         return;
       }
       host.innerHTML = svg;
@@ -138,14 +138,14 @@
       if (!resp.ok) {
         renderState = {
           kind: "error",
-          message: `plantuml.com respondeu ${resp.status}`,
+          message: `plantuml.com responded with ${resp.status}`,
         };
         return;
       }
       const svg = await resp.text();
       if (token !== renderToken) return;
       if (!host) {
-        renderState = { kind: "error", message: "container ausente" };
+        renderState = { kind: "error", message: "container missing" };
         return;
       }
       host.innerHTML = svg;
@@ -205,13 +205,13 @@
     <span class="puml-icon" aria-hidden="true">⚙</span>
     <span class="puml-label">plantuml</span>
     {#if renderState.kind === "remote-rendered"}
-      <span class="puml-remote-badge" title="renderizado via plantuml.com">via plantuml.com</span>
+      <span class="puml-remote-badge" title="rendered via plantuml.com">via plantuml.com</span>
     {/if}
     <button
       type="button"
       class="puml-toggle"
       onclick={toggleMode}
-      title={mode === "render" ? "Editar source" : "Voltar pro diagrama"}
+      title={mode === "render" ? "Edit source" : "Back to diagram"}
     >
       {mode === "render" ? "‹/›" : "▶"}
     </button>

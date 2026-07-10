@@ -41,27 +41,27 @@
     {
       kind: "daily-journal",
       label: "Daily journal",
-      description: "Foco do dia, tarefas, notas, reflexão (com placeholders).",
+      description: "Daily focus, tasks, notes, and reflection (with placeholders).",
     },
     {
       kind: "lesson-notes",
       label: "Lesson notes",
-      description: "Estrutura para anotações de aula com objetivos e dúvidas.",
+      description: "A structure for lesson notes with goals and questions.",
     },
     {
       kind: "book-highlights",
       label: "Book highlights",
-      description: "Frontmatter com title/author + seções de highlights.",
+      description: "Frontmatter with title/author plus highlight sections.",
     },
     {
       kind: "weekly-review",
       label: "Weekly review",
-      description: "Conquistas, bloqueios, aprendizados, foco da próxima semana + query de tasks pendentes.",
+      description: "Wins, blockers, lessons learned, next week's focus, and a pending tasks query.",
     },
     {
       kind: "concept-page",
       label: "Concept page",
-      description: "Definição, por que importa, exemplos, links relacionados, fonte.",
+      description: "Definition, why it matters, examples, related links, and source.",
     },
   ];
 
@@ -186,7 +186,7 @@
 
   async function applyNow() {
     if (!applyTargetPageId) {
-      showToast("err", "Escolha a página alvo");
+      showToast("err", "Choose a target page");
       return;
     }
     applying = true;
@@ -213,7 +213,7 @@
         args,
       );
       applyOpen = false;
-      showToast("ok", `${r.blocks_created} blocos adicionados`);
+      showToast("ok", `${r.blocks_created} blocks added`);
       goto(`/study/notes?page=${encodeURIComponent(targetPageName())}`);
     } catch (e) {
       showToast("err", e instanceof Error ? e.message : String(e));
@@ -247,7 +247,7 @@
       });
       markPageOpen = false;
       await loadAll();
-      showToast("ok", "Página marcada como template");
+      showToast("ok", "Page marked as template");
     } catch (e) {
       showToast("err", e instanceof Error ? e.message : String(e));
     }
@@ -264,7 +264,7 @@
       selected = null;
       selectedPreview = [];
       await loadAll();
-      showToast("ok", "Página desmarcada como template");
+      showToast("ok", "Page unmarked as template");
     } catch (e) {
       showToast("err", e instanceof Error ? e.message : String(e));
     }
@@ -291,7 +291,7 @@
 <div class="tpl-shell">
   <aside class="left">
     <header class="left-head">
-      <a href="/study/notes" class="back">← Notas</a>
+      <a href="/study/notes" class="back">← Notes</a>
       <h2 class="page-title">Templates</h2>
       <button
         class="btn ghost sm"
@@ -300,7 +300,7 @@
           markPageOpen = true;
         }}
       >
-        + Marcar página
+        + Mark page
       </button>
     </header>
 
@@ -324,7 +324,7 @@
                 class="btn primary sm"
                 onclick={() => openApplyForBuiltin(b.kind)}
               >
-                Aplicar
+                Apply
               </button>
             </article>
           </li>
@@ -333,11 +333,11 @@
     </section>
 
     <section>
-      <h3>Suas páginas marcadas</h3>
+      <h3>Your marked pages</h3>
       {#if templates.length === 0}
         <p class="empty">
-          Nenhuma página marcada como template. Marque uma página existente para
-          reusá-la em outras páginas.
+          No pages are marked as templates. Mark an existing page to reuse it
+          on other pages.
         </p>
       {:else}
         <ul class="t-list">
@@ -350,7 +350,7 @@
               >
                 <header>
                   <strong>{t.title ?? t.name}</strong>
-                  <span class="meta">{t.block_count} blocos</span>
+                  <span class="meta">{t.block_count} blocks</span>
                 </header>
                 <p class="path">{t.name}</p>
                 {#if t.placeholders.length > 0}
@@ -360,7 +360,7 @@
                     {/each}
                   </div>
                 {/if}
-                <span class="updated">atualizada em {fmt(t.updated_at)}</span>
+                <span class="updated">updated at {fmt(t.updated_at)}</span>
               </button>
             </li>
           {/each}
@@ -377,13 +377,12 @@
     {/if}
 
     {#if loading}
-      <div class="state">Carregando templates…</div>
+      <div class="state">Loading templates…</div>
     {:else if !selected}
       <div class="state">
-        <h3>Selecione um template à esquerda</h3>
+        <h3>Select a template on the left</h3>
         <p>
-          Clique em um template para ver o preview, ou aplique um built-in
-          direto.
+          Click a template to preview it, or apply a built-in template directly.
         </p>
       </div>
     {:else}
@@ -399,23 +398,23 @@
               if (selected) openApplyForUserTemplate(selected);
             }}
           >
-            Aplicar em uma página
+            Apply to a page
           </button>
           <a class="btn ghost" href={`/study/notes?page=${encodeURIComponent(selected.name)}`}>
-            Editar template
+            Edit template
           </a>
           <button
             class="btn ghost danger"
             onclick={() => (confirmUnmarkOpen = true)}
           >
-            Desmarcar
+            Unmark
           </button>
         </div>
       </header>
 
       {#if selected.placeholders.length > 0}
         <section class="ph-detected">
-          <h3>Placeholders detectados</h3>
+          <h3>Detected placeholders</h3>
           <div class="placeholders inline">
             {#each selected.placeholders as ph (ph)}
               <span class="ph">&lt;%{ph}%&gt;</span>
@@ -423,8 +422,8 @@
           </div>
           <p class="hint">
             Built-ins: <code>&lt;%today%&gt;</code>,
-            <code>&lt;%now%&gt;</code>, <code>&lt;%year%&gt;</code> resolvem
-            automaticamente.
+            <code>&lt;%now%&gt;</code>, and <code>&lt;%year%&gt;</code> resolve
+            automatically.
           </p>
         </section>
       {/if}
@@ -432,9 +431,9 @@
       <section class="preview">
         <h3>Preview</h3>
         {#if previewLoading}
-          <p>Carregando preview…</p>
+          <p>Loading preview…</p>
         {:else if flatPreview.length === 0}
-          <p class="empty">Template vazio.</p>
+          <p class="empty">Empty template.</p>
         {:else}
           <div class="block-preview">
             {#each flatPreview as item (item.content + item.depth)}
@@ -459,13 +458,13 @@
     }}
   >
     <div class="modal wide">
-      <h3>Aplicar template</h3>
+      <h3>Apply template</h3>
 
       <label class="form-field">
-        <span>Página alvo</span>
+        <span>Target page</span>
         <input
           type="text"
-          placeholder="Buscar página…"
+          placeholder="Search pages…"
           bind:value={applyTargetSearch}
         />
         <ul class="target-list">
@@ -481,14 +480,14 @@
               </button>
             </li>
           {:else}
-            <li class="empty">Nenhuma página encontrada.</li>
+            <li class="empty">No pages found.</li>
           {/each}
         </ul>
       </label>
 
       {#if applyUserPlaceholders.length > 0}
         <section>
-          <h4>Variáveis</h4>
+          <h4>Variables</h4>
           <div class="vars">
             {#each applyUserPlaceholders as ph (ph)}
               <label class="form-field inline-label">
@@ -502,10 +501,10 @@
 
       <footer>
         <button class="btn ghost" onclick={() => (applyOpen = false)}>
-          Cancelar
+          Cancel
         </button>
         <button class="btn primary" onclick={applyNow} disabled={applying}>
-          {applying ? "Aplicando…" : "Aplicar"}
+          {applying ? "Applying…" : "Apply"}
         </button>
       </footer>
     </div>
@@ -521,14 +520,14 @@
     }}
   >
     <div class="modal wide">
-      <h3>Marcar página como template</h3>
+      <h3>Mark page as template</h3>
       <p class="hint">
-        A página vira reusável. <code>&lt;%var%&gt;</code> no conteúdo viram
-        placeholders preenchidos no apply.
+        The page becomes reusable. <code>&lt;%var%&gt;</code> markers in the content
+        become placeholders filled during apply.
       </p>
       <input
         type="text"
-        placeholder="Buscar página…"
+        placeholder="Search pages…"
         bind:value={markPageSearch}
       />
       <ul class="target-list">
@@ -540,12 +539,12 @@
             </button>
           </li>
         {:else}
-          <li class="empty">Nenhuma página disponível.</li>
+          <li class="empty">No pages available.</li>
         {/each}
       </ul>
       <footer>
         <button class="btn ghost" onclick={() => (markPageOpen = false)}>
-          Fechar
+          Close
         </button>
       </footer>
     </div>
@@ -554,9 +553,9 @@
 
 <ConfirmDialog
   bind:open={confirmUnmarkOpen}
-  title="Desmarcar template"
-  message="A página continua existindo, apenas perde a marcação como template."
-  confirmLabel="Desmarcar"
+  title="Unmark template"
+  message="The page will continue to exist, but it will no longer be marked as a template."
+  confirmLabel="Unmark"
   variant="danger"
   onConfirm={unmarkAsTemplate}
 />

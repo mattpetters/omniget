@@ -71,7 +71,7 @@
         "study",
         "study:read:search:rebuild",
       );
-      showToast("ok", "Índice reconstruído");
+      showToast("ok", "Index rebuilt");
       if (query.trim()) await runSearch();
     } catch (e) {
       showToast("err", e instanceof Error ? e.message : String(e));
@@ -107,8 +107,8 @@
 
 <section class="study-page">
   <PageHero
-    title="Buscar nas anotações"
-    subtitle="Encontre highlights, notas e marcações em todos os livros"
+    title="Search annotations"
+    subtitle="Find highlights, notes, and markings across all books"
   />
 
   {#if toast}
@@ -122,7 +122,7 @@
       bind:this={searchInput}
       type="search"
       class="search-input"
-      placeholder="Texto, palavra-chave ou frase…"
+      placeholder="Text, keyword, or phrase..."
       bind:value={query}
     />
     <button
@@ -130,36 +130,36 @@
       class="btn ghost"
       onclick={rebuildIndex}
       disabled={rebuilding}
-      title="Reconstruir índice se busca estiver retornando resultados desatualizados"
+      title="Rebuild the index if search is returning stale results"
     >
-      {rebuilding ? "Reindexando…" : "Reindexar"}
+      {rebuilding ? "Reindexing..." : "Reindex"}
     </button>
   </div>
 
   {#if error}
     <div class="state err">{error}</div>
   {:else if searching}
-    <div class="state">Buscando…</div>
+    <div class="state">Searching...</div>
   {:else if !searched}
     <div class="empty">
-      <p>Digite uma palavra ou frase pra buscar.</p>
+      <p>Type a word or phrase to search.</p>
       <p class="hint">
-        A busca cobre highlights, notas e o texto dos livros indexados.
+        Search covers highlights, notes, and indexed book text.
       </p>
     </div>
   {:else if results.length === 0}
     <div class="empty">
-      <p>Nada encontrado pra "{query}".</p>
+      <p>Nothing found for "{query}".</p>
       <p class="hint">
-        Se você tem certeza que o texto existe, tente
+        If you are sure the text exists, try
         <button type="button" class="btn-link" onclick={rebuildIndex}>
-          reindexar
+          reindexing
         </button>.
       </p>
     </div>
   {:else}
     <p class="result-count">
-      {results.length === 1 ? "1 resultado" : `${results.length} resultados`}
+      {results.length === 1 ? "1 result" : `${results.length} results`}
     </p>
     <ul class="result-list">
       {#each results as r (r.annotation_id)}
@@ -171,7 +171,7 @@
           >
             <div class="result-head">
               <span class="result-book">
-                {r.book_title ?? "(sem título)"}
+                {r.book_title ?? "(untitled)"}
               </span>
               {#if r.page_index != null}
                 <span class="result-page">p. {r.page_index + 1}</span>
@@ -180,7 +180,7 @@
                 <span
                   class="result-color"
                   style:background={r.color}
-                  aria-label="Cor: {r.color}"
+                  aria-label="Color: {r.color}"
                 ></span>
               {/if}
             </div>

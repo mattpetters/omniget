@@ -30,16 +30,16 @@
 
 <aside class="nb-dock">
   <header class="dock-head">
-    <span class="dock-title">Favoritos</span>
-    <button class="refresh" type="button" onclick={() => void reload()} title="Recarregar" aria-label="Recarregar">
+    <span class="dock-title">Favorites</span>
+    <button class="refresh" type="button" onclick={() => void reload()} title="Reload" aria-label="Reload">
       ↻
     </button>
   </header>
   <div class="body">
     {#if loading && pages.length === 0}
-      <p class="empty">Carregando…</p>
+      <p class="empty">Loading…</p>
     {:else if pages.length === 0}
-      <p class="empty">Nenhuma página marcada com <code>bookmark::true</code>.</p>
+      <p class="empty">No pages marked with <code>bookmark::true</code>.</p>
     {:else}
       <ul class="entries">
         {#each pages as p (p.id)}

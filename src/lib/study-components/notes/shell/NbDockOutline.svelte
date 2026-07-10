@@ -53,11 +53,11 @@
   </header>
   <div class="body">
     {#if pageId == null}
-      <p class="empty">Sem página ativa.</p>
+      <p class="empty">No active page.</p>
     {:else if loading}
-      <p class="empty">Carregando…</p>
+      <p class="empty">Loading…</p>
     {:else if entries.length === 0}
-      <p class="empty">Sem cabeçalhos nesta página.</p>
+      <p class="empty">No headings on this page.</p>
     {:else}
       <ul class="entries">
         {#each entries as entry (entry.block_id)}
@@ -68,7 +68,7 @@
               onclick={() => jumpTo(entry.block_id)}
               title={entry.content}
             >
-              <span class="content">{entry.content || "(vazio)"}</span>
+              <span class="content">{entry.content || "(empty)"}</span>
             </button>
           </li>
         {/each}

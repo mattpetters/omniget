@@ -119,7 +119,7 @@
         outputDir: dir,
         quality: "progressive",
       });
-      showToast("success", `Pronto — salvo na pasta ${folderName(dir)}`);
+      showToast("success", `Done - saved to the ${folderName(dir)} folder`);
     } catch (e) {
       downloadStore.markJobError(optId, e instanceof Error ? e.message : String(e));
     }
@@ -139,7 +139,7 @@
     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <polyline points="15 18 9 12 15 6"/>
     </svg>
-    Voltar
+    Back
   </button>
 
   {#if user}
@@ -152,10 +152,10 @@
         {/if}
       </div>
       <div class="info">
-        <span class="eyebrow">Artista</span>
+        <span class="eyebrow">Artist</span>
         <h1>{user.username}</h1>
         <p class="meta">
-          {#if user.followers_count}{user.followers_count.toLocaleString("pt-BR")} seguidores{/if}
+          {#if user.followers_count}{user.followers_count.toLocaleString("en-US")} follower{user.followers_count === 1 ? "" : "s"}{/if}
           {#if user.city}{user.city}{user.country_code ? `, ${user.country_code}` : ""}{/if}
         </p>
         {#if user.description}
@@ -164,7 +164,7 @@
         <div class="actions">
           <button type="button" class="play-btn" onclick={() => play(0)} disabled={tracks.length === 0}>
             <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
-            Tocar
+            Play
           </button>
         </div>
       </div>
@@ -172,7 +172,7 @@
   {/if}
 
   {#if loading}
-    <p class="muted">Carregando…</p>
+    <p class="muted">Loading...</p>
   {:else if error}
     <SoundCloudError
       {error}
@@ -189,7 +189,7 @@
     {/if}
     {#if tracks.length > 0}
       <section class="block">
-        <header class="block-head"><h2>Faixas ({tracks.length})</h2></header>
+        <header class="block-head"><h2>Tracks ({tracks.length})</h2></header>
         <div class="track-list">
           {#each tracks.slice(0, 20) as track, i (track.id)}
             <div class="track-row" role="button" tabindex="0" onclick={() => play(i)} onkeydown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); play(i); } }}>
@@ -201,7 +201,7 @@
               </div>
               <div class="m">
                 <span class="t">{track.title}</span>
-                {#if track.likes_count}<span class="a">♥ {track.likes_count.toLocaleString("pt-BR")}</span>{/if}
+                {#if track.likes_count}<span class="a">♥ {track.likes_count.toLocaleString("en-US")}</span>{/if}
               </div>
               <span class="d">{fmtDuration(track.duration)}</span>
               <SoundCloudDownloadButton {track} onTrigger={handleDownload} />
@@ -225,7 +225,7 @@
                 {/if}
               </div>
               <h3 class="card-title">{p.title}</h3>
-              <p class="card-sub">{p.track_count} faixas</p>
+              <p class="card-sub">{p.track_count} track{p.track_count === 1 ? "" : "s"}</p>
             </a>
           {/each}
         </div>

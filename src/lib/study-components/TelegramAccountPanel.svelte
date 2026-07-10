@@ -63,7 +63,7 @@
       profiles = list;
       backups = bks;
     } catch (e: any) {
-      error = typeof e === "string" ? e : (e?.message ?? "Erro");
+      error = typeof e === "string" ? e : (e?.message ?? "Error");
     } finally {
       loading = false;
     }
@@ -88,12 +88,12 @@
         phone: sessionPhone || me?.phone || undefined,
         userId: me?.user_id,
       });
-      showToast("info", `Conta '${profile.label}' salva`);
+      showToast("info", `Account '${profile.label}' saved`);
       saveOpen = false;
       saveLabel = "";
       await load();
     } catch (e: any) {
-      showToast("error", typeof e === "string" ? e : (e?.message ?? "Erro"));
+      showToast("error", typeof e === "string" ? e : (e?.message ?? "Error"));
     } finally {
       saveBusy = false;
     }
@@ -113,7 +113,7 @@
       renameLabel = "";
       await load();
     } catch (e: any) {
-      showToast("error", typeof e === "string" ? e : (e?.message ?? "Erro"));
+      showToast("error", typeof e === "string" ? e : (e?.message ?? "Error"));
     } finally {
       renameBusy = false;
     }
@@ -126,12 +126,12 @@
       await telegramAccountsRestore({ id: confirmRestoreId });
       showToast(
         "info",
-        "Sessão ativada. Reinicie o app pra entrar nesta conta.",
+        "Session activated. Restart the app to sign in to this account.",
       );
       confirmRestoreId = null;
       await load();
     } catch (e: any) {
-      showToast("error", typeof e === "string" ? e : (e?.message ?? "Erro"));
+      showToast("error", typeof e === "string" ? e : (e?.message ?? "Error"));
     } finally {
       actionBusy = false;
     }
@@ -142,11 +142,11 @@
     actionBusy = true;
     try {
       await telegramAccountsRemove({ id: confirmDeleteId });
-      showToast("info", "Perfil removido");
+      showToast("info", "Profile removed");
       confirmDeleteId = null;
       await load();
     } catch (e: any) {
-      showToast("error", typeof e === "string" ? e : (e?.message ?? "Erro"));
+      showToast("error", typeof e === "string" ? e : (e?.message ?? "Error"));
     } finally {
       actionBusy = false;
     }
@@ -156,10 +156,10 @@
     actionBusy = true;
     try {
       const r = await telegramAccountsBackupNow();
-      showToast("info", `Backup criado: ${r.name}`);
+      showToast("info", `Backup created: ${r.name}`);
       await load();
     } catch (e: any) {
-      showToast("error", typeof e === "string" ? e : (e?.message ?? "Erro"));
+      showToast("error", typeof e === "string" ? e : (e?.message ?? "Error"));
     } finally {
       actionBusy = false;
     }
@@ -190,13 +190,13 @@
     onclick={(e) => { if (e.target === e.currentTarget) close(); }}
     onkeydown={(e) => { if (e.key === "Escape") close(); }}
   >
-    <div class="panel" role="dialog" aria-modal="true" aria-label="Gerenciar contas" tabindex="-1">
+    <div class="panel" role="dialog" aria-modal="true" aria-label="Manage accounts" tabindex="-1">
       <header class="panel-header">
         <div>
-          <h2>Contas Telegram</h2>
-          <p class="subtitle">Salve e alterne entre múltiplas sessões.</p>
+          <h2>Telegram accounts</h2>
+          <p class="subtitle">Save and switch between multiple sessions.</p>
         </div>
-        <button type="button" class="icon-btn" onclick={close} aria-label="Fechar">
+        <button type="button" class="icon-btn" onclick={close} aria-label="Close">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 6L6 18" />
             <path d="M6 6l12 12" />
@@ -211,7 +211,7 @@
           <div class="status status-error">{error}</div>
         {:else}
           <section class="active-card">
-            <span class="section-label">Conta ativa</span>
+            <span class="section-label">Active account</span>
             <div class="active-row">
               <div class="active-avatar">
                 {me ? initials(`${me.first_name} ${me.last_name ?? ""}`.trim() || sessionPhone) : "?"}
@@ -221,7 +221,7 @@
                   {#if me}
                     {me.first_name}{me.last_name ? " " + me.last_name : ""}
                   {:else}
-                    {sessionPhone || "Sessão local"}
+                    {sessionPhone || "Local session"}
                   {/if}
                 </span>
                 <span class="active-meta">
@@ -229,7 +229,7 @@
                   {#if me?.username}<span class="dot">·</span>@{me.username}{/if}
                 </span>
               </div>
-              <span class="active-badge">Ativa</span>
+              <span class="active-badge">Active</span>
             </div>
             <button
               type="button"
@@ -241,20 +241,20 @@
                 <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
                 <path d="M17 21v-8H7v8M7 3v5h8" />
               </svg>
-              Salvar como perfil
+              Save as profile
             </button>
           </section>
 
           <section>
             <div class="section-row">
-              <span class="section-label">Perfis salvos</span>
+              <span class="section-label">Saved profiles</span>
               <span class="section-count">{profiles.length}</span>
             </div>
             {#if profiles.length === 0}
               <div class="empty-state">
-                <p class="empty-title">Nenhum perfil salvo ainda.</p>
+                <p class="empty-title">No saved profiles yet.</p>
                 <p class="empty-desc">
-                  Salve sua sessão atual antes de fazer logout — assim você consegue voltar pra ela depois sem refazer login.
+                  Save your current session before logging out so you can return to it later without signing in again.
                 </p>
               </div>
             {:else}
@@ -274,7 +274,7 @@
                           disabled={renameBusy}
                         />
                         <button type="submit" class="ghost-btn" disabled={renameBusy || !renameLabel.trim()}>OK</button>
-                        <button type="button" class="ghost-btn" onclick={() => (renameId = null)} disabled={renameBusy}>Cancelar</button>
+                        <button type="button" class="ghost-btn" onclick={() => (renameId = null)} disabled={renameBusy}>Cancel</button>
                       </form>
                     {:else}
                       <div class="profile-row">
@@ -284,16 +284,16 @@
                           <span class="profile-meta">
                             {#if p.phone_redacted}{p.phone_redacted}{:else}—{/if}
                             <span class="dot">·</span>
-                            criado {fmtDate(p.created_at)}
+                            created {fmtDate(p.created_at)}
                           </span>
                         </div>
                       </div>
                       <div class="profile-actions">
-                        <button type="button" class="ghost-btn" onclick={() => startRename(p)}>Renomear</button>
+                        <button type="button" class="ghost-btn" onclick={() => startRename(p)}>Rename</button>
                         <button type="button" class="primary-btn small" onclick={() => (confirmRestoreId = p.id)}>
-                          Ativar
+                          Activate
                         </button>
-                        <button type="button" class="danger-btn small" onclick={() => (confirmDeleteId = p.id)} aria-label="Remover">
+                        <button type="button" class="danger-btn small" onclick={() => (confirmDeleteId = p.id)} aria-label="Remove">
                           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="3 6 5 6 21 6" />
                             <path d="M19 6l-2 14a2 2 0 01-2 2H9a2 2 0 01-2-2L5 6" />
@@ -311,11 +311,11 @@
             <div class="section-row">
               <span class="section-label">Backups</span>
               <button type="button" class="ghost-btn" onclick={backupNow} disabled={actionBusy || (!sessionPhone && !me)}>
-                Criar backup agora
+                Create backup now
               </button>
             </div>
             {#if backups.length === 0}
-              <p class="empty-text">Nenhum backup. Faça um antes de mudanças importantes na sessão.</p>
+              <p class="empty-text">No backups. Create one before making important session changes.</p>
             {:else}
               <ul class="backup-list">
                 {#each backups as b (b.name)}
@@ -340,22 +340,22 @@
       onkeydown={() => {}}
     >
       <div class="dialog" role="dialog" aria-modal="true" tabindex="-1">
-        <h3>Salvar conta atual como perfil</h3>
-        <p>Crie um nome pra reconhecer essa conta depois (ex: "Pessoal", "Trabalho").</p>
+        <h3>Save current account as a profile</h3>
+        <p>Create a name to recognize this account later, such as "Personal" or "Work".</p>
         <form onsubmit={(e) => { e.preventDefault(); commitSave(); }}>
           <input
             bind:this={saveInput}
             type="text"
             class="input"
-            placeholder="Nome do perfil"
+            placeholder="Profile name"
             bind:value={saveLabel}
             disabled={saveBusy}
             required
           />
           <div class="dialog-actions">
-            <button type="button" class="ghost-btn" onclick={() => (saveOpen = false)} disabled={saveBusy}>Cancelar</button>
+            <button type="button" class="ghost-btn" onclick={() => (saveOpen = false)} disabled={saveBusy}>Cancel</button>
             <button type="submit" class="primary-btn" disabled={saveBusy || !saveLabel.trim()}>
-              {saveBusy ? "Salvando..." : "Salvar perfil"}
+              {saveBusy ? "Saving..." : "Save profile"}
             </button>
           </div>
         </form>
@@ -372,14 +372,14 @@
       onkeydown={() => {}}
     >
       <div class="dialog" role="dialog" aria-modal="true" tabindex="-1">
-        <h3>Ativar perfil "{p?.label}"?</h3>
+        <h3>Activate profile "{p?.label}"?</h3>
         <p>
-          Sua sessão atual será preservada como backup automático. O app precisa ser reiniciado para concluir a troca.
+          Your current session will be preserved as an automatic backup. The app must restart to finish switching accounts.
         </p>
         <div class="dialog-actions">
-          <button type="button" class="ghost-btn" onclick={() => (confirmRestoreId = null)} disabled={actionBusy}>Cancelar</button>
+          <button type="button" class="ghost-btn" onclick={() => (confirmRestoreId = null)} disabled={actionBusy}>Cancel</button>
           <button type="button" class="primary-btn" onclick={commitRestore} disabled={actionBusy}>
-            {actionBusy ? "Ativando..." : "Ativar e reiniciar"}
+            {actionBusy ? "Activating..." : "Activate and restart"}
           </button>
         </div>
       </div>
@@ -395,14 +395,14 @@
       onkeydown={() => {}}
     >
       <div class="dialog" role="dialog" aria-modal="true" tabindex="-1">
-        <h3>Remover perfil "{p?.label}"?</h3>
+        <h3>Remove profile "{p?.label}"?</h3>
         <p class="warn">
-          A sessão deste perfil será apagada permanentemente. Você precisará refazer login pra acessar essa conta novamente.
+          This profile's session will be permanently deleted. You will need to sign in again to access this account.
         </p>
         <div class="dialog-actions">
-          <button type="button" class="ghost-btn" onclick={() => (confirmDeleteId = null)} disabled={actionBusy}>Cancelar</button>
+          <button type="button" class="ghost-btn" onclick={() => (confirmDeleteId = null)} disabled={actionBusy}>Cancel</button>
           <button type="button" class="danger-btn" onclick={commitDelete} disabled={actionBusy}>
-            {actionBusy ? "Removendo..." : "Remover perfil"}
+            {actionBusy ? "Removing..." : "Remove profile"}
           </button>
         </div>
       </div>

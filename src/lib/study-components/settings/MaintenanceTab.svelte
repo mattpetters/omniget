@@ -309,7 +309,7 @@
       {/if}
 
       <div class="modal-actions">
-        <button type="button" class="btn ghost" onclick={cancelImport}>Cancelar</button>
+        <button type="button" class="btn ghost" onclick={cancelImport}>{$t("study.settings_maintenancetab.cancel")}</button>
         <button
           type="button"
           class="btn"

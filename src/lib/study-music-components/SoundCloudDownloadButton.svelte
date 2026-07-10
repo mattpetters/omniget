@@ -22,8 +22,8 @@
     type="button"
     class="btn busy"
     disabled
-    aria-label={`Baixando — ${pct}%`}
-    title={`Baixando — ${pct}%`}
+    aria-label={`Downloading - ${pct}%`}
+    title={`Downloading - ${pct}%`}
   >
     <span class="ring" style:--pct="{pct}">
       <span class="pct">{pct < 1 ? "" : pct}</span>
@@ -33,8 +33,8 @@
   <button
     type="button"
     class="btn done"
-    aria-label="Baixado"
-    title="Baixado"
+    aria-label="Downloaded"
+    title="Downloaded"
     onclick={(e) => { e.stopPropagation(); onTrigger(track, e.shiftKey); }}
   >
     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -46,8 +46,8 @@
     type="button"
     class="btn"
     onclick={(e) => { e.stopPropagation(); onTrigger(track, e.shiftKey); }}
-    aria-label="Baixar"
-    title={"Baixar (Shift = avançado)"}
+    aria-label="Download"
+    title={"Download (Shift = advanced)"}
   >
     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>

@@ -84,7 +84,7 @@
   });
 </script>
 
-<div class="annotate-overlay" role="dialog" aria-label="Anotação de aula">
+<div class="annotate-overlay" role="dialog" aria-label="Lesson annotation">
   <header class="head">
     <div class="title-block">
       <strong>Anotar momento</strong>

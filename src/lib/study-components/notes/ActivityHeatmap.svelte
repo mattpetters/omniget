@@ -27,7 +27,7 @@
   }
 
   function fmtDayBR(d: number): string {
-    return decodeDay(d).toLocaleDateString("pt-BR", {
+    return decodeDay(d).toLocaleDateString("en-US", {
       weekday: "long",
       day: "2-digit",
       month: "long",
@@ -94,18 +94,18 @@
 
 <div class="heatmap-host">
   <header class="heatmap-head">
-    <h3>Atividade — 90 dias</h3>
+    <h3>Activity - 90 days</h3>
     <span class="legend">
-      <span class="legend-label">menos</span>
+      <span class="legend-label">less</span>
       <span class="lvl lvl-0"></span>
       <span class="lvl lvl-1"></span>
       <span class="lvl lvl-2"></span>
       <span class="lvl lvl-3"></span>
       <span class="lvl lvl-4"></span>
-      <span class="legend-label">mais</span>
+      <span class="legend-label">more</span>
     </span>
   </header>
-  <div class="heatmap" role="img" aria-label="Atividade nos últimos 90 dias">
+  <div class="heatmap" role="img" aria-label="Activity over the last 90 days">
     {#each grid as col, ci (ci)}
       <div class="col">
         {#each col as cell (cell.day)}
@@ -114,7 +114,7 @@
             class="cell lvl-{cell.level}"
             class:future={cell.isFuture}
             disabled={cell.isFuture}
-            aria-label="{cell.count} blocos em {fmtDayBR(cell.day)}"
+            aria-label="{cell.count} block{cell.count === 1 ? '' : 's'} on {fmtDayBR(cell.day)}"
             onmouseenter={(e) => {
               hoverCell = cell;
               const r = (e.target as HTMLElement).getBoundingClientRect();
@@ -134,7 +134,7 @@
       style:top={`${hoverPos.y}px`}
       role="status"
     >
-      {hoverCell.count} bloco{hoverCell.count === 1 ? "" : "s"} · {fmtDayBR(hoverCell.day)}
+      {hoverCell.count} block{hoverCell.count === 1 ? "" : "s"} · {fmtDayBR(hoverCell.day)}
     </div>
   {/if}
 </div>

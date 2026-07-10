@@ -417,7 +417,7 @@
       const res = await invoke<{ slug: string; cookie_count: number }>("cookies_add_account", {
         request: {
           domain: addAccountDomain,
-          alias: alias || "Conta",
+          alias: alias || "Account",
           content,
           source_url: sourceUrl || null,
         },

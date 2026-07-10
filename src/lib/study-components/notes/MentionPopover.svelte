@@ -11,7 +11,7 @@
 
   let { items, selectedIndex, kind, position, onPick }: Props = $props();
 
-  const headerLabel = $derived(kind === "tag" ? "Tags" : "Páginas");
+  const headerLabel = $derived(kind === "tag" ? "Tags" : "Pages");
 </script>
 
 {#if items.length > 0}

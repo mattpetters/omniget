@@ -76,7 +76,7 @@
   }
 
   function fmtNumber(n: number, digits = 0): string {
-    return n.toLocaleString("pt-BR", { maximumFractionDigits: digits });
+    return n.toLocaleString("en-US", { maximumFractionDigits: digits });
   }
 
   function heatmapWeeks(entries: HeatmapEntry[]): {

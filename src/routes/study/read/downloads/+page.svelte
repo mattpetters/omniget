@@ -108,7 +108,7 @@
     acting = d.id;
     try {
       await pluginInvoke("study", "study:read:downloads:cancel", { id: d.id });
-      showToast("ok", "Cancelado");
+      showToast("ok", "Canceled");
       await load();
     } catch (e) {
       showToast("err", e instanceof Error ? e.message : String(e));
@@ -128,10 +128,10 @@
       showToast(
         "ok",
         r.removed === 0
-          ? "Nada pra limpar"
+          ? "Nothing to clear"
           : r.removed === 1
-            ? "1 entrada removida"
-            : `${r.removed} entradas removidas`,
+            ? "1 entry removed"
+            : `${r.removed} entries removed`,
       );
       await load();
     } catch (e) {
@@ -166,7 +166,7 @@
   function copyMagnet(m: TorrentMirror) {
     if (navigator.clipboard) {
       navigator.clipboard.writeText(m.magnet);
-      showToast("ok", "Magnet copiado");
+      showToast("ok", "Magnet copied");
     }
   }
 
@@ -188,11 +188,11 @@
 
   function statusLabel(s: DownloadStatus): string {
     return {
-      queued: "fila",
-      downloading: "baixando",
+      queued: "queued",
+      downloading: "downloading",
       complete: "ok",
-      error: "erro",
-      cancelled: "cancelado",
+      error: "error",
+      cancelled: "canceled",
     }[s];
   }
 
@@ -222,14 +222,14 @@
 
 <section class="study-page">
   <PageHero
-    title="Downloads de livros"
+    title="Book downloads"
     subtitle={loading
-      ? "Carregando…"
+      ? "Loading..."
       : counts.active > 0
         ? counts.active === 1
-          ? "1 ativo"
-          : `${counts.active} ativos`
-        : "Nenhum download ativo"}
+          ? "1 active"
+          : `${counts.active} active`
+        : "No active downloads"}
   />
 
   {#if toast}
@@ -246,7 +246,7 @@
         class:active={filter === "all"}
         onclick={() => (filter = "all")}
       >
-        Todos <span class="count">{counts.total}</span>
+        All <span class="count">{counts.total}</span>
       </button>
       <button
         type="button"
@@ -254,7 +254,7 @@
         class:active={filter === "active"}
         onclick={() => (filter = "active")}
       >
-        Ativos <span class="count">{counts.active}</span>
+        Active <span class="count">{counts.active}</span>
       </button>
       <button
         type="button"
@@ -262,7 +262,7 @@
         class:active={filter === "finished"}
         onclick={() => (filter = "finished")}
       >
-        Concluídos <span class="count">{counts.finished}</span>
+        Finished <span class="count">{counts.finished}</span>
       </button>
       <button
         type="button"
@@ -270,7 +270,7 @@
         class:active={filter === "errored"}
         onclick={() => (filter = "errored")}
       >
-        Falhas <span class="count">{counts.errored}</span>
+        Failures <span class="count">{counts.errored}</span>
       </button>
     </div>
     <button
@@ -279,20 +279,20 @@
       onclick={() => (confirmClearOpen = true)}
       disabled={clearingFinished || (counts.finished === 0 && counts.errored === 0)}
     >
-      {clearingFinished ? "Limpando…" : "Limpar concluídos"}
+      {clearingFinished ? "Clearing..." : "Clear finished"}
     </button>
   </div>
 
   {#if error}
     <div class="state err">{error}</div>
   {:else if loading}
-    <div class="state">Carregando…</div>
+    <div class="state">Loading...</div>
   {:else if downloads.length === 0}
     <div class="empty">
-      <p>Nenhum download {filter !== "all" ? "neste filtro" : "ainda"}.</p>
+      <p>No downloads {filter !== "all" ? "in this filter" : "yet"}.</p>
       {#if filter === "all"}
         <p class="hint">
-          Use <a href="/study/read/discover">Descobrir</a> pra encontrar livros.
+          Use <a href="/study/read/discover">Discover</a> to find books.
         </p>
       {/if}
     </div>
@@ -344,14 +344,14 @@
                 onclick={() => cancel(d)}
                 disabled={acting === d.id}
               >
-                {acting === d.id ? "…" : "Cancelar"}
+                {acting === d.id ? "..." : "Cancel"}
               </button>
             {/if}
             <button
               type="button"
               class="btn ghost sm"
               onclick={() => showTorrents(d)}
-              title="Listar mirrors torrent disponíveis"
+              title="List available torrent mirrors"
             >
               Mirrors…
             </button>
@@ -372,9 +372,9 @@
       <h3>Mirrors torrent</h3>
       <p class="modal-hint">{torrentsTarget.title}</p>
       {#if torrentsLoading}
-        <p class="muted small">Buscando mirrors…</p>
+        <p class="muted small">Searching mirrors...</p>
       {:else if torrents.length === 0}
-        <p class="muted small">Nenhum mirror torrent encontrado.</p>
+        <p class="muted small">No torrent mirrors found.</p>
       {:else}
         <ul class="torrent-list">
           {#each torrents as t (t.magnet)}
@@ -393,7 +393,7 @@
                 class="btn ghost sm"
                 onclick={() => copyMagnet(t)}
               >
-                Copiar magnet
+                Copy magnet
               </button>
             </li>
           {/each}
@@ -405,7 +405,7 @@
           class="btn primary"
           onclick={() => (torrentsTarget = null)}
         >
-          Fechar
+          Close
         </button>
       </div>
     </div>
@@ -414,9 +414,9 @@
 
 <ConfirmDialog
   bind:open={confirmClearOpen}
-  title="Limpar concluídos"
-  message="Vai remover entradas de downloads concluídos e cancelados. Os arquivos baixados continuam intactos."
-  confirmLabel="Limpar"
+  title="Clear finished"
+  message="This will remove finished and canceled download entries. Downloaded files remain intact."
+  confirmLabel="Clear"
   variant="danger"
   onConfirm={clearFinished}
 />

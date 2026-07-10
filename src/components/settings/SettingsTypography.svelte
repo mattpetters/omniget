@@ -357,19 +357,19 @@
         </div>
       </div>
       <div class="preview-pane">
-        <h1 class="preview-h1">Aula 03 · Anatomia do coração</h1>
-        <h2 class="preview-h2">Conceitos chave</h2>
+        <h1 class="preview-h1">Lesson 03 · Anatomy of the heart</h1>
+        <h2 class="preview-h2">Key concepts</h2>
         <p class="preview-body">
-          O coração tem <span class="preview-link">[[câmaras cardíacas]]</span>
-          divididas em átrios e ventrículos. O ventrículo esquerdo é mais musculoso
-          porque bombeia sangue contra a resistência sistêmica.
+          The heart has <span class="preview-link">[[cardiac chambers]]</span>
+          divided into atria and ventricles. The left ventricle is more muscular
+          because it pumps blood against systemic resistance.
         </p>
         <ul class="preview-list">
-          <li>Átrio direito recebe sangue venoso da veia cava.</li>
-          <li>Ventrículo esquerdo bombeia para a aorta.</li>
+          <li>The right atrium receives venous blood from the vena cava.</li>
+          <li>The left ventricle pumps blood to the aorta.</li>
         </ul>
-        <pre class="preview-code"><code>{`def calcular_fc_max(idade: int) -> int:
-    return 220 - idade`}</code></pre>
+        <pre class="preview-code"><code>{`def calculate_max_hr(age: int) -> int:
+    return 220 - age`}</code></pre>
         <p class="preview-props">
           <span class="prop">status:: <strong>TODO</strong></span>
           <span class="prop">deadline:: 2026-05-12</span>

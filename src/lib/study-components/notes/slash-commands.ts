@@ -1,13 +1,13 @@
 import type { Editor, Range } from "@tiptap/core";
 
 export type SlashCommandGroup =
-  | "estrutura"
-  | "blocos"
+  | "structure"
+  | "blocks"
   | "callout"
   | "renderers"
   | "refs"
-  | "datas"
-  | "utilidades";
+  | "dates"
+  | "utilities";
 
 export type SlashCommand = {
   id: string;
@@ -20,23 +20,23 @@ export type SlashCommand = {
 };
 
 const GROUP_ORDER: SlashCommandGroup[] = [
-  "estrutura",
-  "blocos",
+  "structure",
+  "blocks",
   "callout",
   "renderers",
   "refs",
-  "datas",
-  "utilidades",
+  "dates",
+  "utilities",
 ];
 
 const GROUP_LABEL: Record<SlashCommandGroup, string> = {
-  estrutura: "Estrutura",
-  blocos: "Blocos",
+  structure: "Structure",
+  blocks: "Blocks",
   callout: "Callouts",
   renderers: "Renderers",
   refs: "Refs",
-  datas: "Datas",
-  utilidades: "Utilidades",
+  dates: "Dates",
+  utilities: "Utilities",
 };
 
 function todayIso(): string {
@@ -55,41 +55,41 @@ function nowHm(): string {
 export const SLASH_COMMANDS: SlashCommand[] = [
   {
     id: "paragraph",
-    label: "Parágrafo",
-    hint: "Texto simples",
+    label: "Paragraph",
+    hint: "Plain text",
     aliases: ["p", "paragraph", "texto", "text"],
     indicator: "¶",
-    group: "estrutura",
+    group: "structure",
     run: (editor, range) =>
       editor.chain().focus().deleteRange(range).setParagraph().run(),
   },
   {
     id: "h1",
     label: "Heading 1",
-    hint: "Título principal",
+    hint: "Main title",
     aliases: ["h1", "heading1", "titulo1", "t1"],
     indicator: "H1",
-    group: "estrutura",
+    group: "structure",
     run: (editor, range) =>
       editor.chain().focus().deleteRange(range).toggleHeading({ level: 1 }).run(),
   },
   {
     id: "h2",
     label: "Heading 2",
-    hint: "Título de seção",
+    hint: "Section title",
     aliases: ["h2", "heading2", "titulo2", "t2"],
     indicator: "H2",
-    group: "estrutura",
+    group: "structure",
     run: (editor, range) =>
       editor.chain().focus().deleteRange(range).toggleHeading({ level: 2 }).run(),
   },
   {
     id: "h3",
     label: "Heading 3",
-    hint: "Sub-seção",
+    hint: "Subsection",
     aliases: ["h3", "heading3", "titulo3", "t3"],
     indicator: "H3",
-    group: "estrutura",
+    group: "structure",
     run: (editor, range) =>
       editor.chain().focus().deleteRange(range).toggleHeading({ level: 3 }).run(),
   },
@@ -99,17 +99,17 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     hint: "Sub-sub",
     aliases: ["h4", "heading4"],
     indicator: "H4",
-    group: "estrutura",
+    group: "structure",
     run: (editor, range) =>
       editor.chain().focus().deleteRange(range).toggleHeading({ level: 4 }).run(),
   },
   {
     id: "h5",
     label: "Heading 5",
-    hint: "Hierarquia profunda",
+    hint: "Deep hierarchy",
     aliases: ["h5", "heading5"],
     indicator: "H5",
-    group: "estrutura",
+    group: "structure",
     run: (editor, range) =>
       editor.chain().focus().deleteRange(range).toggleHeading({ level: 5 }).run(),
   },
@@ -119,57 +119,57 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     hint: "Eyebrow",
     aliases: ["h6", "heading6"],
     indicator: "H6",
-    group: "estrutura",
+    group: "structure",
     run: (editor, range) =>
       editor.chain().focus().deleteRange(range).toggleHeading({ level: 6 }).run(),
   },
   {
     id: "bullet",
-    label: "Lista",
+    label: "List",
     hint: "Bullet list",
     aliases: ["bullet", "list", "lista", "ul"],
     indicator: "•",
-    group: "estrutura",
+    group: "structure",
     run: (editor, range) =>
       editor.chain().focus().deleteRange(range).toggleBulletList().run(),
   },
   {
     id: "ordered",
-    label: "Lista ordenada",
-    hint: "Numeração automática",
+    label: "Ordered list",
+    hint: "Automatic numbering",
     aliases: ["ordered", "ol", "numbered", "numerada"],
     indicator: "1.",
-    group: "estrutura",
+    group: "structure",
     run: (editor, range) =>
       editor.chain().focus().deleteRange(range).toggleOrderedList().run(),
   },
   {
     id: "task",
-    label: "Tarefa",
+    label: "Task",
     hint: "Checkbox",
     aliases: ["task", "todo", "tarefa", "check"],
     indicator: "[ ]",
-    group: "estrutura",
+    group: "structure",
     run: (editor, range) =>
       editor.chain().focus().deleteRange(range).toggleTaskList().run(),
   },
   {
     id: "quote",
-    label: "Citação",
+    label: "Quote",
     hint: "Blockquote",
     aliases: ["quote", "blockquote", "citacao"],
     indicator: "❝",
-    group: "blocos",
+    group: "blocks",
     run: (editor, range) =>
       editor.chain().focus().deleteRange(range).toggleBlockquote().run(),
   },
   {
     id: "code",
-    label: "Bloco de código",
+    label: "Code block",
     hint: "Syntax highlight",
     aliases: ["code", "codigo", "pre"],
     indicator: "<>",
-    group: "blocos",
+    group: "blocks",
     run: (editor, range) =>
       editor.chain().focus().deleteRange(range).toggleCodeBlock().run(),
   },
@@ -179,7 +179,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     hint: "LaTeX via KaTeX",
     aliases: ["math", "latex", "formula", "tex"],
     indicator: "Σ",
-    group: "blocos",
+    group: "blocks",
     run: (editor, range) =>
       editor
         .chain()
@@ -191,13 +191,13 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   {
     id: "query",
     label: "Database view (query)",
-    hint: "Insere {{query <expr>}} live (table view)",
+    hint: "Insert live {{query <expr>}} (table view)",
     aliases: ["query", "db", "database", "dataview"],
     indicator: "{}",
-    group: "blocos",
+    group: "blocks",
     run: (editor, range) => {
       const expr = window.prompt(
-        "Expressão da query (ex: (and (todo TODO))):",
+        "Query expression (ex: (and (todo TODO))):",
         "(and (todo TODO))",
       );
       if (!expr) return;
@@ -211,13 +211,13 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   },
   {
     id: "embed-page",
-    label: "Embed de página",
-    hint: "Transcluir conteúdo de outra página",
+    label: "Page embed",
+    hint: "Transclude content from another page",
     aliases: ["embed", "embedpage", "transclusao", "transclude"],
     indicator: "⤴",
-    group: "blocos",
+    group: "blocks",
     run: (editor, range) => {
-      const name = window.prompt("Nome da página a embedar:");
+      const name = window.prompt("Page name to embed:");
       if (!name || !name.trim()) return;
       editor
         .chain()
@@ -236,21 +236,21 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   },
   {
     id: "divider",
-    label: "Divisor",
-    hint: "Linha horizontal",
+    label: "Divider",
+    hint: "Horizontal line",
     aliases: ["divider", "hr", "rule", "linha"],
     indicator: "—",
-    group: "blocos",
+    group: "blocks",
     run: (editor, range) =>
       editor.chain().focus().deleteRange(range).setHorizontalRule().run(),
   },
   {
     id: "table",
-    label: "Tabela",
-    hint: "3×3 inicial",
+    label: "Table",
+    hint: "Initial 3x3",
     aliases: ["table", "tabela", "grid"],
     indicator: "▦",
-    group: "blocos",
+    group: "blocks",
     run: (editor, range) =>
       editor
         .chain()
@@ -261,13 +261,13 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   },
   {
     id: "image",
-    label: "Imagem (URL)",
-    hint: "Cole a URL externa",
+    label: "Image (URL)",
+    hint: "Paste an external URL",
     aliases: ["image", "img", "imagem", "picture"],
     indicator: "▢",
-    group: "blocos",
+    group: "blocks",
     run: (editor, range) => {
-      const url = window.prompt("URL da imagem:");
+      const url = window.prompt("Image URL:");
       if (!url) return;
       editor
         .chain()
@@ -280,7 +280,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   {
     id: "callout-note",
     label: "Callout: Note",
-    hint: "Caixa informativa",
+    hint: "Informational box",
     aliases: ["note", "info", "callout"],
     indicator: "ℹ",
     group: "callout",
@@ -325,7 +325,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   {
     id: "callout-caution",
     label: "Callout: Caution",
-    hint: "Cuidado",
+    hint: "Caution",
     aliases: ["caution", "perigo", "danger", "callout"],
     indicator: "🚨",
     group: "callout",
@@ -334,8 +334,8 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   },
   {
     id: "mermaid",
-    label: "Diagrama (mermaid)",
-    hint: "Flowcharts, sequência, gantt — sintaxe mermaid",
+    label: "Diagram (Mermaid)",
+    hint: "Flowcharts, sequence, Gantt - Mermaid syntax",
     aliases: ["mermaid", "diagram", "diagrama", "flow", "fluxo"],
     indicator: "▦",
     group: "renderers",
@@ -352,8 +352,8 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   },
   {
     id: "flowchart",
-    label: "Fluxograma (flowchart.js)",
-    hint: "Sintaxe flowchart.js: símbolos start/end/operation/condition",
+    label: "Flowchart (flowchart.js)",
+    hint: "flowchart.js syntax: start/end/operation/condition symbols",
     aliases: ["flowchart", "fluxograma", "fluxo", "fc"],
     indicator: "⇄",
     group: "renderers",
@@ -373,8 +373,8 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   },
   {
     id: "mindmap",
-    label: "Mapa mental (markmap)",
-    hint: "Markdown indentado: # raiz, ## ramo, ### folha",
+    label: "Mind map (markmap)",
+    hint: "Indented Markdown: # root, ## branch, ### leaf",
     aliases: ["mindmap", "markmap", "mapa", "mental", "brain"],
     indicator: "⌘",
     group: "renderers",
@@ -393,8 +393,8 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   },
   {
     id: "abc",
-    label: "Partitura (notação ABC)",
-    hint: "Notação musical ABC — escala, melodia, harmonia",
+    label: "Score (ABC notation)",
+    hint: "ABC music notation - scale, melody, harmony",
     aliases: ["abc", "musica", "music", "score", "partitura", "notation"],
     indicator: "♪",
     group: "renderers",
@@ -413,8 +413,8 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   },
   {
     id: "plantuml",
-    label: "Diagrama UML (PlantUML)",
-    hint: "Sequência, classe, casos de uso — sintaxe PlantUML",
+    label: "UML diagram (PlantUML)",
+    hint: "Sequence, class, use cases - PlantUML syntax",
     aliases: ["plantuml", "puml", "uml", "diagrama", "sequence", "class"],
     indicator: "⚙",
     group: "renderers",
@@ -434,7 +434,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   {
     id: "link",
     label: "Link",
-    hint: "[texto](url)",
+    hint: "[text](url)",
     aliases: ["link", "url", "a"],
     indicator: "🔗",
     group: "refs",
@@ -452,7 +452,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   {
     id: "page-link",
     label: "Page link [[",
-    hint: "Inicia link de página (autocomplete em D1)",
+    hint: "Start a page link (autocomplete in D1)",
     aliases: ["page", "pagina", "wiki", "wikilink"],
     indicator: "[[",
     group: "refs",
@@ -462,7 +462,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   {
     id: "block-ref",
     label: "Block ref ((",
-    hint: "Inicia ref de bloco (autocomplete em D1)",
+    hint: "Start a block ref (autocomplete in D1)",
     aliases: ["ref", "block", "bloco"],
     indicator: "((",
     group: "refs",
@@ -472,7 +472,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   {
     id: "tag",
     label: "Tag #",
-    hint: "Inicia hashtag",
+    hint: "Start a hashtag",
     aliases: ["tag", "hashtag", "etiqueta"],
     indicator: "#",
     group: "refs",
@@ -481,11 +481,11 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   },
   {
     id: "today",
-    label: "Hoje (texto)",
-    hint: "Insere YYYY-MM-DD",
+    label: "Today (text)",
+    hint: "Insert YYYY-MM-DD",
     aliases: ["today", "hoje", "date", "data"],
     indicator: "📅",
-    group: "datas",
+    group: "dates",
     run: (editor, range) =>
       editor
         .chain()
@@ -496,11 +496,11 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   },
   {
     id: "today-link",
-    label: "Hoje (link)",
-    hint: "Insere [[YYYY-MM-DD]]",
+    label: "Today (link)",
+    hint: "Insert [[YYYY-MM-DD]]",
     aliases: ["todaylink", "datelink", "datalink"],
     indicator: "📆",
-    group: "datas",
+    group: "dates",
     run: (editor, range) =>
       editor
         .chain()
@@ -511,11 +511,11 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   },
   {
     id: "now",
-    label: "Agora (HH:MM)",
-    hint: "Insere hora atual",
+    label: "Now (HH:MM)",
+    hint: "Insert current time",
     aliases: ["now", "agora", "hora", "time"],
     indicator: "⏱",
-    group: "datas",
+    group: "dates",
     run: (editor, range) =>
       editor
         .chain()
@@ -526,11 +526,11 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   },
   {
     id: "clear",
-    label: "Limpar formatação",
-    hint: "Remove marks da seleção",
+    label: "Clear formatting",
+    hint: "Remove marks from the selection",
     aliases: ["clear", "limpar", "unset"],
     indicator: "⌫",
-    group: "utilidades",
+    group: "utilities",
     run: (editor, range) =>
       editor
         .chain()
@@ -542,16 +542,16 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   },
   {
     id: "property",
-    label: "Propriedade",
-    hint: "Insere linha key:: value",
+    label: "Property",
+    hint: "Insert key:: value line",
     aliases: ["property", "prop", "propriedade", "kv"],
     indicator: "::",
-    group: "utilidades",
+    group: "utilities",
     run: (editor, range) => {
-      const key = window.prompt("Chave da propriedade:");
+      const key = window.prompt("Property key:");
       if (!key || !key.trim()) return;
       const cleanKey = key.trim().replace(/[^a-zA-Z0-9_-]/g, "_");
-      const value = window.prompt(`Valor de ${cleanKey}:`) ?? "";
+      const value = window.prompt(`Value for ${cleanKey}:`) ?? "";
       editor
         .chain()
         .focus()
@@ -562,11 +562,11 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   },
   {
     id: "template",
-    label: "Aplicar template",
-    hint: "Abre página de templates",
+    label: "Apply template",
+    hint: "Open templates page",
     aliases: ["template", "tpl", "templates"],
     indicator: "▤",
-    group: "utilidades",
+    group: "utilities",
     run: (editor, range) => {
       editor.chain().focus().deleteRange(range).run();
       window.location.href = "/study/notes/templates";

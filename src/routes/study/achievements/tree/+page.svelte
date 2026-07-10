@@ -27,32 +27,32 @@
   };
 
   const TREE_NODES: TreeNode[] = [
-    { code: "xp:100", label: "100 XP", description: "Acumule 100 XP", family: "xp", tier: "bronze", threshold: 100, icon: "✨" },
-    { code: "xp:500", label: "500 XP", description: "Acumule 500 XP", family: "xp", tier: "bronze", threshold: 500, icon: "⭐", requires: "xp:100" },
-    { code: "xp:1000", label: "1k XP", description: "Mil XP", family: "xp", tier: "silver", threshold: 1000, icon: "🌟", requires: "xp:500" },
-    { code: "xp:5000", label: "5k XP", description: "Cinco mil XP", family: "xp", tier: "silver", threshold: 5000, icon: "💫", requires: "xp:1000" },
-    { code: "xp:10000", label: "10k XP", description: "Dez mil XP", family: "xp", tier: "gold", threshold: 10000, icon: "🏆", requires: "xp:5000" },
+    { code: "xp:100", label: "100 XP", description: "Earn 100 XP", family: "xp", tier: "bronze", threshold: 100, icon: "✨" },
+    { code: "xp:500", label: "500 XP", description: "Earn 500 XP", family: "xp", tier: "bronze", threshold: 500, icon: "⭐", requires: "xp:100" },
+    { code: "xp:1000", label: "1k XP", description: "One thousand XP", family: "xp", tier: "silver", threshold: 1000, icon: "🌟", requires: "xp:500" },
+    { code: "xp:5000", label: "5k XP", description: "Five thousand XP", family: "xp", tier: "silver", threshold: 5000, icon: "💫", requires: "xp:1000" },
+    { code: "xp:10000", label: "10k XP", description: "Ten thousand XP", family: "xp", tier: "gold", threshold: 10000, icon: "🏆", requires: "xp:5000" },
 
-    { code: "lessons:1", label: "Primeira aula", description: "Conclua uma aula", family: "lessons", tier: "bronze", threshold: 1, counterKey: "lessons_completed", icon: "🎓" },
-    { code: "lessons:10", label: "10 aulas", description: "10 aulas concluídas", family: "lessons", tier: "bronze", threshold: 10, counterKey: "lessons_completed", icon: "📚", requires: "lessons:1" },
-    { code: "lessons:50", label: "50 aulas", description: "Meio centenário", family: "lessons", tier: "silver", threshold: 50, counterKey: "lessons_completed", icon: "📖", requires: "lessons:10" },
-    { code: "lessons:100", label: "100 aulas", description: "Cem aulas", family: "lessons", tier: "gold", threshold: 100, counterKey: "lessons_completed", icon: "🥇", requires: "lessons:50" },
+    { code: "lessons:1", label: "First lesson", description: "Complete one lesson", family: "lessons", tier: "bronze", threshold: 1, counterKey: "lessons_completed", icon: "🎓" },
+    { code: "lessons:10", label: "10 lessons", description: "10 lessons completed", family: "lessons", tier: "bronze", threshold: 10, counterKey: "lessons_completed", icon: "📚", requires: "lessons:1" },
+    { code: "lessons:50", label: "50 lessons", description: "Half-century", family: "lessons", tier: "silver", threshold: 50, counterKey: "lessons_completed", icon: "📖", requires: "lessons:10" },
+    { code: "lessons:100", label: "100 lessons", description: "One hundred lessons", family: "lessons", tier: "gold", threshold: 100, counterKey: "lessons_completed", icon: "🥇", requires: "lessons:50" },
 
-    { code: "focus:60", label: "1h focado", description: "1h de foco", family: "focus", tier: "bronze", threshold: 60, counterKey: "focus_minutes", icon: "🧘" },
-    { code: "focus:600", label: "10h focado", description: "10h de foco", family: "focus", tier: "silver", threshold: 600, counterKey: "focus_minutes", icon: "🎯", requires: "focus:60" },
-    { code: "focus:6000", label: "100h focado", description: "100h de foco", family: "focus", tier: "gold", threshold: 6000, counterKey: "focus_minutes", icon: "🔥", requires: "focus:600" },
+    { code: "focus:60", label: "1h focused", description: "1 hour of focus", family: "focus", tier: "bronze", threshold: 60, counterKey: "focus_minutes", icon: "🧘" },
+    { code: "focus:600", label: "10h focused", description: "10 hours of focus", family: "focus", tier: "silver", threshold: 600, counterKey: "focus_minutes", icon: "🎯", requires: "focus:60" },
+    { code: "focus:6000", label: "100h focused", description: "100 hours of focus", family: "focus", tier: "gold", threshold: 6000, counterKey: "focus_minutes", icon: "🔥", requires: "focus:600" },
 
-    { code: "streak:3", label: "3 dias", description: "Streak de 3 dias", family: "streak", tier: "bronze", threshold: 3, icon: "🔥" },
-    { code: "streak:7", label: "7 dias", description: "1 semana de streak", family: "streak", tier: "bronze", threshold: 7, icon: "🔥🔥", requires: "streak:3" },
-    { code: "streak:30", label: "30 dias", description: "Um mês inteiro", family: "streak", tier: "silver", threshold: 30, icon: "🔥🔥🔥", requires: "streak:7" },
-    { code: "streak:100", label: "100 dias", description: "Hábito de aço", family: "streak", tier: "gold", threshold: 100, icon: "🏅", requires: "streak:30" },
+    { code: "streak:3", label: "3 days", description: "3-day streak", family: "streak", tier: "bronze", threshold: 3, icon: "🔥" },
+    { code: "streak:7", label: "7 days", description: "1-week streak", family: "streak", tier: "bronze", threshold: 7, icon: "🔥🔥", requires: "streak:3" },
+    { code: "streak:30", label: "30 days", description: "A full month", family: "streak", tier: "silver", threshold: 30, icon: "🔥🔥🔥", requires: "streak:7" },
+    { code: "streak:100", label: "100 days", description: "Steady habit", family: "streak", tier: "gold", threshold: 100, icon: "🏅", requires: "streak:30" },
   ];
 
   type Family = "xp" | "lessons" | "focus" | "streak";
   const FAMILIES: { key: Family; title: string; emoji: string; counterKey?: string }[] = [
     { key: "xp", title: "XP", emoji: "✨" },
-    { key: "lessons", title: "Aulas", emoji: "📚", counterKey: "lessons_completed" },
-    { key: "focus", title: "Foco", emoji: "🧘", counterKey: "focus_minutes" },
+    { key: "lessons", title: "Lessons", emoji: "📚", counterKey: "lessons_completed" },
+    { key: "focus", title: "Focus", emoji: "🧘", counterKey: "focus_minutes" },
     { key: "streak", title: "Streak", emoji: "🔥" },
   ];
 
@@ -143,33 +143,33 @@
 
   function fmtRel(secs: number): string {
     const days = Math.floor((Date.now() / 1000 - secs) / 86400);
-    if (days <= 0) return "hoje";
-    if (days === 1) return "ontem";
-    if (days < 30) return `${days}d atrás`;
-    if (days < 365) return `${Math.floor(days / 30)}mo atrás`;
-    return `${Math.floor(days / 365)}a atrás`;
+    if (days <= 0) return "today";
+    if (days === 1) return "yesterday";
+    if (days < 30) return `${days}d ago`;
+    if (days < 365) return `${Math.floor(days / 30)}mo ago`;
+    return `${Math.floor(days / 365)}y ago`;
   }
 
   onMount(load);
 </script>
 
 <section class="tree-page">
-  <PageHero title="Skill tree" subtitle="Pré-requisitos visuais por família" />
+  <PageHero title="Skill tree" subtitle="Visual prerequisites by family" />
 
   <header class="actions">
-    <a class="link" href="/study/achievements">← Voltar pra dashboard</a>
-    <a class="link" href="/study/achievements/charts">Charts de progressão →</a>
+    <a class="link" href="/study/achievements">← Back to dashboard</a>
+    <a class="link" href="/study/achievements/charts">Progress charts →</a>
   </header>
 
   {#if loading}
-    <div class="state">Carregando…</div>
+    <div class="state">Loading...</div>
   {:else if error}
     <div class="state err">{error}</div>
   {:else}
     <div class="legend">
-      <span class="leg unlocked"><span class="dot"></span>desbloqueado</span>
-      <span class="leg available"><span class="dot"></span>disponível</span>
-      <span class="leg locked"><span class="dot"></span>bloqueado</span>
+      <span class="leg unlocked"><span class="dot"></span>unlocked</span>
+      <span class="leg available"><span class="dot"></span>available</span>
+      <span class="leg locked"><span class="dot"></span>locked</span>
     </div>
 
     <div class="trees">
@@ -241,24 +241,24 @@
             type="button"
             class="detail-close"
             onclick={() => (selectedCode = null)}
-            aria-label="Fechar"
+            aria-label="Close"
           >×</button>
         </header>
         <p>{detail.description}</p>
         {#if dState === "unlocked"}
           <p class="detail-status ok">
-            ✓ Desbloqueado{dUnlock ? ` ${fmtRel(dUnlock.unlocked_at)}` : ""}
+            ✓ Unlocked{dUnlock ? ` ${fmtRel(dUnlock.unlocked_at)}` : ""}
           </p>
         {:else}
           {#if detail.requires}
             {@const reqState = unlockedSet.has(detail.requires) ? "ok" : "locked"}
             <p class="detail-status">
-              <span class="muted">Pré-requisito:</span>
+              <span class="muted">Prerequisite:</span>
               <code>{detail.requires}</code>
               {#if reqState === "ok"}
                 <span class="ok">✓</span>
               {:else}
-                <span class="warn">pendente</span>
+                <span class="warn">pending</span>
               {/if}
             </p>
           {/if}
