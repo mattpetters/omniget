@@ -42,18 +42,6 @@ fn normalize_quality(q: Option<&str>) -> String {
     q.trim_end_matches('p').trim_end_matches('P').to_string()
 }
 
-/// Resolve the python interpreter for the CDM helper.
-async fn ensure_python() -> Result<std::path::PathBuf> {
-    for cand in ["python3", "python"] {
-        if let Some(p) = dependencies::find_tool(cand).await {
-            return Ok(p);
-        }
-    }
-    Err(anyhow!(
-        "python3 not found. Udemy DRM decryption needs python3 with pywidevine installed: `pip install pywidevine`"
-    ))
-}
-
 impl UdemyDownloader {
     /// Resolve course + lecture metadata for a lecture URL.
     async fn fetch_detail(url: &str) -> Result<(api::UdemyClient, String, api::LectureDetail)> {
@@ -64,12 +52,12 @@ impl UdemyDownloader {
             .ok_or_else(|| anyhow!("Could not parse lecture id from URL: {url}"))?;
         let course = api::resolve_course(&client, &slug).await.map_err(|error| {
             anyhow!(
-                "Failed to resolve Udemy course — sign in to Udemy and refresh its managed cookies: {error}"
+                "Failed to resolve Udemy course — sign in to Udemy and refresh its managed cookies: {error:#}"
             )
         })?;
         let detail = api::get_lecture_detail(&client, course.id, lecture_id)
             .await
-            .map_err(|error| anyhow!("Failed to fetch Udemy lecture detail: {error}"))?;
+            .map_err(|error| anyhow!("Failed to fetch Udemy lecture detail: {error:#}"))?;
         Ok((client, slug, detail))
     }
 }
@@ -249,7 +237,9 @@ impl UdemyDownloader {
         let ffmpeg = dependencies::ensure_ffmpeg()
             .await
             .context("ffmpeg is required to mux decrypted Udemy video")?;
-        let python = ensure_python().await?;
+        let python = dependencies::ensure_pywidevine_python()
+            .await
+            .context("Python with pywidevine is required for Udemy DRM decryption")?;
         let cdm_script = drm::materialize_cdm_script().await?;
 
         let tools = drm::DrmTools {
@@ -276,7 +266,7 @@ impl UdemyDownloader {
             progress,
         )
         .await
-        .context("Udemy Widevine decryption pipeline failed")?;
+        .map_err(|error| anyhow!("Udemy Widevine decryption pipeline failed: {error:#}"))?;
 
         let size = std::fs::metadata(&path)?.len();
         if size == 0 {

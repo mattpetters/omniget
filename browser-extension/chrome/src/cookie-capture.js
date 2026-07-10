@@ -26,6 +26,8 @@ const TRACKED_PLATFORMS = {
   "pinterest.com": "pinterest",
   "bsky.app": "bluesky",
   "bsky.social": "bluesky",
+  "patreon.com": "patreon",
+  "patreonusercontent.com": "patreon",
 };
 
 function rootDomainOf(host) {

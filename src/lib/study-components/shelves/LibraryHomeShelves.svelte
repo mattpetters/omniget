@@ -356,6 +356,7 @@
 <script module lang="ts">
   const PLATFORM_LABELS: Record<string, string> = {
     udemy: "Udemy",
+    patreon: "Patreon",
     hotmart: "Hotmart",
     kiwify: "Kiwify",
     gumroad: "Gumroad",

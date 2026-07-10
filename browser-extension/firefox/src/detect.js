@@ -57,6 +57,7 @@ function detectPlatform(url) {
   if (matchesHost(host, "vimeo.com")) return "vimeo";
   if (matchesHost(host, "udemy.com")) return "udemy";
   if (matchesHost(host, "bilibili.com") || host === "b23.tv") return "bilibili";
+  if (matchesHost(host, "patreon.com")) return "patreon";
 
   return null;
 }
@@ -90,6 +91,8 @@ function detectContentType(platform, url) {
       return parseUdemy(segments);
     case "bilibili":
       return parseBilibili(segments);
+    case "patreon":
+      return parsePatreon(url, segments);
     default:
       return "unknown";
   }
@@ -263,6 +266,18 @@ function parseUdemy(segments) {
 
 function parseBilibili(segments) {
   return segments[0] === "video" && segments[1] ? "video" : "unknown";
+}
+
+function parsePatreon(url, segments) {
+  if (
+    segments.length === 1 &&
+    segments[0].toLowerCase() === "creation" &&
+    /^\d+$/.test(url.searchParams.get("hid") || "")
+  ) {
+    return "post";
+  }
+  const postsIndex = segments.indexOf("posts");
+  return postsIndex !== -1 && segments[postsIndex + 1] ? "post" : "unknown";
 }
 
 function matchesHost(host, domain) {

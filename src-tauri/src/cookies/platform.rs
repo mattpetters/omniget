@@ -25,6 +25,7 @@ pub enum PlatformKind {
     Reddit,
     Pinterest,
     Bluesky,
+    Patreon,
     Generic,
 }
 
@@ -45,6 +46,7 @@ impl PlatformKind {
             PlatformKind::Reddit => "reddit",
             PlatformKind::Pinterest => "pinterest",
             PlatformKind::Bluesky => "bluesky",
+            PlatformKind::Patreon => "patreon",
             PlatformKind::Generic => "generic",
         }
     }
@@ -69,6 +71,7 @@ impl PlatformKind {
             "reddit.com" => PlatformKind::Reddit,
             "pinterest.com" => PlatformKind::Pinterest,
             "bsky.app" | "bsky.social" => PlatformKind::Bluesky,
+            "patreon.com" | "patreonusercontent.com" => PlatformKind::Patreon,
             _ => PlatformKind::Generic,
         }
     }
@@ -127,6 +130,18 @@ mod tests {
         assert_eq!(
             PlatformKind::from_domain("bandcamp.com"),
             PlatformKind::Generic
+        );
+    }
+
+    #[test]
+    fn patreon_and_its_media_cdn_share_the_patreon_kind() {
+        assert_eq!(
+            PlatformKind::from_domain("www.patreon.com"),
+            PlatformKind::Patreon
+        );
+        assert_eq!(
+            PlatformKind::from_domain("c10.patreonusercontent.com"),
+            PlatformKind::Patreon
         );
     }
 

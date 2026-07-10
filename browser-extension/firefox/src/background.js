@@ -463,6 +463,8 @@ const TRACKED_COOKIE_NAMES = new Set([
   "sc_anonymous_id",
   "moe_uuid",
   "datadome",
+  "session_id",
+  "patreon_device_id",
 ]);
 
 const TRACKED_DOMAIN_SUFFIXES = [
@@ -483,6 +485,8 @@ const TRACKED_DOMAIN_SUFFIXES = [
   ".bsky.social",
   ".telegram.org",
   ".soundcloud.com",
+  ".patreon.com",
+  ".patreonusercontent.com",
 ];
 
 function platformForDomain(domain) {
@@ -502,6 +506,12 @@ function platformForDomain(domain) {
   if (d.endsWith(".bsky.app") || d.endsWith(".bsky.social")) return "bluesky";
   if (d.endsWith(".telegram.org")) return "telegram";
   if (d.endsWith(".soundcloud.com") || d === "soundcloud.com") return "soundcloud";
+  if (
+    d.endsWith(".patreon.com") ||
+    d === "patreon.com" ||
+    d.endsWith(".patreonusercontent.com") ||
+    d === "patreonusercontent.com"
+  ) return "patreon";
   return null;
 }
 
@@ -600,6 +610,7 @@ async function scanAllPlatformsForCookies() {
     "udemy",
     "bluesky",
     "telegram",
+    "patreon",
   ];
   for (const platform of allPlatforms) {
     try {

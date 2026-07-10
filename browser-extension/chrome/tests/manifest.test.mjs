@@ -3,9 +3,14 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const manifestUrl = new URL("../manifest.json", import.meta.url);
+const firefoxManifestUrl = new URL("../../firefox/manifest.json", import.meta.url);
 
 async function readManifest() {
   return JSON.parse(await readFile(manifestUrl, "utf8"));
+}
+
+async function readFirefoxManifest() {
+  return JSON.parse(await readFile(firefoxManifestUrl, "utf8"));
 }
 
 test("declares popup as default action", async () => {
@@ -63,12 +68,32 @@ test("declares platform-scoped host_permissions instead of a wildcard", async ()
     "*://*.vimeo.com/*",
     "*://*.udemy.com/*",
     "*://*.bilibili.com/*",
+    "*://patreon.com/*",
+    "*://*.patreon.com/*",
+    "*://*.patreonusercontent.com/*",
   ];
   for (const pattern of requiredPatterns) {
     assert.ok(
       manifest.host_permissions.includes(pattern),
       `host_permissions missing required pattern ${pattern}`,
     );
+  }
+});
+
+test("Chrome and Firefox ship the same Patreon permissions and patch version", async () => {
+  const chromeManifest = await readManifest();
+  const firefoxManifest = await readFirefoxManifest();
+  const patreonPatterns = [
+    "*://patreon.com/*",
+    "*://*.patreon.com/*",
+    "*://*.patreonusercontent.com/*",
+  ];
+
+  assert.equal(chromeManifest.version, "0.4.1");
+  assert.equal(firefoxManifest.version, chromeManifest.version);
+  for (const pattern of patreonPatterns) {
+    assert.ok(chromeManifest.host_permissions.includes(pattern));
+    assert.ok(firefoxManifest.host_permissions.includes(pattern));
   }
 });
 

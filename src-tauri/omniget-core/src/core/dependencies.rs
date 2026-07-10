@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 use std::process::Stdio;
+use std::sync::OnceLock;
 
 use anyhow::anyhow;
 
@@ -949,5 +950,517 @@ mod integrity_tests {
         );
         assert_eq!(parse_github_digest(VAZIO), None);
         assert_eq!(parse_github_digest("sha512:abc"), None);
+    }
+}
+
+/// N_m3u8DL-RE is intentionally pinned. Its beta releases are not API-stable:
+/// v0.6.0 (20260628) regressed redirected-console downloads and could exit 0
+/// immediately after parsing a valid Udemy master playlist. Keep this version
+/// coupled to the invocation/output validation in `core::udemy::drm`.
+const N_M3U8DL_RE_TAG: &str = "v0.5.1-beta";
+const N_M3U8DL_RE_VERSION: &str = "0.5.1";
+
+/// The Python dependency is installed into an isolated managed venv so the
+/// desktop app does not depend on (or mutate) the user's global Python site.
+const PYWIDEVINE_VERSION: &str = "1.9.0";
+
+/// Pinned Bento4 build (the bok.net binaries are versioned by build number and
+/// have no "latest" API; this build is verified-good across platforms).
+const BENTO4_BUILD: &str = "1-6-0-641";
+
+fn n_m3u8dl_install_lock() -> &'static tokio::sync::Mutex<()> {
+    static LOCK: OnceLock<tokio::sync::Mutex<()>> = OnceLock::new();
+    LOCK.get_or_init(|| tokio::sync::Mutex::new(()))
+}
+
+fn pywidevine_install_lock() -> &'static tokio::sync::Mutex<()> {
+    static LOCK: OnceLock<tokio::sync::Mutex<()>> = OnceLock::new();
+    LOCK.get_or_init(|| tokio::sync::Mutex::new(()))
+}
+
+#[cfg(unix)]
+fn make_executable(path: &std::path::Path) {
+    use std::os::unix::fs::PermissionsExt;
+    let _ = std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o755));
+}
+#[cfg(not(unix))]
+fn make_executable(_path: &std::path::Path) {}
+
+#[cfg(target_os = "macos")]
+async fn dequarantine(path: &std::path::Path) {
+    let p = path.to_path_buf();
+    let _ = tokio::task::spawn_blocking(move || {
+        crate::core::process::std_command("xattr")
+            .args(["-d", "com.apple.quarantine"])
+            .arg(&p)
+            .output()
+    })
+    .await;
+}
+#[cfg(not(target_os = "macos"))]
+async fn dequarantine(_path: &std::path::Path) {}
+
+fn drm_http_client() -> anyhow::Result<reqwest::Client> {
+    Ok(
+        crate::core::http_client::apply_global_proxy(reqwest::Client::builder())
+            .timeout(std::time::Duration::from_secs(300))
+            .build()?,
+    )
+}
+
+fn n_m3u8dl_asset() -> (&'static str, &'static str) {
+    if cfg!(target_os = "windows") {
+        if cfg!(target_arch = "aarch64") {
+            (
+                "N_m3u8DL-RE_v0.5.1-beta_win-arm64_20251029.zip",
+                "eb7f645399ae4b67101070d14f05c8af905ce94bc4d83cb4323456c8f267d53e",
+            )
+        } else {
+            (
+                "N_m3u8DL-RE_v0.5.1-beta_win-x64_20251029.zip",
+                "7e2e5e64c2893aef118febc2213cd43706fce8bd0ffd5e8dd94024d79ea365e9",
+            )
+        }
+    } else if cfg!(target_os = "macos") {
+        if cfg!(target_arch = "aarch64") {
+            (
+                "N_m3u8DL-RE_v0.5.1-beta_osx-arm64_20251029.tar.gz",
+                "537866d7d03c9aed04c910014bceae26a3db494c1d1edae9c59ddaaa29b0a1c7",
+            )
+        } else {
+            (
+                "N_m3u8DL-RE_v0.5.1-beta_osx-x64_20251029.tar.gz",
+                "fb0d9fd6c18b08a5c55e49f60d3c219471196bd05bf15e58f318a44da500f65a",
+            )
+        }
+    } else if cfg!(target_arch = "aarch64") {
+        (
+            "N_m3u8DL-RE_v0.5.1-beta_linux-arm64_20251029.tar.gz",
+            "b9cce9978e94fd8ce509ee86a6543cccffeb0ee5b7b7aeff1314104265ac65ad",
+        )
+    } else {
+        (
+            "N_m3u8DL-RE_v0.5.1-beta_linux-x64_20251029.tar.gz",
+            "2acce91b64af3ee676a32d1002e1382840d81f430e1b7f8d5b151ce1eb6fb590",
+        )
+    }
+}
+
+fn sha256_hex(bytes: &[u8]) -> String {
+    use sha2::{Digest, Sha256};
+    let mut hasher = Sha256::new();
+    hasher.update(bytes);
+    hasher
+        .finalize()
+        .iter()
+        .map(|byte| format!("{byte:02x}"))
+        .collect()
+}
+
+fn n_m3u8dl_version_is_pinned(output: &str) -> bool {
+    output.lines().map(str::trim).any(|line| {
+        line == N_M3U8DL_RE_VERSION || line.starts_with(&format!("{N_M3U8DL_RE_VERSION}+"))
+    })
+}
+
+async fn n_m3u8dl_binary_is_pinned(path: &std::path::Path) -> bool {
+    let output = match crate::core::process::command(path)
+        .arg("--version")
+        .output()
+        .await
+    {
+        Ok(output) if output.status.success() => output,
+        _ => return false,
+    };
+    let combined = format!(
+        "{}\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    n_m3u8dl_version_is_pinned(&combined)
+}
+
+/// Ensure a verified N_m3u8DL-RE build is available. We replace unpinned
+/// managed builds rather than following `releases/latest`, since beta updates
+/// have previously broken valid encrypted-HLS downloads without a non-zero
+/// process status.
+pub async fn ensure_n_m3u8dl_re() -> anyhow::Result<PathBuf> {
+    let bin_dir = managed_bin_dir().ok_or_else(|| anyhow!("Could not determine data directory"))?;
+    std::fs::create_dir_all(&bin_dir)?;
+    let target = bin_dir.join(bin_name("N_m3u8DL-RE"));
+
+    if target.exists() && n_m3u8dl_binary_is_pinned(&target).await {
+        return Ok(target);
+    }
+    if !target.exists() {
+        if let Some(system) = find_tool("N_m3u8DL-RE").await {
+            if n_m3u8dl_binary_is_pinned(&system).await {
+                return Ok(system);
+            }
+        }
+    }
+
+    let _guard = n_m3u8dl_install_lock().lock().await;
+    if target.exists() && n_m3u8dl_binary_is_pinned(&target).await {
+        return Ok(target);
+    }
+
+    let (asset_name, expected_sha256) = n_m3u8dl_asset();
+    let url = format!(
+        "https://github.com/nilaoda/N_m3u8DL-RE/releases/download/{N_M3U8DL_RE_TAG}/{asset_name}"
+    );
+    tracing::info!(
+        "Downloading pinned N_m3u8DL-RE {} from {}",
+        N_M3U8DL_RE_TAG,
+        url
+    );
+    let bytes = drm_http_client()?
+        .get(&url)
+        .send()
+        .await?
+        .error_for_status()?
+        .bytes()
+        .await?
+        .to_vec();
+    let actual_sha256 = sha256_hex(&bytes);
+    if actual_sha256 != expected_sha256 {
+        return Err(anyhow!(
+            "N_m3u8DL-RE checksum mismatch (expected {expected_sha256}, got {actual_sha256}) — refusing to install"
+        ));
+    }
+
+    let staged = bin_dir.join(format!(".{}.new", bin_name("N_m3u8DL-RE")));
+    let _ = std::fs::remove_file(&staged);
+    let member = bin_name("N_m3u8DL-RE");
+    let staged_clone = staged.clone();
+    let is_zip = asset_name.ends_with(".zip");
+    tokio::task::spawn_blocking(move || -> anyhow::Result<()> {
+        if is_zip {
+            extract_member_from_zip(&bytes, &member, &staged_clone)
+        } else {
+            extract_member_from_tar_gz(&bytes, &member, &staged_clone)
+        }
+    })
+    .await
+    .map_err(|error| anyhow!("N_m3u8DL-RE extract task failed: {error}"))??;
+
+    if !staged.exists() {
+        return Err(anyhow!("N_m3u8DL-RE binary not found after extraction"));
+    }
+    make_executable(&staged);
+    dequarantine(&staged).await;
+    if !n_m3u8dl_binary_is_pinned(&staged).await {
+        let _ = std::fs::remove_file(&staged);
+        return Err(anyhow!(
+            "Downloaded N_m3u8DL-RE did not report expected version {N_M3U8DL_RE_VERSION}"
+        ));
+    }
+    replace_managed_binary(&staged, &target)?;
+    tracing::info!(
+        "N_m3u8DL-RE {} installed to {}",
+        N_M3U8DL_RE_TAG,
+        target.display()
+    );
+    Ok(target)
+}
+
+fn managed_pywidevine_python(venv: &std::path::Path) -> PathBuf {
+    if cfg!(target_os = "windows") {
+        venv.join("Scripts").join("python.exe")
+    } else {
+        venv.join("bin").join("python")
+    }
+}
+
+async fn python_has_managed_pywidevine(python: &std::path::Path) -> bool {
+    let check = format!(
+        "import importlib.metadata; from pywidevine.cdm import Cdm; from pywidevine.device import Device; from pywidevine.pssh import PSSH; assert importlib.metadata.version('pywidevine') == '{PYWIDEVINE_VERSION}'"
+    );
+    crate::core::process::command(python)
+        .args(["-c", &check])
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+        .await
+        .is_ok_and(|status| status.success())
+}
+
+fn process_failure_tail(output: &std::process::Output) -> String {
+    let text = format!(
+        "{}\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    text.lines()
+        .rev()
+        .take(12)
+        .collect::<Vec<_>>()
+        .into_iter()
+        .rev()
+        .collect::<Vec<_>>()
+        .join(" | ")
+}
+
+/// Ensure an isolated Python runtime containing the pywidevine version tested
+/// with OmniGet's CDM helper. The global Python environment is never modified.
+pub async fn ensure_pywidevine_python() -> anyhow::Result<PathBuf> {
+    let bin_dir = managed_bin_dir().ok_or_else(|| anyhow!("Could not determine data directory"))?;
+    std::fs::create_dir_all(&bin_dir)?;
+    let venv = bin_dir.join(format!("pywidevine-{PYWIDEVINE_VERSION}"));
+    let managed_python = managed_pywidevine_python(&venv);
+    if managed_python.exists() && python_has_managed_pywidevine(&managed_python).await {
+        return Ok(managed_python);
+    }
+
+    let _guard = pywidevine_install_lock().lock().await;
+    if managed_python.exists() && python_has_managed_pywidevine(&managed_python).await {
+        return Ok(managed_python);
+    }
+
+    let mut base_python = None;
+    for candidate in ["python3", "python"] {
+        if let Some(path) = find_tool(candidate).await {
+            base_python = Some(path);
+            break;
+        }
+    }
+    let base_python = base_python.ok_or_else(|| {
+        anyhow!(
+            "Python 3 was not found. Udemy Widevine downloads need Python 3 to create OmniGet's managed pywidevine runtime"
+        )
+    })?;
+
+    if venv.exists() {
+        std::fs::remove_dir_all(&venv).map_err(|error| {
+            anyhow!(
+                "Could not repair managed pywidevine runtime at {}: {error}",
+                venv.display()
+            )
+        })?;
+    }
+    tracing::info!(
+        "Creating managed pywidevine {} runtime with {}",
+        PYWIDEVINE_VERSION,
+        base_python.display()
+    );
+    let create = crate::core::process::command(&base_python)
+        .args(["-m", "venv"])
+        .arg(&venv)
+        .output()
+        .await
+        .map_err(|error| {
+            anyhow!(
+                "Failed to run {} -m venv for the managed pywidevine runtime: {error}",
+                base_python.display()
+            )
+        })?;
+    if !create.status.success() {
+        return Err(anyhow!(
+            "Python could not create OmniGet's managed pywidevine runtime (exit {}). Install Python's venv support and retry. Details: {}",
+            create.status,
+            process_failure_tail(&create)
+        ));
+    }
+
+    let requirement = format!("pywidevine=={PYWIDEVINE_VERSION}");
+    let install = crate::core::process::command(&managed_python)
+        .args([
+            "-m",
+            "pip",
+            "install",
+            "--disable-pip-version-check",
+            "--no-input",
+            &requirement,
+        ])
+        .output()
+        .await
+        .map_err(|error| {
+            anyhow!("Failed to start pip for the managed pywidevine runtime: {error}")
+        })?;
+    if !install.status.success() {
+        return Err(anyhow!(
+            "Could not install {requirement} into OmniGet's managed runtime (exit {}). Check the network connection and retry. Details: {}",
+            install.status,
+            process_failure_tail(&install)
+        ));
+    }
+    if !python_has_managed_pywidevine(&managed_python).await {
+        return Err(anyhow!(
+            "Managed Python runtime was created, but pywidevine {PYWIDEVINE_VERSION} failed its import check at {}",
+            managed_python.display()
+        ));
+    }
+    tracing::info!(
+        "Managed pywidevine {} runtime ready at {}",
+        PYWIDEVINE_VERSION,
+        managed_python.display()
+    );
+    Ok(managed_python)
+}
+
+/// Ensure `mp4decrypt` (Bento4) is available, auto-downloading a pinned Bento4
+/// build for this platform if missing.
+pub async fn ensure_mp4decrypt() -> anyhow::Result<PathBuf> {
+    if let Some(path) = find_tool("mp4decrypt").await {
+        return Ok(path);
+    }
+    let bin_dir = managed_bin_dir().ok_or_else(|| anyhow!("Could not determine data directory"))?;
+    std::fs::create_dir_all(&bin_dir)?;
+    let target = bin_dir.join(bin_name("mp4decrypt"));
+    if target.exists() {
+        return Ok(target);
+    }
+
+    let plat = if cfg!(target_os = "windows") {
+        Some("x86_64-microsoft-win32")
+    } else if cfg!(target_os = "macos") {
+        Some("universal-apple-macosx")
+    } else if cfg!(target_arch = "x86_64") {
+        Some("x86_64-unknown-linux")
+    } else {
+        None
+    };
+    let plat = plat.ok_or_else(|| {
+        anyhow!("No prebuilt Bento4 mp4decrypt for this platform — install it via your package manager (e.g. `brew install bento4`)")
+    })?;
+
+    let url = format!("https://www.bok.net/Bento4/binaries/Bento4-SDK-{BENTO4_BUILD}.{plat}.zip");
+    tracing::info!("Downloading Bento4 (mp4decrypt) from {}", url);
+    let client = drm_http_client()?;
+    let bytes = client
+        .get(&url)
+        .send()
+        .await?
+        .error_for_status()?
+        .bytes()
+        .await?
+        .to_vec();
+
+    // The zip nests files under `Bento4-SDK-.../bin/mp4decrypt`.
+    let member = format!("bin/{}", bin_name("mp4decrypt"));
+    let target_clone = target.clone();
+    tokio::task::spawn_blocking(move || extract_member_from_zip(&bytes, &member, &target_clone))
+        .await
+        .map_err(|e| anyhow!("extract task failed: {e}"))??;
+
+    if !target.exists() {
+        return Err(anyhow!("mp4decrypt binary not found after extraction"));
+    }
+    make_executable(&target);
+    dequarantine(&target).await;
+    tracing::info!("mp4decrypt installed to {}", target.display());
+    Ok(target)
+}
+
+/// Extract the first archive member whose path ends with `member_suffix` into
+/// `dest` (a zip blob held in memory).
+fn extract_member_from_zip(
+    data: &[u8],
+    member_suffix: &str,
+    dest: &std::path::Path,
+) -> anyhow::Result<()> {
+    let cursor = std::io::Cursor::new(data);
+    let mut archive = zip::ZipArchive::new(cursor).map_err(|e| anyhow!("open zip: {e}"))?;
+    for i in 0..archive.len() {
+        let mut entry = archive.by_index(i).map_err(|e| anyhow!("zip entry: {e}"))?;
+        let name = entry.name().replace('\\', "/");
+        if name.ends_with(member_suffix) || name.ends_with(&format!("/{member_suffix}")) {
+            let mut buf = Vec::new();
+            std::io::Read::read_to_end(&mut entry, &mut buf)?;
+            std::fs::write(dest, &buf)?;
+            return Ok(());
+        }
+    }
+    Err(anyhow!("member '{member_suffix}' not found in zip"))
+}
+
+/// Extract the first tar.gz member whose filename equals `member_name` into `dest`.
+fn extract_member_from_tar_gz(
+    data: &[u8],
+    member_name: &str,
+    dest: &std::path::Path,
+) -> anyhow::Result<()> {
+    let decoder = flate2::read::GzDecoder::new(std::io::Cursor::new(data));
+    let mut archive = tar::Archive::new(decoder);
+    for entry in archive.entries().map_err(|e| anyhow!("tar entries: {e}"))? {
+        let mut entry = entry.map_err(|e| anyhow!("tar entry: {e}"))?;
+        let path = entry.path().map_err(|e| anyhow!("tar path: {e}"))?;
+        let fname = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+        if fname == member_name {
+            let mut buf = Vec::new();
+            std::io::Read::read_to_end(&mut entry, &mut buf)?;
+            std::fs::write(dest, &buf)?;
+            return Ok(());
+        }
+    }
+}
+
+#[cfg(test)]
+mod udemy_drm_dependency_tests {
+    use super::*;
+
+    #[test]
+    fn accepts_only_the_pinned_n_m3u8dl_version() {
+        assert!(n_m3u8dl_version_is_pinned(
+            "0.5.1+c1f6db5639397dde362c31b31eebd88c796c90da"
+        ));
+        assert!(n_m3u8dl_version_is_pinned("0.5.1"));
+        assert!(!n_m3u8dl_version_is_pinned(
+            "0.6.0+df70f0b3da0c630bd413bf617e758051f6b64757"
+        ));
+        assert!(!n_m3u8dl_version_is_pinned("N_m3u8DL-RE 0.5.10"));
+    }
+
+    #[test]
+    fn pinned_asset_has_a_published_sha256() {
+        let (asset, digest) = n_m3u8dl_asset();
+        assert!(asset.contains("v0.5.1-beta"));
+        assert_eq!(digest.len(), 64);
+        assert!(digest.bytes().all(|byte| byte.is_ascii_hexdigit()));
+    }
+
+    #[test]
+    fn sha256_matches_known_vector() {
+        assert_eq!(
+            sha256_hex(b""),
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        );
+    }
+
+    #[test]
+    fn managed_python_path_matches_platform_venv_layout() {
+        let path = managed_pywidevine_python(std::path::Path::new("runtime"));
+        if cfg!(target_os = "windows") {
+            assert!(path.ends_with(std::path::Path::new("Scripts/python.exe")));
+        } else {
+            assert!(path.ends_with(std::path::Path::new("bin/python")));
+        }
+    }
+
+    #[tokio::test]
+    #[ignore = "downloads pinned DRM dependencies into a temporary data directory"]
+    async fn provisions_verified_managed_drm_runtime() {
+        let nonce = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("clock")
+            .as_nanos();
+        let data_dir = std::env::temp_dir().join(format!(
+            "omniget-managed-drm-{}-{nonce}",
+            std::process::id()
+        ));
+        let previous = std::env::var_os("OMNIGET_DATA_DIR");
+        std::env::set_var("OMNIGET_DATA_DIR", &data_dir);
+
+        let n_m3u8dl = ensure_n_m3u8dl_re().await.unwrap();
+        assert!(n_m3u8dl_binary_is_pinned(&n_m3u8dl).await);
+        let python = ensure_pywidevine_python().await.unwrap();
+        assert!(python_has_managed_pywidevine(&python).await);
+
+        if let Some(previous) = previous {
+            std::env::set_var("OMNIGET_DATA_DIR", previous);
+        } else {
+            std::env::remove_var("OMNIGET_DATA_DIR");
+        }
+        let _ = std::fs::remove_dir_all(data_dir);
     }
 }

@@ -7,6 +7,7 @@ pub mod generic_ytdlp;
 pub mod instagram;
 pub mod p2p;
 pub mod p2p_words;
+pub mod patreon;
 pub mod pinterest;
 pub mod reddit;
 pub mod threads;
@@ -24,6 +25,7 @@ pub use douyin::DouyinDownloader;
 pub use generic_ytdlp::GenericYtdlpDownloader;
 pub use instagram::InstagramDownloader;
 pub use p2p::P2pDownloader;
+pub use patreon::PatreonDownloader;
 pub use pinterest::PinterestDownloader;
 pub use reddit::RedditDownloader;
 pub use threads::ThreadsDownloader;
@@ -78,6 +80,7 @@ pub enum Platform {
     Telegram,
     Vimeo,
     Udemy,
+    Patreon,
     Bilibili,
     Other(String),
 }
@@ -98,6 +101,7 @@ impl fmt::Display for Platform {
             Platform::Telegram => "telegram",
             Platform::Vimeo => "vimeo",
             Platform::Udemy => "udemy",
+            Platform::Patreon => "patreon",
             Platform::Bilibili => "bilibili",
             Platform::Other(ref name) => name.as_str(),
         };
@@ -123,6 +127,7 @@ impl FromStr for Platform {
             "telegram" | "tg" => Ok(Platform::Telegram),
             "vimeo" => Ok(Platform::Vimeo),
             "udemy" => Ok(Platform::Udemy),
+            "patreon" => Ok(Platform::Patreon),
             "bilibili" | "b站" => Ok(Platform::Bilibili),
             _ => Err(format!("Unknown platform: {}", s)),
         }
@@ -178,6 +183,8 @@ impl Platform {
             Some(Platform::Vimeo)
         } else if matches("udemy.com") {
             Some(Platform::Udemy)
+        } else if patreon::is_patreon_post_url(url_str) {
+            Some(Platform::Patreon)
         } else if matches("bilibili.com") || matches("bilibili.tv") || host == "b23.tv" {
             Some(Platform::Bilibili)
         } else if matches("kiwify.com.br") {
@@ -232,7 +239,27 @@ impl Platform {
             Platform::Telegram,
             Platform::Vimeo,
             Platform::Udemy,
+            Platform::Patreon,
             Platform::Bilibili,
         ]
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn detects_patreon_posts_without_claiming_creator_pages() {
+        assert_eq!(
+            Platform::from_url(
+                "https://www.patreon.com/FanuFatGyver/posts/mixing-drums-up-163067112"
+            ),
+            Some(Platform::Patreon)
+        );
+        assert_eq!(
+            Platform::from_url("https://www.patreon.com/FanuFatGyver"),
+            None
+        );
     }
 }

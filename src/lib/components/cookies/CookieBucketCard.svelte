@@ -109,6 +109,7 @@
       reddit: "Reddit",
       pinterest: "Pinterest",
       bluesky: "Bluesky",
+      patreon: "Patreon",
     };
     return map[kind] ?? domain;
   }

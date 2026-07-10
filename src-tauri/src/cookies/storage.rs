@@ -308,6 +308,7 @@ fn platform_display(p: PlatformKind) -> &'static str {
         PlatformKind::Reddit => "Reddit",
         PlatformKind::Pinterest => "Pinterest",
         PlatformKind::Bluesky => "Bluesky",
+        PlatformKind::Patreon => "Patreon",
         PlatformKind::Generic => "Site",
     }
 }

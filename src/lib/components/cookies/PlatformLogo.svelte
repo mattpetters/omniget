@@ -14,6 +14,7 @@
     | "reddit"
     | "pinterest"
     | "bluesky"
+    | "patreon"
     | "generic";
 
   type Props = {
@@ -136,6 +137,13 @@
         <path d="M5.3 3.7c2.8 2.1 5.9 6.4 7 8.7 1.1-2.3 4.2-6.6 7-8.7 2-1.5 5.2-2.7 5.2 1 0 .7-.4 6.1-.7 7-.9 3-3.8 3.7-6.5 3.3 4.7.8 5.9 3.4 3.3 6-4.9 5-7-1.3-7.6-2.9-.1-.3-.2-.4-.2-.3-.1-.1-.1 0-.2.3-.5 1.6-2.7 7.9-7.6 2.9-2.6-2.6-1.3-5.2 3.3-6-2.7.4-5.6-.3-6.5-3.3-.3-.9-.7-6.3-.7-7 0-3.7 3.2-2.5 5.2-1z"/>
       </svg>
     </div>
+  {:else if kind === "patreon"}
+    <div class="bg pt">
+      <svg viewBox="0 0 24 24" width="60%" height="60%" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+        <path d="M5 4v16"/>
+        <circle cx="15" cy="9" r="5"/>
+      </svg>
+    </div>
   {:else}
     <div class="bg generic" style:background="{genericBg}">
       <span class="initial">{genericInitial}</span>
@@ -174,6 +182,7 @@
   .rd { background: #FF4500; }
   .pn { background: #E60023; }
   .bs { background: #0085FF; }
+  .pt { background: #FF424D; }
   .generic {
     color: white;
   }

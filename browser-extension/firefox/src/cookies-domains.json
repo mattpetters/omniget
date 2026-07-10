@@ -12,5 +12,6 @@
   "hotmart": [".hotmart.com"],
   "udemy": [".udemy.com"],
   "bluesky": [".bsky.app", ".bsky.social"],
-  "telegram": [".telegram.org", ".t.me"]
+  "telegram": [".telegram.org", ".t.me"],
+  "patreon": [".patreon.com", ".patreonusercontent.com"]
 }

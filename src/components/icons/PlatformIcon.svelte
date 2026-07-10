@@ -60,6 +60,11 @@
     <rect x="2" y="4" width="20" height="16" rx="4" />
     <path d="M10 9l5 3l-5 3z" />
   </svg>
+{:else if platform === "patreon"}
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 4v16" />
+    <circle cx="15" cy="9" r="5" />
+  </svg>
 {:else if platform === "soundcloud"}
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M2 17l.5-5 .5 5M5 17l.5-8 .5 8M8 17l.5-10 .5 10M11 17l.5-7 .5 7" />

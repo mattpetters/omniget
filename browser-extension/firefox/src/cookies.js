@@ -13,6 +13,7 @@ export const DEFAULT_PLATFORM_COOKIE_DOMAINS = Object.freeze({
   udemy: [".udemy.com"],
   bluesky: [".bsky.app", ".bsky.social"],
   telegram: [".telegram.org", ".t.me"],
+  patreon: [".patreon.com", ".patreonusercontent.com"],
 });
 
 export const COOKIE_DOMAINS_RESOURCE_PATH = "src/cookies-domains.json";

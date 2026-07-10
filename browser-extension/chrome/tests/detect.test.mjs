@@ -341,3 +341,32 @@ test("Bilibili: b23.tv short link", () => {
 test("Bilibili: homepage is unknown", () => {
   assertUnsupported("https://www.bilibili.com/", "bilibili", "unknown");
 });
+
+// ── Patreon ─────────────────────────────────────────────────────────────────────
+
+test("Patreon: creator-scoped post page", () => {
+  assertSupported(
+    "https://www.patreon.com/FanuFatGyver/posts/mixing-drums-up-163067112",
+    "patreon",
+    "post",
+  );
+});
+
+test("Patreon: canonical and /c/ post page formats", () => {
+  assertSupported("https://www.patreon.com/posts/mixing-drums-up-163067112", "patreon", "post");
+  assertSupported("https://www.patreon.com/c/FanuFatGyver/posts/mixing-drums-up-163067112", "patreon", "post");
+});
+
+test("Patreon: legacy creation URL", () => {
+  assertSupported("https://www.patreon.com/creation?hid=163067112", "patreon", "post");
+  assertUnsupported("https://www.patreon.com/creation?hid=not-a-post", "patreon", "unknown");
+});
+
+test("Patreon: homepage and creator profile are not mistaken for posts", () => {
+  assertUnsupported("https://www.patreon.com/", "patreon", "unknown");
+  assertUnsupported("https://www.patreon.com/FanuFatGyver", "patreon", "unknown");
+});
+
+test("Patreon: lookalike domains are not matched", () => {
+  assertNull("https://notpatreon.com/creator/posts/example-123");
+});

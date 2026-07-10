@@ -2433,11 +2433,15 @@ pub async fn download_video(
         base_args.push("--split-chapters".to_string());
     }
 
-    if embed_metadata_enabled() {
+    if embed_metadata_enabled()
+        && !extra_flags.iter().any(|flag| flag == "--no-embed-metadata")
+    {
         base_args.push("--embed-metadata".to_string());
     }
 
-    if embed_thumbnail_enabled() {
+    if embed_thumbnail_enabled()
+        && !extra_flags.iter().any(|flag| flag == "--no-embed-thumbnail")
+    {
         base_args.push("--embed-thumbnail".to_string());
         base_args.push("--convert-thumbnails".to_string());
         base_args.push("jpg".to_string());

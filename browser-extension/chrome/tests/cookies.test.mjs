@@ -169,6 +169,7 @@ test("default domains include all currently detectable platforms", async () => {
     "udemy",
     "bluesky",
     "telegram",
+    "patreon",
   ];
   for (const key of required) {
     assert.ok(
@@ -235,4 +236,25 @@ test("telegram platform is now data-driven and resolves to telegram.org", async 
   assert.ok(cookies);
   assert.equal(cookies.length, 1);
   assert.equal(cookies[0].domain, ".telegram.org");
+});
+
+test("patreon extracts account and media-host cookies", async () => {
+  const cookies = await extractCookiesForPlatform(
+    "patreon",
+    mockGetAllCookies({
+      ".patreon.com": [
+        { domain: ".patreon.com", httpOnly: true, path: "/", secure: true, expirationDate: 42, name: "session", value: "test-session" },
+      ],
+      ".patreonusercontent.com": [
+        { domain: ".patreonusercontent.com", httpOnly: false, path: "/", secure: true, expirationDate: 43, name: "media", value: "test-media" },
+      ],
+    }),
+  );
+
+  assert.ok(cookies);
+  assert.equal(cookies.length, 2);
+  assert.deepEqual(cookies.map(({ domain }) => domain), [
+    ".patreon.com",
+    ".patreonusercontent.com",
+  ]);
 });

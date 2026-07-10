@@ -8,7 +8,7 @@ Detects video and audio streams on any website and sends them to the OmniGet des
 - Groups HLS manifests into logical video sessions — no duplicate entries
 - Filters out HLS `.ts` segments and subtitle manifests automatically
 - Sends cookies, referer, and authorization headers for authenticated downloads
-- Recognizes 13 platforms by URL (YouTube, Instagram, TikTok, etc.) and activates the icon
+- Recognizes 14 platforms by URL (YouTube, Instagram, TikTok, Patreon, etc.) and activates the icon
 - Media detection works on **all websites**, not just recognized platforms
 - Dark-themed popup with quick download, batch download, and per-video controls
 - Sniffer toggle persisted across sessions
@@ -69,6 +69,7 @@ If the user clicks Download before completing the pairing flow, the extension fa
 | Vimeo | video |
 | Udemy | course |
 | Bilibili | video |
+| Patreon | authenticated post |
 
 Mirror domains are also recognized: `youtu.be`, `youtube-nocookie.com`, `ddinstagram.com`, `vxtwitter.com`, `fixvx.com`, `v.redd.it`, `redd.it`, `clips.twitch.tv`, `pin.it`, `b23.tv`, `t.me`, `telegram.me`.
 
@@ -144,7 +145,7 @@ pages/
 scripts/
   package.mjs          ZIP packaging for CWS (strips manifest key)
 tests/
-  *.test.mjs           196 tests across 9 files
+  *.test.mjs           205 tests across 16 files
 ```
 
 ## Packaging
@@ -161,7 +162,7 @@ The packaging script strips the `key` field from `manifest.json` before creating
 node --test browser-extension/chrome/tests/*.test.mjs
 ```
 
-196 tests across 9 files covering platform detection, click handling, badge feedback, tooltip titles, error content, cookie extraction, manifest validation, the omniget:// scheme builder + hidden-tab fallback, and the localhost bridge client (config IO, health probe, port discovery, fetch with timeout / 401 / network failure paths).
+205 tests across 16 files covering platform detection, manual cookie capture, click handling, badge feedback, tooltip titles, error content, cookie extraction, manifest validation, the omniget:// scheme builder + hidden-tab fallback, and the localhost bridge client (config IO, health probe, port discovery, fetch with timeout / 401 / network failure paths).
 
 ## Internationalization
 

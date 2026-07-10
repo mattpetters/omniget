@@ -43,6 +43,10 @@ pub fn parse_url(url_str: &str) -> Option<ParsedUrl> {
         Platform::Telegram => parse_telegram(&segments),
         Platform::Vimeo => parse_vimeo(&segments),
         Platform::Udemy => parse_udemy(&segments),
+        Platform::Patreon => (
+            omniget_core::platforms::patreon::patreon_post_id(parsed.as_str()),
+            ParsedContentType::Post,
+        ),
         Platform::Bilibili => parse_bilibili(&segments),
         Platform::Other(ref name) => match name.as_str() {
             "douyin" => parse_douyin(&segments),
@@ -356,4 +360,20 @@ fn parse_xiaohongshu(segments: &[&str]) -> (Option<String>, ParsedContentType) {
         return (Some(segments[2].to_string()), ParsedContentType::Post);
     }
     (None, ParsedContentType::Post)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_patreon_creator_post_url() {
+        let parsed =
+            parse_url("https://www.patreon.com/FanuFatGyver/posts/mixing-drums-up-163067112")
+                .unwrap();
+
+        assert_eq!(parsed.platform, Platform::Patreon);
+        assert_eq!(parsed.content_id.as_deref(), Some("163067112"));
+        assert_eq!(parsed.content_type, ParsedContentType::Post);
+    }
 }
