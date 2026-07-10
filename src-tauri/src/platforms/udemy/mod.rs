@@ -62,12 +62,14 @@ impl UdemyDownloader {
         let slug = api::parse_slug(url);
         let lecture_id = api::parse_lecture_id(url)
             .ok_or_else(|| anyhow!("Could not parse lecture id from URL: {url}"))?;
-        let course = api::resolve_course(&client, &slug).await.with_context(|| {
-            "Failed to resolve Udemy course — sign in to Udemy in your browser and capture cookies via the omniget browser extension"
+        let course = api::resolve_course(&client, &slug).await.map_err(|error| {
+            anyhow!(
+                "Failed to resolve Udemy course — sign in to Udemy and refresh its managed cookies: {error}"
+            )
         })?;
         let detail = api::get_lecture_detail(&client, course.id, lecture_id)
             .await
-            .context("Failed to fetch Udemy lecture detail")?;
+            .map_err(|error| anyhow!("Failed to fetch Udemy lecture detail: {error}"))?;
         Ok((client, slug, detail))
     }
 }

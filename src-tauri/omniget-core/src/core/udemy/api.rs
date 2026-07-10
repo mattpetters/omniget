@@ -10,6 +10,42 @@ use serde::Deserialize;
 
 use super::UDEMY_UA;
 
+fn safe_error_detail(body: &serde_json::Value) -> Option<String> {
+    let detail = body
+        .get("detail")
+        .or_else(|| body.get("message"))?
+        .as_str()?;
+    let detail = detail.split_whitespace().collect::<Vec<_>>().join(" ");
+    (!detail.is_empty()).then(|| detail.chars().take(300).collect())
+}
+
+/// Keep API failures actionable without dumping response bodies (which may
+/// contain account or playback metadata). Udemy's JSON errors expose a short
+/// human-readable `detail`/`message`; only that field and the HTTP status are
+/// propagated.
+async fn require_success(
+    response: reqwest::Response,
+    operation: &str,
+) -> Result<reqwest::Response> {
+    let status = response.status();
+    if status.is_success() {
+        return Ok(response);
+    }
+
+    let detail = response
+        .json::<serde_json::Value>()
+        .await
+        .ok()
+        .and_then(|body| safe_error_detail(&body));
+
+    match detail {
+        Some(detail) if !detail.trim().is_empty() => {
+            Err(anyhow!("{operation} returned HTTP {status}: {detail}"))
+        }
+        _ => Err(anyhow!("{operation} returned HTTP {status}")),
+    }
+}
+
 /// Extract and validate the Udemy portal host from a URL (`*.udemy.com`).
 pub fn udemy_host(url: &str) -> Result<String> {
     let parsed = url::Url::parse(url).map_err(|e| anyhow!("invalid Udemy URL: {e}"))?;
@@ -115,13 +151,9 @@ pub fn parse_lecture_id(input: &str) -> Option<u64> {
 pub async fn resolve_course(client: &UdemyClient, slug: &str) -> Result<Course> {
     let url = format!("{}/courses/{}/", client.base_url(), slug);
     let params = [("fields[course]", "id,title")];
-    let resp = client
-        .http
-        .get(&url)
-        .query(&params)
-        .send()
+    let resp = client.http.get(&url).query(&params).send().await?;
+    let resp = require_success(resp, "Udemy course request")
         .await?
-        .error_for_status()?
         .json::<Course>()
         .await?;
     Ok(resp)
@@ -168,13 +200,9 @@ pub async fn get_lecture_detail(
         ),
     ];
 
-    let resp = client
-        .http
-        .get(&url)
-        .query(&params)
-        .send()
+    let resp = client.http.get(&url).query(&params).send().await?;
+    let resp = require_success(resp, "Udemy lecture detail request")
         .await?
-        .error_for_status()?
         .json::<serde_json::Value>()
         .await?;
 
@@ -295,5 +323,17 @@ mod tests {
     fn hls_selection() {
         assert!(select_hls(&[mp4("720"), hls()]).is_some());
         assert!(select_hls(&[mp4("720")]).is_none());
+    }
+
+    #[test]
+    fn api_error_detail_is_single_line_and_bounded() {
+        let body = serde_json::json!({
+            "detail": format!("permission denied\r\n{}", "x".repeat(400))
+        });
+        let detail = safe_error_detail(&body).unwrap();
+        assert!(!detail.contains('\r'));
+        assert!(!detail.contains('\n'));
+        assert!(detail.starts_with("permission denied "));
+        assert_eq!(detail.chars().count(), 300);
     }
 }

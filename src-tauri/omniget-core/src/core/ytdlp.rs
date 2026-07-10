@@ -1257,7 +1257,19 @@ async fn find_ffmpeg_location_cached() -> Option<String> {
     result
 }
 
-fn per_domain_cookie_file(url: &str) -> Option<std::path::PathBuf> {
+/// Whether the embedding app installed a managed per-domain cookie resolver.
+pub(crate) fn managed_cookie_source_is_configured() -> bool {
+    PER_DOMAIN_COOKIE_FN.get().is_some()
+}
+
+/// Return the selected managed-cookie source for `url` without copying it.
+///
+/// Non-yt-dlp HTTP clients (for example the dedicated Udemy API client) use
+/// this to authenticate with the same account selected for the current queue
+/// item. The callback installed by the desktop app consults
+/// `CURRENT_COOKIE_SLUG`, so callers must resolve this while still inside the
+/// queue item's task-local scope.
+pub(crate) fn managed_cookie_source_for_url(url: &str) -> Option<std::path::PathBuf> {
     let source = PER_DOMAIN_COOKIE_FN.get()?(url)?;
     if !source.exists() {
         return None;
@@ -1267,6 +1279,11 @@ fn per_domain_cookie_file(url: &str) -> Option<std::path::PathBuf> {
     if modified.elapsed().unwrap_or_default() >= std::time::Duration::from_secs(604800 * 4) {
         return None;
     }
+    Some(source)
+}
+
+fn per_domain_cookie_file(url: &str) -> Option<std::path::PathBuf> {
+    let source = managed_cookie_source_for_url(url)?;
     let stem = source
         .file_stem()
         .and_then(|s| s.to_str())

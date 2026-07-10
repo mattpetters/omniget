@@ -1235,6 +1235,9 @@
   .downloads-page {
     display: flex;
     flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
     gap: calc(var(--padding) * 1.5);
     padding: calc(var(--padding) * 1.5);
     max-width: 800px;

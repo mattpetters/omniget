@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+<!-- git-changelog-on-commit: 2e61b91fe442b923c989a47bcd5e9c25911ca47e -->
+### Changed
+- Updated src-tauri/omniget-core/src/core/cookie_parser.rs,src-tauri/omniget-core/src/core/udemy/api.rs src-tauri/omniget-core/src/core/ytdlp.rs,src-tauri/src/platforms/udemy/mod.rs src/routes/downloads/+page.svelte based on the staged diff so the commit records the current implementation changes.
+
 <!-- git-changelog-on-commit: d42db7094cb67bb1cae67694fd3dbdd7d851a37e -->
 ### Changed
 - Updated src-tauri/tauri.conf.json based on the staged diff so the commit records the current implementation changes.

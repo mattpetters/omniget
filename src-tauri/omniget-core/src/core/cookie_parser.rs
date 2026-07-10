@@ -1,5 +1,8 @@
 use std::collections::HashMap;
 use std::sync::Arc;
+use std::time::{SystemTime, UNIX_EPOCH};
+
+use reqwest::cookie::Jar;
 
 fn cookie_domain_matches(
     request_domain: &str,
@@ -14,12 +17,20 @@ fn cookie_domain_matches(
 }
 
 pub fn load_extension_cookies_for_domain(domain: &str) -> Option<Arc<reqwest::cookie::Jar>> {
-    let cookie_path = crate::core::ytdlp::ext_cookie_path_if_fresh()?;
-    let content = std::fs::read_to_string(&cookie_path).ok()?;
+    load_extension_cookies_for_url(&format!("https://{}/", domain.trim_start_matches('.')))
+}
 
-    let jar = reqwest::cookie::Jar::default();
+fn cookie_jar_from_netscape(content: &str, request_url: &str) -> Option<Arc<Jar>> {
+    let request_url = reqwest::Url::parse(request_url).ok()?;
+    let request_domain = request_url.host_str()?.to_lowercase();
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .ok()
+        .and_then(|duration| i64::try_from(duration.as_secs()).ok())
+        .unwrap_or(0);
+
+    let jar = Jar::default();
     let mut count = 0usize;
-    let request_domain = domain.trim_start_matches('.').to_lowercase();
 
     for line in content.lines() {
         let line = line.trim();
@@ -36,7 +47,7 @@ pub fn load_extension_cookies_for_domain(domain: &str) -> Option<Arc<reqwest::co
             line
         };
 
-        let parts: Vec<&str> = effective_line.split('\t').collect();
+        let parts: Vec<&str> = effective_line.splitn(7, '\t').collect();
         if parts.len() < 7 {
             continue;
         }
@@ -51,18 +62,41 @@ pub fn load_extension_cookies_for_domain(domain: &str) -> Option<Arc<reqwest::co
 
         let name = parts[5];
         let value = parts[6];
-        let url_scheme = if parts[3].eq_ignore_ascii_case("TRUE") {
-            "https"
-        } else {
-            "http"
-        };
-        let url_str = format!("{}://{}/", url_scheme, cookie_domain);
-
-        if let Ok(url) = url_str.parse::<reqwest::Url>() {
-            let cookie_str = format!("{}={}", name, value);
-            jar.add_cookie_str(&cookie_str, &url);
-            count += 1;
+        if name.is_empty() {
+            continue;
         }
+
+        // A zero expiry represents a session cookie in Netscape format.
+        // Do not revive expired browser cookies as fresh reqwest sessions.
+        let expires_at = parts[4].parse::<i64>().unwrap_or(0);
+        if expires_at > 0 && expires_at <= now {
+            continue;
+        }
+
+        // Preserve the Netscape cookie's scope. Adding a `.udemy.com` cookie
+        // as a host-only cookie for `udemy.com` means reqwest will not send it
+        // to either `www.udemy.com` or an enterprise portal. Conversely, a
+        // host-only `www.udemy.com` session must not leak to another portal.
+        let path = if parts[2].starts_with('/') {
+            parts[2]
+        } else {
+            "/"
+        };
+        let mut cookie_str = format!("{name}={value}; Path={path}");
+        if include_subdomains {
+            cookie_str.push_str("; Domain=");
+            cookie_str.push_str(&cookie_domain);
+        }
+        if parts[3].eq_ignore_ascii_case("TRUE") {
+            cookie_str.push_str("; Secure");
+        }
+        if expires_at > now {
+            cookie_str.push_str("; Max-Age=");
+            cookie_str.push_str(&expires_at.saturating_sub(now).to_string());
+        }
+
+        jar.add_cookie_str(&cookie_str, &request_url);
+        count += 1;
     }
 
     if count == 0 {
@@ -72,19 +106,36 @@ pub fn load_extension_cookies_for_domain(domain: &str) -> Option<Arc<reqwest::co
     tracing::debug!(
         "[cookies] loaded {} extension cookies for {}",
         count,
-        domain
+        request_domain
     );
     Some(Arc::new(jar))
 }
 
 pub fn load_extension_cookies_for_url(url: &str) -> Option<Arc<reqwest::cookie::Jar>> {
-    let domains = normalize_cookie_domains(url);
-    for domain in &domains {
-        if let Some(jar) = load_extension_cookies_for_domain(domain) {
-            return Some(jar);
+    // Managed per-domain accounts are the primary cookie source. Its callback
+    // resolves the queue item's CURRENT_COOKIE_SLUG, so dedicated HTTP clients
+    // authenticate with the same account selected in the downloads UI.
+    let managed_cookie_path =
+        crate::core::ytdlp::managed_cookie_source_for_url(url).or_else(|| {
+            normalize_cookie_domains(url)
+                .into_iter()
+                .find_map(|domain| {
+                    crate::core::ytdlp::managed_cookie_source_for_url(&format!("https://{domain}/"))
+                })
+        });
+    let cookie_path = match managed_cookie_path {
+        Some(path) => path,
+        // Retain the legacy browser-extension source only for older embedders
+        // that never installed the managed resolver. Once managed accounts
+        // are configured, a missing selected account must not silently switch
+        // authentication identities via a legacy file.
+        None if !crate::core::ytdlp::managed_cookie_source_is_configured() => {
+            crate::core::ytdlp::ext_cookie_path_if_fresh()?
         }
-    }
-    None
+        None => return None,
+    };
+    let content = std::fs::read_to_string(cookie_path).ok()?;
+    cookie_jar_from_netscape(&content, url)
 }
 
 fn normalize_cookie_domains(url: &str) -> Vec<String> {
@@ -308,6 +359,13 @@ pub fn parse_bearer_input(input: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use reqwest::cookie::CookieStore;
+
+    fn cookie_header(jar: &Jar, url: &str) -> String {
+        jar.cookies(&reqwest::Url::parse(url).unwrap())
+            .and_then(|value| value.to_str().ok().map(str::to_owned))
+            .unwrap_or_default()
+    }
 
     #[test]
     fn host_only_matches_exact_only() {
@@ -357,6 +415,127 @@ mod tests {
             "sub.example.com",
             true
         ));
+    }
+
+    #[test]
+    fn netscape_jar_sends_parent_domain_and_host_only_cookies_to_udemy_portal() {
+        let content = concat!(
+            ".udemy.com\tTRUE\t/\tTRUE\t0\tshared_session\tparent-value\n",
+            "#HttpOnly_www.udemy.com\tFALSE\t/\tTRUE\t0\tmarket_session\tmarket-value\n",
+            "intuit.udemy.com\tFALSE\t/\tTRUE\t0\tbusiness_session\tbusiness-value\n",
+        );
+
+        let jar = cookie_jar_from_netscape(
+            content,
+            "https://www.udemy.com/course/example/learn/lecture/1",
+        )
+        .unwrap();
+        let header = cookie_header(&jar, "https://www.udemy.com/api-2.0/test");
+
+        assert!(header.contains("shared_session=parent-value"));
+        assert!(header.contains("market_session=market-value"));
+        assert!(!header.contains("business_session"));
+
+        let enterprise_jar = cookie_jar_from_netscape(
+            content,
+            "https://intuit.udemy.com/course/example/learn/lecture/2",
+        )
+        .unwrap();
+        let enterprise_header =
+            cookie_header(&enterprise_jar, "https://intuit.udemy.com/api-2.0/test");
+        assert!(enterprise_header.contains("shared_session=parent-value"));
+        assert!(enterprise_header.contains("business_session=business-value"));
+        assert!(!enterprise_header.contains("market_session"));
+    }
+
+    #[test]
+    fn netscape_jar_does_not_leak_host_only_cookie_to_another_subdomain() {
+        let content = concat!(
+            ".udemy.com\tTRUE\t/\tTRUE\t0\tshared_session\tparent-value\n",
+            "www.udemy.com\tFALSE\t/\tTRUE\t0\tmarket_session\tmarket-value\n",
+        );
+
+        let jar =
+            cookie_jar_from_netscape(content, "https://www.udemy.com/course/example").unwrap();
+        let header = cookie_header(&jar, "https://other.udemy.com/api-2.0/test");
+
+        assert!(header.contains("shared_session=parent-value"));
+        assert!(!header.contains("market_session"));
+    }
+
+    #[test]
+    fn netscape_jar_skips_expired_cookies_and_keeps_future_cookies() {
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+        let content = format!(
+            "example.com\tFALSE\t/\tTRUE\t{}\texpired\told\nexample.com\tFALSE\t/\tTRUE\t{}\tfuture\tcurrent\n",
+            now.saturating_sub(60),
+            now.saturating_add(3600),
+        );
+
+        let jar = cookie_jar_from_netscape(&content, "https://example.com/").unwrap();
+        let header = cookie_header(&jar, "https://example.com/api");
+
+        assert!(!header.contains("expired=old"));
+        assert!(header.contains("future=current"));
+    }
+
+    #[tokio::test]
+    async fn url_loader_uses_the_task_selected_managed_cookie_account() {
+        let dir = std::env::temp_dir().join(format!(
+            "omniget-managed-cookie-test-{}",
+            std::process::id()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(
+            dir.join("_default.txt"),
+            "www.udemy.com\tFALSE\t/\tTRUE\t0\taccount\tdefault\n",
+        )
+        .unwrap();
+        std::fs::write(
+            dir.join("work.txt"),
+            "www.udemy.com\tFALSE\t/\tTRUE\t0\taccount\twork\n",
+        )
+        .unwrap();
+        std::fs::write(
+            dir.join("legacy.txt"),
+            "www.udemy.com\tFALSE\t/\tTRUE\t0\taccount\tlegacy\n",
+        )
+        .unwrap();
+
+        let callback_dir = dir.clone();
+        crate::core::ytdlp::set_per_domain_cookie_fn(move |_url| {
+            let slug = crate::core::log_hook::current_cookie_slug()
+                .unwrap_or_else(|| "_default".to_string());
+            Some(callback_dir.join(format!("{slug}.txt")))
+        });
+        let legacy_path = dir.join("legacy.txt");
+        crate::core::ytdlp::set_ext_cookie_path_fn(move || legacy_path.clone());
+
+        let jar = crate::core::log_hook::CURRENT_COOKIE_SLUG
+            .scope(Some("work".to_string()), async {
+                load_extension_cookies_for_url("https://www.udemy.com/course/example")
+            })
+            .await
+            .unwrap();
+        assert_eq!(
+            cookie_header(&jar, "https://www.udemy.com/api-2.0/test"),
+            "account=work"
+        );
+
+        let missing = crate::core::log_hook::CURRENT_COOKIE_SLUG
+            .scope(Some("missing".to_string()), async {
+                load_extension_cookies_for_url("https://www.udemy.com/course/example")
+            })
+            .await;
+        assert!(
+            missing.is_none(),
+            "a missing managed account must not fall back to a legacy identity"
+        );
+
+        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
