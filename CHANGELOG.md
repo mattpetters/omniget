@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Fixed
+- Run N_m3u8DL-RE from each lecture's writable temporary directory so macOS app launches from `/` cannot create raw metadata on the read-only system volume.
+
 <!-- git-changelog-on-commit: bf07d95ba19a22a456a678e7055cb5baf0cf7737 -->
 ### Changed
 - Updated browser-extension/chrome/README.md,browser-extension/chrome/manifest.json browser-extension/chrome/src/background.js,browser-extension/chrome/src/cookie-capture.js browser-extension/chrome/src/cookies-domains.json,browser-extension/chrome/src/cookies.js browser-extension/chrome/src/detect.js,browser-extension/chrome/tests/cookie-capture.test.mjs based on the staged diff so the commit records the current implementation changes.

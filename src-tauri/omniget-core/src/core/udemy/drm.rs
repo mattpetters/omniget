@@ -283,27 +283,7 @@ async fn download_encrypted_hls(
         let _ = std::fs::remove_file(&video_canonical);
     }
 
-    let mut cmd = crate::core::process::command(tool);
-    cmd.arg(hls_url)
-        .args(["--save-dir", &tmp_dir.to_string_lossy()])
-        .args(["--save-name", base_name])
-        .arg("--no-date-info")
-        .arg("--no-ansi-color")
-        .arg("--disable-update-check")
-        // Browser-ish UA so Udemy's WAF doesn't 403 the manifest.
-        .args(["-H", &format!("User-Agent: {UDEMY_UA}")])
-        .args(["--select-video", video_selector(quality)])
-        .args(["--select-audio", "best"])
-        // Spectre.Console reports a zero-width redirected terminal in some
-        // desktop launches. N_m3u8DL-RE v0.6 then silently exited after parsing
-        // the master playlist (or crashed in LiveRenderable). Supplying stable
-        // dimensions keeps redirected progress rendering deterministic.
-        .env("COLUMNS", "160")
-        .env("LINES", "60")
-        .env("TERM", "xterm-256color")
-        .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::piped());
-
+    let mut cmd = n_m3u8dl_command(hls_url, tmp_dir, base_name, quality, tool);
     let mut child = cmd.spawn().with_context(|| {
         format!(
             "Failed to run N_m3u8DL-RE ({}) — is it installed?",
@@ -388,6 +368,42 @@ async fn download_encrypted_hls(
     };
 
     Ok((video, find_audio_file(tmp_dir)))
+}
+
+fn n_m3u8dl_command(
+    hls_url: &str,
+    tmp_dir: &Path,
+    base_name: &str,
+    quality: &str,
+    tool: &Path,
+) -> tokio::process::Command {
+    let mut cmd = crate::core::process::command(tool);
+    cmd.arg(hls_url)
+        .args(["--save-dir", &tmp_dir.to_string_lossy()])
+        .args(["--save-name", base_name])
+        .arg("--no-date-info")
+        .arg("--no-ansi-color")
+        .arg("--disable-update-check")
+        // Browser-ish UA so Udemy's WAF doesn't 403 the manifest.
+        .args(["-H", &format!("User-Agent: {UDEMY_UA}")])
+        .args(["--select-video", video_selector(quality)])
+        .args(["--select-audio", "best"])
+        // Spectre.Console reports a zero-width redirected terminal in some
+        // desktop launches. N_m3u8DL-RE v0.6 then silently exited after parsing
+        // the master playlist (or crashed in LiveRenderable). Supplying stable
+        // dimensions keeps redirected progress rendering deterministic.
+        .env("COLUMNS", "160")
+        .env("LINES", "60")
+        .env("TERM", "xterm-256color")
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        // N_m3u8DL-RE 0.5.1 resolves the raw metadata directory from the process
+        // working directory instead of --save-dir. Installed macOS apps often
+        // start in `/`, which turns a lecture title into a root-level path and
+        // fails on the read-only system volume. Keep every side file inside the
+        // already-created per-lecture temporary directory.
+        .current_dir(tmp_dir);
+    cmd
 }
 
 const OUTPUT_TAIL_LINES: usize = 24;
@@ -706,5 +722,19 @@ mod tests {
             combined_output_tail("downloaded", "warning"),
             "downloaded | warning"
         );
+    }
+
+    #[test]
+    fn n_m3u8dl_runs_from_its_writable_per_lecture_directory() {
+        let dir = test_dir("nm3u8-cwd");
+        let command = n_m3u8dl_command(
+            "https://example.invalid/master.m3u8",
+            &dir,
+            "01 - Hello, World",
+            "best",
+            Path::new("/usr/bin/false"),
+        );
+
+        assert_eq!(command.as_std().get_current_dir(), Some(dir.as_path()));
     }
 }
