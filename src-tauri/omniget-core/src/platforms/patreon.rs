@@ -203,7 +203,6 @@ impl PatreonDownloader {
                 opts.download_subtitles,
                 &extra_flags,
                 opts.audio_format.as_deref(),
-                opts.save_encrypted_hls,
             )
             .await;
             let _ = forwarder.await;
@@ -302,9 +301,7 @@ impl PlatformDownloader for PatreonDownloader {
         }
         if matches!(info.media_type, MediaType::File | MediaType::Photo) {
             disable_media_postprocessors(
-                patreon_opts
-                    .custom_ytdlp_args
-                    .get_or_insert_with(Vec::new),
+                patreon_opts.custom_ytdlp_args.get_or_insert_with(Vec::new),
             );
         }
         self.fallback
@@ -609,7 +606,9 @@ mod tests {
     #[test]
     fn attachment_flags_disable_media_only_post_processors() {
         let flags = patreon_entry_flags(vec!["--no-overwrites".to_string()], 3);
-        assert!(flags.windows(2).any(|pair| pair == ["--playlist-items", "3"]));
+        assert!(flags
+            .windows(2)
+            .any(|pair| pair == ["--playlist-items", "3"]));
         assert!(flags.iter().any(|flag| flag == "--no-embed-metadata"));
         assert!(flags.iter().any(|flag| flag == "--no-embed-thumbnail"));
     }

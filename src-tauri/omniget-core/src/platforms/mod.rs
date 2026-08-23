@@ -5,6 +5,7 @@ pub mod direct_file;
 pub mod douyin;
 pub mod generic_ytdlp;
 pub mod instagram;
+pub mod mix_with_the_masters;
 pub mod p2p;
 pub mod p2p_words;
 pub mod patreon;
@@ -24,6 +25,7 @@ pub use direct_file::DirectFileDownloader;
 pub use douyin::DouyinDownloader;
 pub use generic_ytdlp::GenericYtdlpDownloader;
 pub use instagram::InstagramDownloader;
+pub use mix_with_the_masters::MixWithTheMastersDownloader;
 pub use p2p::P2pDownloader;
 pub use patreon::PatreonDownloader;
 pub use pinterest::PinterestDownloader;
@@ -81,6 +83,7 @@ pub enum Platform {
     Vimeo,
     Udemy,
     Patreon,
+    MixWithTheMasters,
     Bilibili,
     Other(String),
 }
@@ -102,6 +105,7 @@ impl fmt::Display for Platform {
             Platform::Vimeo => "vimeo",
             Platform::Udemy => "udemy",
             Platform::Patreon => "patreon",
+            Platform::MixWithTheMasters => "mixwiththemasters",
             Platform::Bilibili => "bilibili",
             Platform::Other(ref name) => name.as_str(),
         };
@@ -128,6 +132,7 @@ impl FromStr for Platform {
             "vimeo" => Ok(Platform::Vimeo),
             "udemy" => Ok(Platform::Udemy),
             "patreon" => Ok(Platform::Patreon),
+            "mixwiththemasters" | "mwtm" => Ok(Platform::MixWithTheMasters),
             "bilibili" | "b站" => Ok(Platform::Bilibili),
             _ => Err(format!("Unknown platform: {}", s)),
         }
@@ -185,6 +190,8 @@ impl Platform {
             Some(Platform::Udemy)
         } else if patreon::is_patreon_post_url(url_str) {
             Some(Platform::Patreon)
+        } else if mix_with_the_masters::is_mix_with_the_masters_video_url(url_str) {
+            Some(Platform::MixWithTheMasters)
         } else if matches("bilibili.com") || matches("bilibili.tv") || host == "b23.tv" {
             Some(Platform::Bilibili)
         } else if matches("kiwify.com.br") {
@@ -240,6 +247,7 @@ impl Platform {
             Platform::Vimeo,
             Platform::Udemy,
             Platform::Patreon,
+            Platform::MixWithTheMasters,
             Platform::Bilibili,
         ]
     }

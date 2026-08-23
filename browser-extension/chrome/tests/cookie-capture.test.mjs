@@ -13,6 +13,11 @@ test("Patreon root and subdomains map to the Patreon cookie kind", () => {
   assert.equal(detectPlatformKind("c10.patreonusercontent.com"), "patreon");
 });
 
+test("MWTM maps to its dedicated cookie kind", () => {
+  assert.equal(detectPlatformKind("mixwiththemasters.com"), "mixwiththemasters");
+  assert.equal(detectPlatformKind("www.mixwiththemasters.com"), "mixwiththemasters");
+});
+
 test("manual Patreon capture queries the root domain and forwards metadata", async () => {
   const queries = [];
   let sent = null;

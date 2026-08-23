@@ -232,6 +232,8 @@ async fn download_playlist(
         file_size_bytes: 0,
         duration_seconds: 0.0,
         torrent_id: None,
+        protected_media: None,
+        protection_sidecar_path: None,
     };
     let mut success_count: usize = 0;
     let mut first_error: Option<anyhow::Error> = None;

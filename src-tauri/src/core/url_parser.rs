@@ -47,6 +47,16 @@ pub fn parse_url(url_str: &str) -> Option<ParsedUrl> {
             omniget_core::platforms::patreon::patreon_post_id(parsed.as_str()),
             ParsedContentType::Post,
         ),
+        Platform::MixWithTheMasters => (
+            omniget_core::platforms::mix_with_the_masters::mix_with_the_masters_slug(
+                parsed.as_str(),
+            ),
+            if segments.iter().any(|segment| *segment == "part") {
+                ParsedContentType::Video
+            } else {
+                ParsedContentType::Course
+            },
+        ),
         Platform::Bilibili => parse_bilibili(&segments),
         Platform::Other(ref name) => match name.as_str() {
             "douyin" => parse_douyin(&segments),

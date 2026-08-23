@@ -15,6 +15,7 @@
     | "pinterest"
     | "bluesky"
     | "patreon"
+    | "mixwiththemasters"
     | "generic";
 
   type Props = {

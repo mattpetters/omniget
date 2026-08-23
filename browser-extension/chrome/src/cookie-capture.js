@@ -28,6 +28,7 @@ const TRACKED_PLATFORMS = {
   "bsky.social": "bluesky",
   "patreon.com": "patreon",
   "patreonusercontent.com": "patreon",
+  "mixwiththemasters.com": "mixwiththemasters",
 };
 
 function rootDomainOf(host) {

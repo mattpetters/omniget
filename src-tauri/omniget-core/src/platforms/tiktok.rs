@@ -560,6 +560,8 @@ impl PlatformDownloader for TikTokDownloader {
                                 file_size_bytes: bytes,
                                 duration_seconds: info.duration_seconds.unwrap_or(0.0),
                                 torrent_id: None,
+                                protected_media: None,
+                                protection_sidecar_path: None,
                             });
                         }
                         Err(e) => {
@@ -638,6 +640,8 @@ impl PlatformDownloader for TikTokDownloader {
                     file_size_bytes: total_bytes,
                     duration_seconds: 0.0,
                     torrent_id: None,
+                    protected_media: None,
+                    protection_sidecar_path: None,
                 })
             }
             MediaType::Audio => {
@@ -664,6 +668,8 @@ impl PlatformDownloader for TikTokDownloader {
                     file_size_bytes: bytes,
                     duration_seconds: 0.0,
                     torrent_id: None,
+                    protected_media: None,
+                    protection_sidecar_path: None,
                 })
             }
             _ => Err(anyhow!("Unsupported media type for download")),

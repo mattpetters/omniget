@@ -13,5 +13,6 @@
   "udemy": [".udemy.com"],
   "bluesky": [".bsky.app", ".bsky.social"],
   "telegram": [".telegram.org", ".t.me"],
-  "patreon": [".patreon.com", ".patreonusercontent.com"]
+  "patreon": [".patreon.com", ".patreonusercontent.com"],
+  "mixwiththemasters": [".mixwiththemasters.com"]
 }

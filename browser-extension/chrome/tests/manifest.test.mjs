@@ -71,6 +71,8 @@ test("declares platform-scoped host_permissions instead of a wildcard", async ()
     "*://patreon.com/*",
     "*://*.patreon.com/*",
     "*://*.patreonusercontent.com/*",
+    "*://mixwiththemasters.com/*",
+    "*://*.mixwiththemasters.com/*",
   ];
   for (const pattern of requiredPatterns) {
     assert.ok(
@@ -80,7 +82,7 @@ test("declares platform-scoped host_permissions instead of a wildcard", async ()
   }
 });
 
-test("Chrome and Firefox ship the same Patreon permissions and patch version", async () => {
+test("Chrome and Firefox ship the same authenticated-site permissions and patch version", async () => {
   const chromeManifest = await readManifest();
   const firefoxManifest = await readFirefoxManifest();
   const patreonPatterns = [
@@ -89,9 +91,16 @@ test("Chrome and Firefox ship the same Patreon permissions and patch version", a
     "*://*.patreonusercontent.com/*",
   ];
 
-  assert.equal(chromeManifest.version, "0.4.1");
+  assert.equal(chromeManifest.version, "0.4.2");
   assert.equal(firefoxManifest.version, chromeManifest.version);
   for (const pattern of patreonPatterns) {
+    assert.ok(chromeManifest.host_permissions.includes(pattern));
+    assert.ok(firefoxManifest.host_permissions.includes(pattern));
+  }
+  for (const pattern of [
+    "*://mixwiththemasters.com/*",
+    "*://*.mixwiththemasters.com/*",
+  ]) {
     assert.ok(chromeManifest.host_permissions.includes(pattern));
     assert.ok(firefoxManifest.host_permissions.includes(pattern));
   }

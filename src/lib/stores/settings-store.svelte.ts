@@ -41,6 +41,7 @@ export type AppSettings = {
     copy_to_clipboard_on_hotkey: boolean;
     extra_ytdlp_flags?: string[];
     save_encrypted_hls: boolean;
+    widevine_device_path: string;
     cookie_file: string;
     always_use_managed_cookies: boolean;
     bilibili_danmaku_enabled: boolean;

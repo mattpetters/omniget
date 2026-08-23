@@ -170,6 +170,7 @@ test("default domains include all currently detectable platforms", async () => {
     "bluesky",
     "telegram",
     "patreon",
+    "mixwiththemasters",
   ];
   for (const key of required) {
     assert.ok(
@@ -257,4 +258,19 @@ test("patreon extracts account and media-host cookies", async () => {
     ".patreon.com",
     ".patreonusercontent.com",
   ]);
+});
+
+test("MWTM extracts the authenticated site cookies", async () => {
+  const cookies = await extractCookiesForPlatform(
+    "mixwiththemasters",
+    mockGetAllCookies({
+      ".mixwiththemasters.com": [
+        { domain: ".mixwiththemasters.com", httpOnly: true, path: "/", secure: true, expirationDate: 42, name: "session", value: "synthetic-session" },
+      ],
+    }),
+  );
+
+  assert.ok(cookies);
+  assert.equal(cookies.length, 1);
+  assert.equal(cookies[0].domain, ".mixwiththemasters.com");
 });

@@ -26,6 +26,7 @@ pub enum PlatformKind {
     Pinterest,
     Bluesky,
     Patreon,
+    MixWithTheMasters,
     Generic,
 }
 
@@ -47,6 +48,7 @@ impl PlatformKind {
             PlatformKind::Pinterest => "pinterest",
             PlatformKind::Bluesky => "bluesky",
             PlatformKind::Patreon => "patreon",
+            PlatformKind::MixWithTheMasters => "mixwiththemasters",
             PlatformKind::Generic => "generic",
         }
     }
@@ -72,6 +74,7 @@ impl PlatformKind {
             "pinterest.com" => PlatformKind::Pinterest,
             "bsky.app" | "bsky.social" => PlatformKind::Bluesky,
             "patreon.com" | "patreonusercontent.com" => PlatformKind::Patreon,
+            "mixwiththemasters.com" => PlatformKind::MixWithTheMasters,
             _ => PlatformKind::Generic,
         }
     }
@@ -155,5 +158,17 @@ mod tests {
     #[test]
     fn root_handles_leading_dot() {
         assert_eq!(root_domain_of(".youtube.com"), "youtube.com");
+    }
+
+    #[test]
+    fn mix_with_the_masters_has_a_dedicated_cookie_kind() {
+        assert_eq!(
+            PlatformKind::from_domain("www.mixwiththemasters.com"),
+            PlatformKind::MixWithTheMasters
+        );
+        assert_eq!(
+            PlatformKind::MixWithTheMasters.as_str(),
+            "mixwiththemasters"
+        );
     }
 }

@@ -211,7 +211,6 @@ pub async fn download(
         opts.download_subtitles,
         &extra,
         opts.audio_format.as_deref(),
-        opts.save_encrypted_hls,
     )
     .await
 }
@@ -271,7 +270,6 @@ async fn download_playlist(
             opts.download_subtitles,
             &extra,
             opts.audio_format.as_deref(),
-            opts.save_encrypted_hls,
         )
         .await
         {

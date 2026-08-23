@@ -1393,6 +1393,7 @@ fn extract_member_from_tar_gz(
             return Ok(());
         }
     }
+    Err(anyhow!("member '{member_name}' not found in tar.gz"))
 }
 
 #[cfg(test)]

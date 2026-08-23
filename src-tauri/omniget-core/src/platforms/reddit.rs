@@ -625,6 +625,8 @@ impl RedditDownloader {
                             file_size_bytes: file_size,
                             duration_seconds: info.duration_seconds.unwrap_or(0.0),
                             torrent_id: None,
+                            protected_media: None,
+                            protection_sidecar_path: None,
                         })
                     } else {
                         let video_final = opts.output_dir.join(format!(
@@ -651,6 +653,8 @@ impl RedditDownloader {
                             file_size_bytes: video_bytes,
                             duration_seconds: info.duration_seconds.unwrap_or(0.0),
                             torrent_id: None,
+                            protected_media: None,
+                            protection_sidecar_path: None,
                         })
                     }
                 } else {
@@ -671,6 +675,8 @@ impl RedditDownloader {
                         file_size_bytes: bytes,
                         duration_seconds: info.duration_seconds.unwrap_or(0.0),
                         torrent_id: None,
+                        protected_media: None,
+                        protection_sidecar_path: None,
                     })
                 }
             }
@@ -697,6 +703,8 @@ impl RedditDownloader {
                     file_size_bytes: bytes,
                     duration_seconds: 0.0,
                     torrent_id: None,
+                    protected_media: None,
+                    protection_sidecar_path: None,
                 })
             }
             MediaType::Photo => {
@@ -724,6 +732,8 @@ impl RedditDownloader {
                     file_size_bytes: bytes,
                     duration_seconds: 0.0,
                     torrent_id: None,
+                    protected_media: None,
+                    protection_sidecar_path: None,
                 })
             }
             MediaType::Carousel => {
@@ -762,6 +772,8 @@ impl RedditDownloader {
                     file_size_bytes: total_bytes,
                     duration_seconds: 0.0,
                     torrent_id: None,
+                    protected_media: None,
+                    protection_sidecar_path: None,
                 })
             }
             _ => Err(anyhow!("Unsupported media type")),

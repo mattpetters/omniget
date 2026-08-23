@@ -868,7 +868,6 @@ impl PlatformDownloader for TwitterDownloader {
                     false,
                     &extra_flags,
                     opts.audio_format.as_deref(),
-                    opts.save_encrypted_hls,
                 )
                 .await;
             }

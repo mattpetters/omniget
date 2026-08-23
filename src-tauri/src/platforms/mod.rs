@@ -5,6 +5,7 @@ pub use omniget_core::platforms::DirectFileDownloader;
 pub use omniget_core::platforms::DouyinDownloader;
 pub use omniget_core::platforms::GenericYtdlpDownloader;
 pub use omniget_core::platforms::InstagramDownloader;
+pub use omniget_core::platforms::MixWithTheMastersDownloader;
 pub use omniget_core::platforms::P2pDownloader;
 pub use omniget_core::platforms::PinterestDownloader;
 pub use omniget_core::platforms::Platform;

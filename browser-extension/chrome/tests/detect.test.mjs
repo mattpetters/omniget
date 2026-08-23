@@ -370,3 +370,27 @@ test("Patreon: homepage and creator profile are not mistaken for posts", () => {
 test("Patreon: lookalike domains are not matched", () => {
   assertNull("https://notpatreon.com/creator/posts/example-123");
 });
+
+// ── Mix With The Masters ────────────────────────────────────────────────
+
+test("MWTM: course and individual part URLs", () => {
+  const root = "https://mixwiththemasters.com/videos/young-guru-choosing-outboard-gear-no-i-d-studio";
+  assertSupported(root, "mixwiththemasters", "course");
+  assertSupported(`${root}/part`, "mixwiththemasters", "video");
+  assertSupported(`${root}/part/3`, "mixwiththemasters", "video");
+  assertSupported(
+    "https://mixwiththemasters.com/fr/videos/example-course/part/2",
+    "mixwiththemasters",
+    "video",
+  );
+});
+
+test("MWTM: non-video and internal playlist URLs are rejected", () => {
+  assertUnsupported("https://mixwiththemasters.com/videos", "mixwiththemasters", "unknown");
+  assertUnsupported(
+    "https://mixwiththemasters.com/videos/_/playlist/example/part/1/Index.m3u8",
+    "mixwiththemasters",
+    "unknown",
+  );
+  assertNull("https://notmixwiththemasters.com/videos/example");
+});

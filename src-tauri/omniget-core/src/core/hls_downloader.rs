@@ -793,8 +793,8 @@ async fn download_segment_with_retry(
         }
 
         let result = tokio::time::timeout(SEGMENT_TIMEOUT, async {
-            let mut request = apply_referer_headers(client.get(url), referer)
-                .header("User-Agent", user_agent);
+            let mut request =
+                apply_referer_headers(client.get(url), referer).header("User-Agent", user_agent);
             if let Some(byte_range) = byte_range {
                 request = request.header(reqwest::header::RANGE, byte_range.header_value());
             }

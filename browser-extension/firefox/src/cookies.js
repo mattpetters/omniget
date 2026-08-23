@@ -14,6 +14,7 @@ export const DEFAULT_PLATFORM_COOKIE_DOMAINS = Object.freeze({
   bluesky: [".bsky.app", ".bsky.social"],
   telegram: [".telegram.org", ".t.me"],
   patreon: [".patreon.com", ".patreonusercontent.com"],
+  mixwiththemasters: [".mixwiththemasters.com"],
 });
 
 export const COOKIE_DOMAINS_RESOURCE_PATH = "src/cookies-domains.json";

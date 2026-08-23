@@ -162,6 +162,8 @@ impl PlatformDownloader for DirectFileDownloader {
             file_size_bytes: bytes,
             duration_seconds: 0.0,
             torrent_id: None,
+            protected_media: None,
+            protection_sidecar_path: None,
         })
     }
 }

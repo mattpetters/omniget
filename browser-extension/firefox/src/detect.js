@@ -58,6 +58,7 @@ function detectPlatform(url) {
   if (matchesHost(host, "udemy.com")) return "udemy";
   if (matchesHost(host, "bilibili.com") || host === "b23.tv") return "bilibili";
   if (matchesHost(host, "patreon.com")) return "patreon";
+  if (matchesHost(host, "mixwiththemasters.com")) return "mixwiththemasters";
 
   return null;
 }
@@ -93,6 +94,8 @@ function detectContentType(platform, url) {
       return parseBilibili(segments);
     case "patreon":
       return parsePatreon(url, segments);
+    case "mixwiththemasters":
+      return parseMixWithTheMasters(segments);
     default:
       return "unknown";
   }
@@ -278,6 +281,18 @@ function parsePatreon(url, segments) {
   }
   const postsIndex = segments.indexOf("posts");
   return postsIndex !== -1 && segments[postsIndex + 1] ? "post" : "unknown";
+}
+
+function parseMixWithTheMasters(segments) {
+  const videosIndex = segments.indexOf("videos");
+  if (videosIndex === -1 || !segments[videosIndex + 1] || segments[videosIndex + 1] === "_") {
+    return "unknown";
+  }
+  const tail = segments.slice(videosIndex + 2);
+  if (tail.length === 0) return "course";
+  if (tail[0] !== "part") return "unknown";
+  if (tail.length === 1) return "video";
+  return tail.length === 2 && /^\d+$/.test(tail[1]) ? "video" : "unknown";
 }
 
 function matchesHost(host, domain) {

@@ -248,6 +248,11 @@ pub fn run() {
     // Patreon must precede the generic fallback so membership failures can
     // offer cookie/access guidance and multi-attachment posts stay selectable.
     registry.register(Arc::new(omniget_core::platforms::PatreonDownloader::new()));
+    // MWTM must precede the generic fallback so stable course URLs can refresh
+    // their authenticated, short-lived HLS playlists at download time.
+    registry.register(Arc::new(
+        omniget_core::platforms::MixWithTheMastersDownloader::new(),
+    ));
     // Udemy must precede the generic yt-dlp fallback so its real Widevine DRM
     // pipeline handles `*.udemy.com` lecture URLs (first match wins).
     #[cfg(not(target_os = "android"))]

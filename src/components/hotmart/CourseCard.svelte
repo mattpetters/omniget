@@ -1,7 +1,7 @@
 <script lang="ts">
   import { t } from "$lib/i18n";
 
-  type CardDownloadStatus = "idle" | "downloading" | "complete" | "error";
+  type CardDownloadStatus = "idle" | "downloading" | "complete" | "error" | "needs_decryption";
 
   type CourseCardProps = {
     name: string;
@@ -106,6 +106,24 @@
           <path d="M5 12l5 5l10 -10" />
         </svg>
         {$t("hotmart.downloaded")}
+      </button>
+    {:else if downloadStatus === "needs_decryption"}
+      <button class="button elevated card-download status-error" disabled>
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M12 9v4" />
+          <path d="M12 17h.01" />
+          <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
+        </svg>
+        {$t("downloads.status.needs_decryption")}
       </button>
     {:else if downloadStatus === "error"}
       <button class="button elevated card-download status-error" onclick={handleClick}>

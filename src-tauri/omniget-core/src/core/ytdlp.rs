@@ -2433,14 +2433,14 @@ pub async fn download_video(
         base_args.push("--split-chapters".to_string());
     }
 
-    if embed_metadata_enabled()
-        && !extra_flags.iter().any(|flag| flag == "--no-embed-metadata")
-    {
+    if embed_metadata_enabled() && !extra_flags.iter().any(|flag| flag == "--no-embed-metadata") {
         base_args.push("--embed-metadata".to_string());
     }
 
     if embed_thumbnail_enabled()
-        && !extra_flags.iter().any(|flag| flag == "--no-embed-thumbnail")
+        && !extra_flags
+            .iter()
+            .any(|flag| flag == "--no-embed-thumbnail")
     {
         base_args.push("--embed-thumbnail".to_string());
         base_args.push("--convert-thumbnails".to_string());
@@ -2825,6 +2825,8 @@ pub async fn download_video(
                 file_size_bytes: meta.len(),
                 duration_seconds: 0.0,
                 torrent_id: None,
+                protected_media: None,
+                protection_sidecar_path: None,
             });
         }
 

@@ -259,3 +259,6 @@ vite.config.ts.timestamp-*
 .vite/
 .varredura/
 remake/shots/
+
+# Local authentication test credentials (never commit)
+mwtmcrds.txt

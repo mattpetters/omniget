@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, OnceLock};
 
@@ -54,6 +54,12 @@ fn info_cache() -> &'static tokio::sync::Mutex<HashMap<String, CachedInfo>> {
 
 const INFO_CACHE_TTL: std::time::Duration = std::time::Duration::from_secs(600);
 
+pub const EMPTY_DOWNLOAD_ERROR: &str =
+    "Download produced no playable output (0 bytes). Retry after checking access.";
+
+pub const NEEDS_DECRYPTION_MESSAGE: &str =
+    "Protected media was saved encrypted and needs decryption.";
+
 static IN_FLIGHT_FETCHES: OnceLock<
     tokio::sync::Mutex<HashMap<String, Arc<tokio::sync::Mutex<()>>>>,
 > = OnceLock::new();
@@ -94,7 +100,7 @@ pub fn kind_from_platform(platform: &str) -> QueueKind {
         "pinterest" => QueueKind::Image,
         "magnet" | "p2p" | "torrent" => QueueKind::Generic,
         "telegram" | "telegram_media" => QueueKind::TelegramMedia,
-        "courses" | "course_lesson" => QueueKind::CourseLesson,
+        "courses" | "course_lesson" | "mixwiththemasters" => QueueKind::CourseLesson,
         "annas_archive" | "book" | "libgen" | "gutendex" => QueueKind::Book,
         "pdf" => QueueKind::Pdf,
         "webpage" | "embed" => QueueKind::Webpage,
@@ -109,8 +115,17 @@ pub enum QueueStatus {
     Active,
     Paused,
     Seeding,
-    Complete { success: bool },
-    Error { message: String, retryable: bool },
+    Complete {
+        success: bool,
+    },
+    NeedsDecryption {
+        message: String,
+        sidecar_path: String,
+    },
+    Error {
+        message: String,
+        retryable: bool,
+    },
 }
 
 pub fn is_retryable_error_message(message: &str) -> bool {
@@ -120,6 +135,21 @@ pub fn is_retryable_error_message(message: &str) -> bool {
     }
     let (category, _) = omniget_core::core::errors::classify_download_error(message);
     matches!(category, "unknown" | "rate_limited")
+}
+
+pub fn successful_output_is_empty(file_path: Option<&Path>, file_size_bytes: Option<u64>) -> bool {
+    if file_size_bytes == Some(0) {
+        return true;
+    }
+
+    let Some(path) = file_path else {
+        return true;
+    };
+
+    match std::fs::metadata(path) {
+        Ok(meta) => meta.len() == 0,
+        Err(_) => true,
+    }
 }
 
 #[derive(Clone, Serialize)]
@@ -135,6 +165,8 @@ pub struct QueueItemInfo {
     pub total_bytes: Option<u64>,
     pub file_path: Option<String>,
     pub file_size_bytes: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub protection_sidecar_path: Option<String>,
     pub file_count: Option<u32>,
     pub thumbnail_url: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -170,6 +202,7 @@ pub struct QueueItem {
     pub total_bytes: Option<u64>,
     pub file_path: Option<String>,
     pub file_size_bytes: Option<u64>,
+    pub protection_sidecar_path: Option<String>,
     pub file_count: Option<u32>,
     pub media_info: Option<MediaInfo>,
     pub downloader: Arc<dyn PlatformDownloader>,
@@ -206,6 +239,7 @@ impl QueueItem {
             total_bytes: self.total_bytes,
             file_path: self.file_path.clone(),
             file_size_bytes: self.file_size_bytes,
+            protection_sidecar_path: self.protection_sidecar_path.clone(),
             file_count: self.file_count,
             thumbnail_url: self.thumbnail_url_override.clone().or_else(|| {
                 self.media_info
@@ -291,6 +325,7 @@ impl DownloadQueue {
             total_bytes,
             file_path: None,
             file_size_bytes: None,
+            protection_sidecar_path: None,
             file_count,
             media_info,
             downloader,
@@ -337,17 +372,30 @@ impl DownloadQueue {
             if self.items.iter().any(|i| i.id == entry.id) {
                 continue;
             }
-            let status = if entry.success {
-                QueueStatus::Complete { success: true }
-            } else {
-                let msg = entry.error.clone().unwrap_or_default();
-                let retryable = is_retryable_error_message(&msg);
-                QueueStatus::Error {
-                    message: msg,
-                    retryable,
+            let status = match entry.status.as_str() {
+                "needs_decryption" => QueueStatus::NeedsDecryption {
+                    message: entry
+                        .error
+                        .clone()
+                        .unwrap_or_else(|| NEEDS_DECRYPTION_MESSAGE.to_string()),
+                    sidecar_path: entry.protection_sidecar_path.clone().unwrap_or_default(),
+                },
+                "complete" if entry.success => QueueStatus::Complete { success: true },
+                _ if entry.success => QueueStatus::Complete { success: true },
+                _ => {
+                    let msg = entry.error.clone().unwrap_or_default();
+                    let retryable = is_retryable_error_message(&msg);
+                    QueueStatus::Error {
+                        message: msg,
+                        retryable,
+                    }
                 }
             };
-            let percent = if entry.success { 100.0 } else { 0.0 };
+            let percent = if matches!(status, QueueStatus::Complete { .. }) {
+                100.0
+            } else {
+                0.0
+            };
             let item = QueueItem {
                 id: entry.id,
                 url: entry.url.clone(),
@@ -377,6 +425,7 @@ impl DownloadQueue {
                 total_bytes: entry.total_bytes,
                 file_path: entry.file_path.clone(),
                 file_size_bytes: entry.file_size_bytes,
+                protection_sidecar_path: entry.protection_sidecar_path.clone(),
                 file_count: None,
                 media_info: None,
                 downloader: placeholder.clone(),
@@ -452,20 +501,32 @@ impl DownloadQueue {
             if !can_finish_active_item(&item.status) {
                 return;
             }
-            let error_for_history = error.clone();
-            if success {
+            let empty_success = success
+                && successful_output_is_empty(file_path.as_deref().map(Path::new), file_size_bytes);
+            let final_success = success && !empty_success;
+            let final_error = if empty_success {
+                Some(EMPTY_DOWNLOAD_ERROR.to_string())
+            } else {
+                error
+            };
+            let error_for_history = final_error.clone();
+            let final_file_path = if empty_success { None } else { file_path };
+            let final_file_size_bytes = if empty_success { None } else { file_size_bytes };
+
+            if final_success {
                 item.status = QueueStatus::Complete { success: true };
                 item.percent = 100.0;
             } else {
-                let msg = error.unwrap_or_default();
+                let msg = final_error.clone().unwrap_or_default();
                 let retryable = is_retryable_error_message(&msg);
                 item.status = QueueStatus::Error {
                     message: msg,
                     retryable,
                 };
             }
-            item.file_path = file_path;
-            item.file_size_bytes = file_size_bytes;
+            item.file_path = final_file_path;
+            item.file_size_bytes = final_file_size_bytes;
+            item.protection_sidecar_path = None;
             item.speed_bytes_per_sec = 0.0;
             item.eta_seconds = None;
             crate::core::recovery::remove(id);
@@ -479,8 +540,17 @@ impl DownloadQueue {
                     file_path: item.file_path.clone(),
                     file_size_bytes: item.file_size_bytes,
                     total_bytes: item.total_bytes,
-                    success,
-                    error: if success { None } else { error_for_history },
+                    success: final_success,
+                    status: if final_success {
+                        "complete".to_string()
+                    } else {
+                        "error".to_string()
+                    },
+                    error: if final_success {
+                        None
+                    } else {
+                        error_for_history
+                    },
                     completed_at: crate::core::queue_history::now_unix_seconds(),
                     thumbnail_url: item.thumbnail_url_override.clone().or_else(|| {
                         item.media_info
@@ -488,6 +558,57 @@ impl DownloadQueue {
                             .and_then(|m| m.thumbnail_url.clone())
                     }),
                     kind: item.kind,
+                    protection_sidecar_path: None,
+                };
+                crate::core::queue_history::record(entry);
+            }
+        }
+    }
+
+    pub fn mark_needs_decryption(
+        &mut self,
+        id: u64,
+        message: String,
+        file_path: Option<String>,
+        file_size_bytes: Option<u64>,
+        sidecar_path: String,
+    ) {
+        if let Some(item) = self.items.iter_mut().find(|i| i.id == id) {
+            if !can_finish_active_item(&item.status) {
+                return;
+            }
+            item.status = QueueStatus::NeedsDecryption {
+                message: message.clone(),
+                sidecar_path: sidecar_path.clone(),
+            };
+            item.file_path = file_path;
+            item.file_size_bytes = file_size_bytes;
+            item.protection_sidecar_path = Some(sidecar_path.clone());
+            item.downloaded_bytes = item.file_size_bytes.unwrap_or(item.downloaded_bytes);
+            item.speed_bytes_per_sec = 0.0;
+            item.eta_seconds = None;
+            crate::core::recovery::remove(id);
+
+            if !item.external {
+                let entry = crate::core::queue_history::HistoryEntry {
+                    id: item.id,
+                    url: item.url.clone(),
+                    platform: item.platform.clone(),
+                    title: item.title.clone(),
+                    file_path: item.file_path.clone(),
+                    file_size_bytes: item.file_size_bytes,
+                    total_bytes: item.total_bytes,
+                    success: false,
+                    status: "needs_decryption".to_string(),
+                    error: Some(message),
+                    completed_at: crate::core::queue_history::now_unix_seconds(),
+                    thumbnail_url: item.thumbnail_url_override.clone().or_else(|| {
+                        item.media_info
+                            .as_ref()
+                            .and_then(|m| m.thumbnail_url.clone())
+                    }),
+                    kind: item.kind,
+                    protection_sidecar_path: Some(sidecar_path),
                 };
                 crate::core::queue_history::record(entry);
             }
@@ -509,6 +630,7 @@ impl DownloadQueue {
             item.percent = 100.0;
             item.file_path = file_path;
             item.file_size_bytes = file_size_bytes;
+            item.protection_sidecar_path = None;
             item.speed_bytes_per_sec = 0.0;
             item.torrent_id = torrent_id;
             crate::core::recovery::remove(id);
@@ -741,6 +863,7 @@ impl DownloadQueue {
                 item.downloaded_bytes = 0;
                 item.file_path = None;
                 item.file_size_bytes = None;
+                item.protection_sidecar_path = None;
                 item.retry_count = 0;
                 return true;
             }
@@ -785,15 +908,24 @@ impl DownloadQueue {
         let to_remove: Vec<u64> = self
             .items
             .iter()
-            .filter(|i| matches!(i.status, QueueStatus::Complete { .. }))
+            .filter(|i| {
+                matches!(
+                    i.status,
+                    QueueStatus::Complete { .. } | QueueStatus::NeedsDecryption { .. }
+                )
+            })
             .map(|i| i.id)
             .collect();
         for id in &to_remove {
             crate::core::recovery::remove(*id);
             crate::core::queue_history::remove(*id);
         }
-        self.items
-            .retain(|i| !matches!(i.status, QueueStatus::Complete { .. }));
+        self.items.retain(|i| {
+            !matches!(
+                i.status,
+                QueueStatus::Complete { .. } | QueueStatus::NeedsDecryption { .. }
+            )
+        });
     }
 
     pub fn get_state(&self) -> Vec<QueueItemInfo> {
@@ -1314,6 +1446,15 @@ async fn spawn_download_inner(
         torrent_files: torrent_files.clone(),
         torrent_auto_trackers: settings.advanced.torrent_auto_trackers,
         torrent_upnp: settings.advanced.torrent_upnp,
+        save_encrypted_hls: settings.download.save_encrypted_hls,
+        widevine_device_path: {
+            let path = settings.download.widevine_device_path.trim();
+            if path.is_empty() {
+                None
+            } else {
+                Some(path.to_string())
+            }
+        },
     };
 
     let total_bytes = info.file_size_bytes;
@@ -1557,6 +1698,18 @@ async fn spawn_download_inner(
 
     match result {
         Ok(dl) => {
+            let protected_sidecar_path = dl
+                .protection_sidecar_path
+                .as_ref()
+                .map(|path| path.to_string_lossy().to_string());
+            let needs_decryption = dl
+                .protected_media
+                .as_ref()
+                .map(|protected| {
+                    protected.encrypted && protected.decryption_status == "not_decrypted"
+                })
+                .unwrap_or(false)
+                && protected_sidecar_path.is_some();
             append_download_log(
                 &app,
                 item_id,
@@ -1595,6 +1748,7 @@ async fn spawn_download_inner(
 
             if settings.download.embed_metadata
                 && platform_name != "magnet"
+                && !needs_decryption
                 && ffmpeg::is_ffmpeg_available().await
             {
                 let metadata = MetadataEmbed {
@@ -1615,7 +1769,7 @@ async fn spawn_download_inner(
                 }
             }
 
-            if from_hotkey && settings.download.copy_to_clipboard_on_hotkey {
+            if from_hotkey && settings.download.copy_to_clipboard_on_hotkey && !needs_decryption {
                 #[cfg(not(target_os = "android"))]
                 {
                     match crate::core::clipboard::copy_file_to_clipboard(&dl.file_path).await {
@@ -1643,6 +1797,24 @@ async fn spawn_download_inner(
                         Some(dl.file_size_bytes),
                         dl.torrent_id,
                     );
+                } else if needs_decryption {
+                    if let Some(sidecar_path) = protected_sidecar_path {
+                        append_download_log(
+                            &app,
+                            item_id,
+                            format!(
+                                "[omniget] protected media saved encrypted; sidecar={}",
+                                sidecar_path
+                            ),
+                        );
+                        q.mark_needs_decryption(
+                            item_id,
+                            NEEDS_DECRYPTION_MESSAGE.to_string(),
+                            Some(dl.file_path.to_string_lossy().to_string()),
+                            Some(dl.file_size_bytes),
+                            sidecar_path,
+                        );
+                    }
                 } else {
                     q.mark_complete(
                         item_id,

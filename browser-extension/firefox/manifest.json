@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "OmniGet",
   "description": "Detect supported media pages and send them to OmniGet with one click.",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "default_locale": "en",
   "browser_specific_settings": {
     "gecko": {
@@ -79,7 +79,9 @@
     "*://*.sndcdn.com/*",
     "*://patreon.com/*",
     "*://*.patreon.com/*",
-    "*://*.patreonusercontent.com/*"
+    "*://*.patreonusercontent.com/*",
+    "*://mixwiththemasters.com/*",
+    "*://*.mixwiththemasters.com/*"
   ],
   "optional_host_permissions": [
     "*://*/*"
