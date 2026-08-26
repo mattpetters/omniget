@@ -1298,7 +1298,7 @@ video {
 
 /* Acessibilidade por preferência do app (Settings → Appearance), espelhando as
    media queries do SO para quem não controla a preferência global. Reduz via
-   tokens: os componentes já consomem --duration-*/--material. */
+   tokens: os componentes já consomem os tokens de duração e material. */
 [data-reduce-motion="true"] {
   --duration-fast: 0.01ms;
   --duration-base: 0.01ms;

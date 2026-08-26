@@ -434,11 +434,6 @@
     align-items: stretch;
   }
 
-  h1 {
-    font-size: 20px;
-    font-weight: 500;
-  }
-
   .tabs {
     display: inline-flex;
     align-self: flex-start;

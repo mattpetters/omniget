@@ -1118,8 +1118,7 @@
 />
 
 {#if tagBook}
-  <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-  <div class="drawer-overlay" onclick={() => (tagBook = null)}></div>
+  <button type="button" class="drawer-overlay" onclick={() => (tagBook = null)} aria-label={$t("common.close")}></button>
   <div class="drawer drawer-narrow" role="dialog" tabindex="-1" aria-label={$t("study.read.tags_edit")}>
     <header class="drawer-head">
       <h2>{$t("study.read.tags_edit")}</h2>
@@ -1161,8 +1160,7 @@
 {/if}
 
 {#if enrichBook}
-  <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-  <div class="drawer-overlay" onclick={() => (enrichBook = null)}></div>
+  <button type="button" class="drawer-overlay" onclick={() => (enrichBook = null)} aria-label={$t("common.close")}></button>
   <div class="drawer" role="dialog" tabindex="-1" aria-label={$t("study.read.enrich_metadata")}>
     <header class="drawer-head">
       <h2>{$t("study.read.enrich_metadata")}</h2>
@@ -1227,8 +1225,7 @@
 {/if}
 
 {#if collectionsOpen}
-  <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-  <div class="drawer-overlay" onclick={() => (collectionsOpen = false)}></div>
+  <button type="button" class="drawer-overlay" onclick={() => (collectionsOpen = false)} aria-label={$t("common.close")}></button>
   <div class="drawer" role="dialog" tabindex="-1" aria-label={$t("study.read.collections_title")}>
     <header class="drawer-head">
       <h2>{$t("study.read.collections_title")}</h2>
@@ -1302,8 +1299,7 @@
 {/if}
 
 {#if rootsOpen}
-  <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-  <div class="drawer-overlay" onclick={() => (rootsOpen = false)}></div>
+  <button type="button" class="drawer-overlay" onclick={() => (rootsOpen = false)} aria-label={$t("common.close")}></button>
   <div class="drawer" role="dialog" tabindex="-1" aria-label={$t("study.read.roots_title")}>
     <header class="drawer-head">
       <h2>{$t("study.read.roots_title")}</h2>
@@ -1432,8 +1428,15 @@
   .drawer-overlay {
     position: fixed;
     inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    appearance: none;
     background: color-mix(in oklab, var(--bg, #000) 60%, transparent);
     backdrop-filter: blur(2px);
+    cursor: default;
     z-index: 40;
   }
   .drawer {

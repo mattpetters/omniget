@@ -294,22 +294,6 @@
     color: #fff;
   }
 
-  .btn-spinner {
-    width: 14px;
-    height: 14px;
-    border: 2px solid var(--input-border);
-    border-top-color: var(--blue);
-    border-radius: 50%;
-    animation: spin 0.6s linear infinite;
-    flex-shrink: 0;
-  }
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
   .mini-progress-track {
     width: 100%;
     height: 4px;

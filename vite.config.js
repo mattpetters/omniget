@@ -52,7 +52,7 @@ function i18nKeysPlugin({ strict } = { strict: false }) {
   };
 }
 
-export default defineConfig(({ command }) => {
+export default defineConfig(({ command, isSsrBuild }) => {
   const gitInfo = getGitInfo();
   const isBuild = command === "build";
   const strictI18n =
@@ -82,11 +82,37 @@ export default defineConfig(({ command }) => {
       format: "es",
     },
 
+    // Graphviz's Emscripten bundle contains a guarded `node:module` import for
+    // its Node runtime. The browser build never executes that branch, but Vite
+    // still resolves it and emits a compatibility warning. Keep the real Node
+    // module for SSR and provide an explicit unreachable browser shim.
+    resolve: {
+      alias: isSsrBuild
+        ? []
+        : [
+            {
+              find: "node:module",
+              replacement: path.resolve(
+                configDir,
+                "src/lib/shims/node-module.ts",
+              ),
+            },
+          ],
+    },
+
     define: {
       __COMMIT_HASH__: JSON.stringify(gitInfo.hash),
       __GIT_BRANCH__: JSON.stringify(gitInfo.branch),
       __APP_VERSION__: JSON.stringify(getVersion()),
       __BUILD_DATE__: JSON.stringify(new Date().toISOString().split("T")[0]),
+    },
+
+    // OmniGet is a locally installed desktop app whose editor, media tooling,
+    // and locale data are already route-split. The largest lazy chunk remains
+    // below 2 MB and is read from disk, so use that intentional budget instead
+    // of Vite's network-oriented 500 KB default.
+    build: {
+      chunkSizeWarningLimit: 2000,
     },
 
     // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`

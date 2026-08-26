@@ -19,7 +19,7 @@ function readCurrentVersion() {
 }
 
 function bump(current, kind) {
-  const match = current.match(/^(\d+)\.(\d+)\.(\d+)(?:-([\w.]+))?$/);
+  const match = current.match(/^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?$/);
   if (!match) {
     console.error(`Cannot parse current version: ${current}`);
     process.exit(1);
@@ -48,7 +48,7 @@ const current = readCurrentVersion();
 let version;
 if (["major", "minor", "patch"].includes(arg)) {
   version = bump(current, arg);
-} else if (/^\d+\.\d+\.\d+(-[\w.]+)?$/.test(arg)) {
+} else if (/^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/.test(arg)) {
   version = arg;
 } else {
   console.error(`Invalid version: ${arg}`);

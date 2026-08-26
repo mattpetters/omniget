@@ -1345,15 +1345,6 @@
     background: color-mix(in oklab, var(--text) 6%, transparent);
   }
 
-  .omnibox-area {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--space-3);
-    width: 100%;
-    max-width: 640px;
-  }
-
   .mode-toggle-row {
     display: inline-flex;
     background: var(--button);
@@ -1780,9 +1771,6 @@
   .cookie-hint.expired {
     color: #e0564f;
   }
-  .cookie-hint svg {
-    flex-shrink: 0;
-  }
   .cookie-hint-link {
     background: none;
     border: 0;
@@ -1879,10 +1867,6 @@
     color: var(--blue);
   }
 
-  .card-status-icon.error {
-    color: var(--red);
-  }
-
   .card-actions {
     display: flex;
     align-items: center;
@@ -1923,53 +1907,6 @@
 
   .search-hint {
     color: var(--gray);
-  }
-
-  .quick-actions {
-    display: flex;
-    gap: var(--space-2);
-    margin-bottom: var(--space-3);
-  }
-
-  .quick-action-btn {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    padding: var(--space-2) var(--space-4);
-    font-size: var(--text-sm);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--surface);
-    color: var(--text);
-    cursor: pointer;
-    transition: background var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
-  }
-
-  @media (hover: hover) {
-    .quick-action-btn:hover {
-      background: var(--surface-hi);
-      transform: translateY(-1px);
-    }
-  }
-
-  .quick-action-btn:active {
-    transform: scale(0.98);
-    background: var(--surface-hi);
-  }
-
-  .quick-action-btn svg {
-    opacity: 0.7;
-    flex-shrink: 0;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .quick-action-btn {
-      transition: none;
-    }
-    .quick-action-btn:hover,
-    .quick-action-btn:active {
-      transform: none;
-    }
   }
 
   .terms-note {

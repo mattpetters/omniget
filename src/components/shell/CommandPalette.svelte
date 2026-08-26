@@ -11,6 +11,7 @@
     runCommandPaletteSelected,
     setCommandPaletteQuery,
     setCommandPaletteSelectedIndex,
+    openCommandPalette,
   } from "$lib/stores/command-palette-store.svelte";
 
   let inputEl = $state<HTMLInputElement | null>(null);
@@ -68,7 +69,7 @@
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        import("$lib/stores/command-palette-store.svelte").then((m) => m.openCommandPalette());
+        openCommandPalette();
       }
       onKeydown(e);
     };
@@ -78,10 +79,14 @@
 </script>
 
 {#if open}
-  <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-  <div class="mac-command-backdrop" onclick={() => closeCommandPalette()}>
-    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-    <div class="mac-command-palette" onclick={(e) => e.stopPropagation()}>
+  <div class="mac-command-backdrop">
+    <button
+      type="button"
+      class="mac-command-dismiss"
+      onclick={() => closeCommandPalette()}
+      aria-label={$t("common.close")}
+    ></button>
+    <div class="mac-command-palette" role="dialog" aria-modal="true" aria-label={$t("command_palette.placeholder")}>
       <div class="mac-command-input-row">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <circle cx="11" cy="11" r="8" />
