@@ -6,6 +6,7 @@ import { summarizeCookies } from "./cookie-summary.js";
 import { loadSnifferState, isSnifferEnabled, setSnifferEnabled } from "./sniffer-toggle.js";
 import { registerContextMenu, getContextMenuId } from "./context-menu.js";
 import { openOmnigetScheme } from "./send-via-scheme.js";
+import { captureMwtmParts, isMwtmPlaylistUrl } from "./mwtm-capture.js";
 import {
   sendViaBridge,
   sendCookiesViaBridge,
@@ -296,8 +297,10 @@ async function handleSendToApp(msg) {
 
   let pageTitle = "";
   let pageThumbnail = "";
+  let activeTab = null;
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    activeTab = tab ?? null;
     pageTitle = tab?.title || "";
     pageThumbnail = tab?.favIconUrl || "";
   } catch {}
@@ -339,6 +342,73 @@ async function handleSendToApp(msg) {
       }
     }
   } catch {}
+
+  if (platform === "mixwiththemasters") {
+    if (activeTab?.id === undefined) {
+      return { ok: false, error: "Open the MWTM video in the active tab and try again." };
+    }
+
+    let parts;
+    try {
+      parts = await captureMwtmParts({
+        chromeApi: chrome,
+        tabId: activeTab.id,
+        pageUrl: url,
+        getDetectedPlaylist: async (targetPageUrl) => {
+          const detected = [...getDetectedMediaForUrl(targetPageUrl).values()]
+            .filter((entry) => isMwtmPlaylistUrl(entry?.url))
+            .sort((a, b) => {
+              const aMaster = /\/Index\.m3u8(?:\?|$)/i.test(a.url) ? 1 : 0;
+              const bMaster = /\/Index\.m3u8(?:\?|$)/i.test(b.url) ? 1 : 0;
+              return bMaster - aMaster || (b.detectedAt || 0) - (a.detectedAt || 0);
+            });
+          return detected[0]?.url || null;
+        },
+      });
+    } catch (error) {
+      return {
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+
+    let sent = 0;
+    for (const part of parts) {
+      if (!isMwtmPlaylistUrl(part.playlistUrl)) continue;
+      const message = {
+        type: "enqueue",
+        protocolVersion: PROTOCOL_VERSION,
+        url: part.playlistUrl,
+        referer: part.pageUrl,
+        pageUrl: part.pageUrl,
+        title: part.title,
+        thumbnail: part.thumbnail || pageThumbnail,
+        mediaType: "hls",
+        contentType: "application/vnd.apple.mpegurl",
+        autoDownload: true,
+        userAgent: navigator.userAgent,
+        openApp: sent === 0 ? msg.openApp : false,
+      };
+      if (cookies) message.cookies = cookies;
+      if (msg.headers) message.headers = msg.headers;
+
+      const result = await sendViaBridge(message);
+      if (!result?.ok) {
+        return {
+          ok: false,
+          sent,
+          error: result?.message || "OmniGet rejected the resolved MWTM playlist.",
+          bridgeReason: result?.reason,
+        };
+      }
+      sent++;
+    }
+
+    if (sent === 0) {
+      return { ok: false, error: "MWTM did not expose an authorized video playlist in Dia." };
+    }
+    return { ok: true, viaBridge: true, sent, cookieSummary: summarizeCookies(cookies) };
+  }
 
   const message = { type: "enqueue", url, protocolVersion: PROTOCOL_VERSION };
   if (cookies) message.cookies = cookies;

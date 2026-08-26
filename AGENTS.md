@@ -11,6 +11,17 @@ cargo check           # typecheck Rust without building
 pnpm check            # svelte-check + tsc
 ```
 
+## Fork Versioning
+
+Fork builds use `<upstream-version>-mpfork-<iteration>`, for example
+`0.8.6-mpfork-0.1`, `0.8.6-mpfork-0.2`, and so on. Increment the fork
+iteration for every shipped fork update. When syncing to a new upstream app
+version, adopt that upstream version and reset the fork iteration to `0.1`.
+Keep `package.json`, `package-lock.json`, `src-tauri/Cargo.toml`, `src-tauri/Cargo.lock`,
+`src-tauri/tauri.conf.json`, the About-page fallback, and the changelog
+fallback in sync. Browser extensions retain their own Chromium-compatible
+numeric version because manifest versions cannot contain SemVer suffixes.
+
 ## Tech Stack
 
 - **Backend:** Rust, Tauri 2.x, tokio, reqwest, serde, sqlx (SQLite), chromiumoxide

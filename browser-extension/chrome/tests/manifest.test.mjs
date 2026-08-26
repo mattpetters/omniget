@@ -43,6 +43,12 @@ test("declares storage permission for sniffer toggle", async () => {
   assert.ok(manifest.permissions.includes("storage"));
 });
 
+test("declares scripting permission for authenticated in-page media capture", async () => {
+  const manifest = await readManifest();
+
+  assert.ok(manifest.permissions.includes("scripting"));
+});
+
 test("declares platform-scoped host_permissions instead of a wildcard", async () => {
   const manifest = await readManifest();
 
@@ -91,7 +97,7 @@ test("Chrome and Firefox ship the same authenticated-site permissions and patch 
     "*://*.patreonusercontent.com/*",
   ];
 
-  assert.equal(chromeManifest.version, "0.4.2");
+  assert.equal(chromeManifest.version, "0.4.3");
   assert.equal(firefoxManifest.version, chromeManifest.version);
   for (const pattern of patreonPatterns) {
     assert.ok(chromeManifest.host_permissions.includes(pattern));

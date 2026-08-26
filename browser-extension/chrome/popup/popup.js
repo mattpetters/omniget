@@ -311,13 +311,15 @@ async function handleDownload(btn, url, platform, mediaEntry) {
     btn.classList.remove("sending");
     btn.classList.add("success");
     btn.querySelector(".btn-icon").innerHTML = SVG.check;
-    btn.querySelector(".btn-label").textContent = tr("popup_sent");
+    btn.querySelector(".btn-label").textContent = result.sent > 1
+      ? tr("popup_sent_n", result.sent)
+      : tr("popup_sent");
     const summaryText = formatCookieSummary(result.cookieSummary);
     const metaEl = btn.querySelector(".btn-meta");
     if (metaEl) metaEl.textContent = summaryText;
     setTimeout(() => window.close(), summaryText ? 1600 : 1000);
   } else {
-    showError(btn.closest(".primary-action"));
+    showError(btn.closest(".primary-action"), result.error);
   }
 }
 
@@ -345,12 +347,12 @@ async function handleBatchDownload(btn, groups) {
   }
 }
 
-function showError(container) {
+function showError(container, detail = "") {
   container.innerHTML = `
     <div class="error-box">
       <div class="error-header">
         <span class="error-icon">${SVG.warning}</span>
-        <span class="error-message">${escapeHtml(tr("popup_not_running"))}</span>
+        <span class="error-message">${escapeHtml(detail || tr("popup_not_running"))}</span>
       </div>
       <div class="error-actions">
         <button class="error-btn error-btn-primary" data-action="retry">${escapeHtml(tr("popup_try_again"))}</button>
@@ -391,7 +393,12 @@ function sendToApp(url, platform, mediaEntry) {
     }
 
     chrome.runtime.sendMessage(msg, (response) => {
-      resolve({ ok: response?.ok ?? false, cookieSummary: response?.cookieSummary ?? null });
+      resolve({
+        ok: response?.ok ?? false,
+        sent: response?.sent ?? 0,
+        error: response?.error || response?.message || "",
+        cookieSummary: response?.cookieSummary ?? null,
+      });
     });
   });
 }

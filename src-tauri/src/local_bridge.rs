@@ -402,11 +402,24 @@ async fn enqueue(
 
     let app = state.app.clone();
     let url = payload.url.clone();
-    tauri::async_runtime::spawn(async move {
-        if let Err(error) = crate::external_url::handle_external_url(&app, url, "bridge").await {
-            tracing::warn!("failed to handle bridge URL: {error}");
+    if payload.auto_download == Some(true) {
+        match crate::external_url::queue_url_with_defaults(&app, url, false, None).await {
+            Ok(_) => {
+                if payload.open_app == Some(true) {
+                    crate::tray::show_window(&app);
+                }
+            }
+            Err(error) => {
+                return error_response(StatusCode::BAD_REQUEST, "ENQUEUE_FAILED", error);
+            }
         }
-    });
+    } else {
+        tauri::async_runtime::spawn(async move {
+            if let Err(error) = crate::external_url::handle_external_url(&app, url, "bridge").await {
+                tracing::warn!("failed to handle bridge URL: {error}");
+            }
+        });
+    }
 
     let body = Json(EnqueueResponse {
         ok: true,

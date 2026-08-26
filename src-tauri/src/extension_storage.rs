@@ -58,6 +58,8 @@ pub struct ExtensionPayload {
     pub thumbnail: Option<String>,
     #[serde(default, rename = "openApp")]
     pub open_app: Option<bool>,
+    #[serde(default, rename = "autoDownload")]
+    pub auto_download: Option<bool>,
     #[serde(default, rename = "pageUrl")]
     pub page_url: Option<String>,
     #[serde(default, rename = "userAgent")]

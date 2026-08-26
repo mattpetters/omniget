@@ -39,7 +39,7 @@ export async function initChangelog(): Promise<void> {
   try {
     currentVersion = await getVersion();
   } catch {
-    currentVersion = "0.8.6";
+    currentVersion = "0.8.6-mpfork-0.1";
   }
 
   const lastSeen = localStorage.getItem(STORAGE_KEY);

@@ -58,6 +58,18 @@
   let settings = $derived(getSettings());
 
   let isStudyRoute = $derived(page.url.pathname.startsWith("/study"));
+  let isImmersiveStudyRoute = $derived.by(() => {
+    const path = page.url.pathname;
+    return (
+      path.startsWith("/study/music") ||
+      path.startsWith("/study/notes") ||
+      path.startsWith("/study/focus") ||
+      path.startsWith("/study/watch") ||
+      path.startsWith("/study/anki/study") ||
+      /^\/study\/course\/[^/]+\/lesson\/[^/]+/.test(path) ||
+      /^\/study\/read\/(?:entry\/[^/]+|manga\/[^/]+|\d+)(?:\/|$)/.test(path)
+    );
+  });
   let isCoreRoute = $derived(
     page.url.pathname === "/" ||
     page.url.pathname.startsWith("/downloads") ||
@@ -316,7 +328,7 @@
 
     <main id="main-content" class="content">
       {#if isStudyRoute}
-        <div class="study-shell">
+        <div class="study-shell" class:study-shell--immersive={isImmersiveStudyRoute}>
           {@render children()}
         </div>
       {:else if isCoreRoute}
@@ -404,6 +416,13 @@
     display: flex;
     flex-direction: column;
     min-height: 0;
+    width: 100%;
+    padding-inline: var(--space-4);
+    box-sizing: border-box;
+  }
+
+  .study-shell--immersive {
+    padding-inline: 0;
   }
 
   .ytdlp-banner {
