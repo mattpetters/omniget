@@ -4,6 +4,9 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, OnceLock};
 
 static EMIT_COUNT: AtomicU64 = AtomicU64::new(0);
+static STUDY_RESCAN_EPOCH: AtomicU64 = AtomicU64::new(0);
+
+const MWTM_PLATFORM: &str = "mix-with-the-masters";
 
 pub fn now_ms() -> u64 {
     std::time::SystemTime::now()
@@ -20,6 +23,75 @@ fn append_download_log(app: &tauri::AppHandle, id: u64, line: impl AsRef<str>) {
             "id": id,
         }),
     );
+}
+
+fn mwtm_course_directory_name(title: &str) -> String {
+    let title = title.trim();
+    let lower = title.to_ascii_lowercase();
+    let course_title = if lower.ends_with(" - trailer") {
+        &title[..title.len() - " - trailer".len()]
+    } else if let Some(index) = lower.rfind(" - part ") {
+        let part = &lower[(index + " - part ".len())..];
+        if !part.is_empty() && part.chars().all(|c| c.is_ascii_digit()) {
+            &title[..index]
+        } else {
+            title
+        }
+    } else {
+        title
+    };
+    let sanitized = sanitize_filename::sanitize(course_title.trim())
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ");
+    if sanitized.trim().is_empty() {
+        "Mix With The Masters Course".to_string()
+    } else {
+        sanitized
+    }
+}
+
+fn schedule_mwtm_study_rescan(app: &tauri::AppHandle, library_root: PathBuf) {
+    let epoch = STUDY_RESCAN_EPOCH.fetch_add(1, Ordering::Relaxed) + 1;
+    let app = app.clone();
+    tauri::async_runtime::spawn(async move {
+        // A full course queues each part independently. Debounce completions so
+        // Study performs one scan after the current burst instead of rescanning
+        // the same platform directory for every lesson.
+        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+        if STUDY_RESCAN_EPOCH.load(Ordering::Relaxed) != epoch {
+            return;
+        }
+
+        let Some(state) =
+            app.try_state::<Arc<tokio::sync::RwLock<crate::plugin_loader::PluginManager>>>()
+        else {
+            return;
+        };
+        let manager = state.read().await;
+        if !manager.is_loaded("study") {
+            return;
+        }
+
+        let root = library_root.to_string_lossy().to_string();
+        if let Err(error) = manager
+            .handle_command(
+                "study",
+                "study:library:roots_add",
+                serde_json::json!({ "path": root }),
+            )
+            .await
+        {
+            tracing::warn!("[study] could not register MWTM library root: {error}");
+            return;
+        }
+        if let Err(error) = manager
+            .handle_command("study", "study:rescan", serde_json::json!({}))
+            .await
+        {
+            tracing::warn!("[study] could not rescan completed MWTM course: {error}");
+        }
+    });
 }
 
 use serde::Serialize;
@@ -1410,6 +1482,19 @@ async fn spawn_download_inner(
     if settings.download.organize_by_platform {
         final_output_dir = final_output_dir.join(&platform_name);
     }
+    let study_library_root = if platform_name == MWTM_PLATFORM {
+        // MWTM is course content even when generic platform organization is
+        // disabled. A stable platform/course/lesson hierarchy lets Study scan
+        // it as one course instead of a pile of unrelated videos.
+        if !settings.download.organize_by_platform {
+            final_output_dir = final_output_dir.join(MWTM_PLATFORM);
+        }
+        let library_root = final_output_dir.clone();
+        final_output_dir = final_output_dir.join(mwtm_course_directory_name(&info.title));
+        Some(library_root)
+    } else {
+        None
+    };
     let torrent_id_slot = Arc::new(tokio::sync::Mutex::new(None));
     let audio_format = if download_mode.as_deref() == Some("audio") {
         Some(settings.download.music_audio_format.clone())
@@ -1829,6 +1914,11 @@ async fn spawn_download_inner(
                 q.get_state()
             };
             emit_queue_state_from_state(&app, state);
+            if !needs_decryption {
+                if let Some(library_root) = study_library_root {
+                    schedule_mwtm_study_rescan(&app, library_root);
+                }
+            }
         }
         Err(e) => {
             let raw_err = e.to_string();
@@ -2194,7 +2284,10 @@ fn is_generic_title(title: &str) -> bool {
 
 #[cfg(test)]
 mod kind_tests {
-    use super::{can_finish_active_item, kind_from_platform, QueueKind, QueueStatus};
+    use super::{
+        can_finish_active_item, kind_from_platform, mwtm_course_directory_name, QueueKind,
+        QueueStatus,
+    };
 
     #[test]
     fn only_active_items_can_finish() {
@@ -2270,6 +2363,24 @@ mod kind_tests {
         assert_eq!(
             kind_from_platform("mixwiththemasters"),
             QueueKind::CourseLesson
+        );
+    }
+
+    #[test]
+    fn mwtm_parts_share_a_sanitized_course_directory() {
+        assert_eq!(
+            mwtm_course_directory_name(
+                "No I.D. Studio Choosing Outboard Gear Workshop #10 - Part 2"
+            ),
+            "No I.D. Studio Choosing Outboard Gear Workshop #10"
+        );
+        assert_eq!(
+            mwtm_course_directory_name("No I.D. Studio - Trailer"),
+            "No I.D. Studio"
+        );
+        assert_eq!(
+            mwtm_course_directory_name("Course: Mixing / Mastering - Part 1"),
+            "Course Mixing Mastering"
         );
     }
 

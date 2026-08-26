@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy, onMount, tick } from "svelte";
   import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-  import { goto } from "$app/navigation";
+  import { beforeNavigate, goto } from "$app/navigation";
   import { page } from "$app/stores";
   import { pluginInvoke } from "$lib/plugin-invoke";
   import { rpcSetSource, rpcClearSource } from "$lib/rpc";
@@ -18,7 +18,7 @@
     STUDY_PROGRESS_ENABLED,
     STUDY_ACHIEVEMENTS_ENABLED,
   } from "$lib/study-feature-flags";
-  import { beforeNavigate } from "$app/navigation";
+  import { notesShell } from "$lib/study-notes/shell-store.svelte";
   import { musicPlayer, type MusicTrack } from "$lib/study-music/player-store.svelte";
   import { musicUI } from "$lib/study-music/ui-store.svelte";
   import { musicTheme } from "$lib/study-music/theme-store.svelte";
@@ -728,6 +728,13 @@
   beforeNavigate(({ to, from }) => {
     if (!to) return;
     const path = to.url.pathname;
+    if (
+      path.startsWith("/study/notes") &&
+      from &&
+      !from.url.pathname.startsWith("/study/notes")
+    ) {
+      notesShell.rememberReturnUrl(`${from.url.pathname}${from.url.search}`);
+    }
     if (
       path.startsWith("/study/watch") ||
       path.startsWith("/study/course/") ||

@@ -12,20 +12,26 @@
   import NbWndTree from "./NbWndTree.svelte";
 
   let { children } = $props();
+  let exiting = $state(false);
 
-  function exitFullscreen() {
+  async function exitFullscreen() {
+    if (exiting) return;
+    exiting = true;
     const target = notesShell.consumeReturnUrl();
-    void goto(target);
+    try {
+      await goto(target);
+    } catch (error) {
+      console.error("Could not leave Notes with client navigation", error);
+      window.location.assign(target);
+    } finally {
+      exiting = false;
+    }
   }
 
-  function shouldIgnoreEsc(target: HTMLElement | null): boolean {
-    if (!target) return false;
-    const tag = target.tagName;
-    if (tag === "INPUT" || tag === "TEXTAREA") return true;
-    if (target.isContentEditable) return true;
-    if (target.closest('[data-modal="true"]')) return true;
-    if (target.closest('[role="dialog"]')) return true;
-    return false;
+  function modalOwnsEscape(): boolean {
+    return document.querySelector(
+      '[data-modal="true"], [role="dialog"][aria-modal="true"]',
+    ) !== null;
   }
 
   function shouldIgnoreShortcut(target: HTMLElement | null): boolean {
@@ -127,11 +133,14 @@
 
   function onKey(e: KeyboardEvent) {
     if (e.key === "Escape" && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
-      if (!shouldIgnoreEsc(e.target as HTMLElement | null)) {
-        e.preventDefault();
-        exitFullscreen();
-        return;
-      }
+      // Notes advertises Escape as its fullscreen exit. The previous input /
+      // contenteditable exemption made that shortcut inert whenever the editor
+      // had focus, which is almost always. Let an actual modal consume Escape;
+      // otherwise leave Notes regardless of the focused editor element.
+      if (e.defaultPrevented || modalOwnsEscape()) return;
+      e.preventDefault();
+      void exitFullscreen();
+      return;
     }
     void handleShortcut(e);
   }
@@ -190,7 +199,8 @@
     <button
       type="button"
       class="exit-btn"
-      onclick={exitFullscreen}
+      onclick={() => void exitFullscreen()}
+      disabled={exiting}
       aria-label="Exit fullscreen mode"
       title="Exit (Esc)"
     >
