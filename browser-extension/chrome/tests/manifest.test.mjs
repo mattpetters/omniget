@@ -97,7 +97,7 @@ test("Chrome and Firefox ship the same authenticated-site permissions and patch 
     "*://*.patreonusercontent.com/*",
   ];
 
-  assert.equal(chromeManifest.version, "0.4.3");
+  assert.equal(chromeManifest.version, "0.4.4");
   assert.equal(firefoxManifest.version, chromeManifest.version);
   for (const pattern of patreonPatterns) {
     assert.ok(chromeManifest.host_permissions.includes(pattern));
