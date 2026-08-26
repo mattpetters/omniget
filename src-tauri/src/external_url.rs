@@ -196,7 +196,7 @@ pub async fn queue_url_with_defaults(
         Some(crate::models::media::MediaInfo {
             title,
             author: String::new(),
-            platform: "generic".to_string(),
+            platform: platform_name.clone(),
             duration_seconds: None,
             thumbnail_url: m.thumbnail.clone(),
             available_qualities: vec![crate::models::media::VideoQuality {
@@ -229,7 +229,7 @@ pub async fn queue_url_with_defaults(
         Some(crate::models::media::MediaInfo {
             title: ext_title.clone().unwrap_or_else(|| url.clone()),
             author: String::new(),
-            platform: "generic".to_string(),
+            platform: platform_name.clone(),
             duration_seconds: None,
             thumbnail_url: ext_thumbnail.clone(),
             available_qualities: Vec::new(),

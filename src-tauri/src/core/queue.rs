@@ -100,7 +100,9 @@ pub fn kind_from_platform(platform: &str) -> QueueKind {
         "pinterest" => QueueKind::Image,
         "magnet" | "p2p" | "torrent" => QueueKind::Generic,
         "telegram" | "telegram_media" => QueueKind::TelegramMedia,
-        "courses" | "course_lesson" | "mixwiththemasters" => QueueKind::CourseLesson,
+        "courses" | "course_lesson" | "mix-with-the-masters" | "mixwiththemasters" => {
+            QueueKind::CourseLesson
+        }
         "annas_archive" | "book" | "libgen" | "gutendex" => QueueKind::Book,
         "pdf" => QueueKind::Pdf,
         "webpage" | "embed" => QueueKind::Webpage,
@@ -2261,6 +2263,14 @@ mod kind_tests {
     fn course_lesson_kind() {
         assert_eq!(kind_from_platform("courses"), QueueKind::CourseLesson);
         assert_eq!(kind_from_platform("course_lesson"), QueueKind::CourseLesson);
+        assert_eq!(
+            kind_from_platform("mix-with-the-masters"),
+            QueueKind::CourseLesson
+        );
+        assert_eq!(
+            kind_from_platform("mixwiththemasters"),
+            QueueKind::CourseLesson
+        );
     }
 
     #[test]

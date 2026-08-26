@@ -4260,7 +4260,7 @@ dependencies = [
 
 [[package]]
 name = "omniget"
-version = "0.8.6-mpfork-0.1"
+version = "0.8.6-mpfork-0.2"
 dependencies = [
  "aes",
  "anyhow",

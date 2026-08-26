@@ -105,7 +105,7 @@ impl fmt::Display for Platform {
             Platform::Vimeo => "vimeo",
             Platform::Udemy => "udemy",
             Platform::Patreon => "patreon",
-            Platform::MixWithTheMasters => "mixwiththemasters",
+            Platform::MixWithTheMasters => "mix-with-the-masters",
             Platform::Bilibili => "bilibili",
             Platform::Other(ref name) => name.as_str(),
         };
@@ -132,7 +132,9 @@ impl FromStr for Platform {
             "vimeo" => Ok(Platform::Vimeo),
             "udemy" => Ok(Platform::Udemy),
             "patreon" => Ok(Platform::Patreon),
-            "mixwiththemasters" | "mwtm" => Ok(Platform::MixWithTheMasters),
+            "mix-with-the-masters" | "mixwiththemasters" | "mwtm" => {
+                Ok(Platform::MixWithTheMasters)
+            }
             "bilibili" | "b站" => Ok(Platform::Bilibili),
             _ => Err(format!("Unknown platform: {}", s)),
         }
@@ -190,7 +192,7 @@ impl Platform {
             Some(Platform::Udemy)
         } else if patreon::is_patreon_post_url(url_str) {
             Some(Platform::Patreon)
-        } else if mix_with_the_masters::is_mix_with_the_masters_video_url(url_str) {
+        } else if mix_with_the_masters::is_mix_with_the_masters_media_url(url_str) {
             Some(Platform::MixWithTheMasters)
         } else if matches("bilibili.com") || matches("bilibili.tv") || host == "b23.tv" {
             Some(Platform::Bilibili)
@@ -268,6 +270,31 @@ mod tests {
         assert_eq!(
             Platform::from_url("https://www.patreon.com/FanuFatGyver"),
             None
+        );
+    }
+
+    #[test]
+    fn classifies_mwtm_pages_and_signed_playlists_with_first_class_slug() {
+        let course =
+            "https://mixwiththemasters.com/videos/young-guru-choosing-outboard-gear-no-i-d-studio";
+        let playlist =
+            "https://mixwiththemasters.com/videos/_/playlist/example/part/1/Index.m3u8?_hash=abc";
+
+        assert_eq!(
+            Platform::from_url(course),
+            Some(Platform::MixWithTheMasters)
+        );
+        assert_eq!(
+            Platform::from_url(playlist),
+            Some(Platform::MixWithTheMasters)
+        );
+        assert_eq!(
+            Platform::MixWithTheMasters.to_string(),
+            "mix-with-the-masters"
+        );
+        assert_eq!(
+            Platform::from_str("mixwiththemasters"),
+            Ok(Platform::MixWithTheMasters)
         );
     }
 }

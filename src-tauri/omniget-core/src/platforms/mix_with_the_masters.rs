@@ -148,7 +148,7 @@ impl MixWithTheMastersDownloader {
             return Ok(MediaInfo {
                 title: page.course_title,
                 author: page.author,
-                platform: "mixwiththemasters".to_string(),
+                platform: "mix-with-the-masters".to_string(),
                 duration_seconds: None,
                 thumbnail_url: page.thumbnail_url,
                 available_qualities: qualities,
@@ -165,7 +165,7 @@ impl MixWithTheMastersDownloader {
         Ok(MediaInfo {
             title: format!("{} - {}", page.course_title, label),
             author: page.author,
-            platform: "mixwiththemasters".to_string(),
+            platform: "mix-with-the-masters".to_string(),
             duration_seconds: None,
             thumbnail_url: page.thumbnail_url,
             available_qualities: vec![VideoQuality {
@@ -354,6 +354,33 @@ impl PlatformDownloader for MixWithTheMastersDownloader {
 
 pub fn is_mix_with_the_masters_video_url(url: &str) -> bool {
     parse_mwtm_video_url(url).is_some()
+}
+
+/// Recognizes both stable MWTM video pages and the short-lived signed HLS
+/// playlists captured by the browser extension. Signed playlists deliberately
+/// remain outside `is_mix_with_the_masters_video_url`: the generic downloader
+/// is the correct transport for them, but they still belong to the MWTM
+/// platform for queue grouping and output organization.
+pub fn is_mix_with_the_masters_media_url(url: &str) -> bool {
+    is_mix_with_the_masters_video_url(url) || is_mix_with_the_masters_playlist_url(url)
+}
+
+fn is_mix_with_the_masters_playlist_url(url: &str) -> bool {
+    let Ok(parsed) = url::Url::parse(url) else {
+        return false;
+    };
+    if !matches!(parsed.scheme(), "http" | "https") {
+        return false;
+    }
+    let Some(host) = parsed.host_str() else {
+        return false;
+    };
+    if host.trim_start_matches("www.") != MWTM_DOMAIN {
+        return false;
+    }
+
+    let path = parsed.path().to_ascii_lowercase();
+    path.starts_with("/videos/_/playlist/") && path.ends_with(".m3u8")
 }
 
 pub fn mix_with_the_masters_slug(url: &str) -> Option<String> {
@@ -618,6 +645,19 @@ mod tests {
         ));
         assert!(!is_mix_with_the_masters_video_url(
             "https://notmixwiththemasters.com/videos/example"
+        ));
+    }
+
+    #[test]
+    fn recognizes_signed_playlists_as_mwtm_media_without_claiming_other_urls() {
+        let playlist = "https://mixwiththemasters.com/videos/_/playlist/example/part/1/Index.m3u8?_hash=abc&userId=42";
+        assert!(is_mix_with_the_masters_media_url(playlist));
+        assert!(!is_mix_with_the_masters_video_url(playlist));
+        assert!(!is_mix_with_the_masters_media_url(
+            "https://mixwiththemasters.com/videos"
+        ));
+        assert!(!is_mix_with_the_masters_media_url(
+            "https://notmixwiththemasters.com/videos/_/playlist/example/Index.m3u8"
         ));
     }
 
